@@ -1,0 +1,65 @@
+[
+    {
+        "id_operario": "OPER-0001",
+        "nombre": "Juan Soto",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0002",
+        "nombre": "Camila Pérez",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0003",
+        "nombre": "Diego Rojas",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "activo": false
+    },
+    {
+        "id_operario": "OPER-0004",
+        "nombre": "María Muñoz",
+        "area": "Corte",
+        "maquina": "MAQ-02",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0005",
+        "nombre": "Felipe Torres",
+        "area": "Corte",
+        "maquina": "MAQ-02",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0006",
+        "nombre": "Ana Díaz",
+        "area": "Corte",
+        "maquina": "MAQ-02",
+        "activo": false
+    },
+    {
+        "id_operario": "OPER-0007",
+        "nombre": "Valentina Silva",
+        "area": "Calidad",
+        "maquina": "MAQ-03",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0008",
+        "nombre": "Cristóbal Reyes",
+        "area": "Calidad",
+        "maquina": "MAQ-03",
+        "activo": true
+    },
+    {
+        "id_operario": "OPER-0009",
+        "nombre": "Fernanda López",
+        "area": "Calidad",
+        "maquina": "MAQ-03",
+        "activo": true
+    }
+]

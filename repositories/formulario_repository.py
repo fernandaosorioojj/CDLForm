@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from config.settings import SETTINGS
+from pathlib import Path
+from typing import List, Optional
+
 from models.formulario import Formulario
 from repositories.base_repository import BaseRepository
 
 
-class FormularioRepository(BaseRepository[Formulario]):
-    def __init__(self) -> None:
-        super().__init__(SETTINGS.paths.formularios_file)
+class FormularioRepository(BaseRepository):
+    def __init__(self, file_path: Path | None = None) -> None:
+        super().__init__(file_path or Path("storage/formularios.json"))
 
     def _from_dict(self, data: dict) -> Formulario:
         return Formulario.from_dict(data)
@@ -15,20 +17,57 @@ class FormularioRepository(BaseRepository[Formulario]):
     def _get_entity_id(self, entity: Formulario) -> str:
         return entity.id_formulario
 
-    def get_by_op(self, op: str) -> list[Formulario]:
-        normalized_op = op.strip()
+    def get_all_formularios(self) -> List[Formulario]:
+        registros = self.get_all()
+        return [self._from_dict(item) for item in registros]
 
-        return [
-            formulario
-            for formulario in self.list_all()
-            if formulario.op == normalized_op
-        ]
+    def get_formulario_by_id(self, id_formulario: str) -> Optional[Formulario]:
+        if not id_formulario or not str(id_formulario).strip():
+            return None
 
-    def get_by_evento_origen(self, id_evento_origen: str) -> list[Formulario]:
-        normalized_id_evento = id_evento_origen.strip()
+        data = self.find_by_id(str(id_formulario).strip())
+        if not data:
+            return None
 
-        return [
-            formulario
-            for formulario in self.list_all()
-            if formulario.id_evento_origen == normalized_id_evento
-        ]
+        return self._from_dict(data)
+
+    def add_formulario(self, formulario: Formulario) -> Formulario:
+        self.add(formulario.to_dict())
+        return formulario
+
+    def update_formulario(self, id_formulario: str, formulario: Formulario) -> Formulario:
+        self.update_by_id(id_formulario, formulario.to_dict())
+        return formulario
+
+    def get_formularios_por_estado(self, estado: str) -> List[Formulario]:
+        if not estado or not str(estado).strip():
+            return []
+
+        estado_normalizado = str(estado).strip().lower()
+
+        registros = self.filter(
+            lambda item: str(item.get("estado", "")).strip().lower() == estado_normalizado
+        )
+        return [self._from_dict(item) for item in registros]
+
+    def get_formularios_por_operario(self, operario: str) -> List[Formulario]:
+        if not operario or not str(operario).strip():
+            return []
+
+        operario_normalizado = str(operario).strip().lower()
+
+        registros = self.filter(
+            lambda item: str(item.get("operario", "")).strip().lower() == operario_normalizado
+        )
+        return [self._from_dict(item) for item in registros]
+
+    def get_formularios_por_op(self, op: str) -> List[Formulario]:
+        if not op or not str(op).strip():
+            return []
+
+        op_normalizada = str(op).strip().lower()
+
+        registros = self.filter(
+            lambda item: str(item.get("op", "")).strip().lower() == op_normalizada
+        )
+        return [self._from_dict(item) for item in registros]

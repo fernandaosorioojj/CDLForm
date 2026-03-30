@@ -1,62 +1,87 @@
 from __future__ import annotations
 
-import logging
 import sys
-from pathlib import Path
+import argparse
 
-from config.logging_config import configure_logging
-from config.settings import SETTINGS
-from core.exceptions import CDLformError
-from utils.json_manager import JsonManager
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
-logger = logging.getLogger(__name__)
+from ui.login import LoginView
+from ui.seleccion_operario import SeleccionOperarioView
 
 
-def initialize_storage() -> None:
-    files_to_initialize: dict[Path, list] = {
-        SETTINGS.paths.formularios_file: [],
-        SETTINGS.paths.respuestas_file: [],
-        SETTINGS.paths.preguntas_file: [],
-        SETTINGS.paths.eventos_op_file: [],
-        SETTINGS.paths.disparadores_file: [],
-    }
-                                                                                                                                                                                                                                                                                    
-    for file_path, default_data in files_to_initialize.items():
-        JsonManager.ensure_file_exists(file_path, default_data)
+def parse_args():
+    parser = argparse.ArgumentParser(description="CDLform")
 
-
-def bootstrap_application() -> None:
-    configure_logging()
-
-    logger.info(
-        "iniciando aplicación %s versión %s en entorno %s",
-        SETTINGS.app_name,
-        SETTINGS.app_version,
-        SETTINGS.environment,
+    parser.add_argument(
+        "--modo",
+        choices=["normal", "auto"],
+        default="normal",
+        help="Modo de ejecución de la aplicación",
     )
 
-    initialize_storage()
+    parser.add_argument("--op", default=None, help="OP asociada al formulario")
+    parser.add_argument("--area", default=None, help="Área asociada al formulario")
+    parser.add_argument("--maquina", default=None, help="Máquina asociada al formulario")
+    parser.add_argument(
+        "--evento-origen",
+        dest="evento_origen",
+        default=None,
+        help="ID o referencia del evento origen",
+    )
 
-    logger.info("storage inicializado correctamente")
-    logger.info("aplicación lista para continuar con el flujo de ejecución")
+    return parser.parse_args()
 
 
-def main() -> int:
-    try:
-        bootstrap_application()
-        print(f"{SETTINGS.app_name} iniciado correctamente.")
-        return 0
+def validar_argumentos_modo_auto(args) -> list[str]:
+    errores = []
 
-    except CDLformError as exc:
-        logging.getLogger(__name__).exception("error controlado de aplicación: %s", exc)
-        print(f"error de aplicación: {exc}")
-        return 1
+    if not args.op or not str(args.op).strip():
+        errores.append("Falta el parámetro --op")
 
-    except Exception as exc:
-        logging.getLogger(__name__).exception("error no controlado: %s", exc)
-        print(f"error inesperado: {exc}")
-        return 1
+    if not args.area or not str(args.area).strip():
+        errores.append("Falta el parámetro --area")
+
+    if not args.maquina or not str(args.maquina).strip():
+        errores.append("Falta el parámetro --maquina")
+
+    return errores
+
+
+def main():
+    args = parse_args()
+    app = QApplication(sys.argv)
+
+    if args.modo == "normal":
+        ventana = LoginView()
+        ventana.show()
+        sys.exit(app.exec_())
+
+    if args.modo == "auto":
+        errores = validar_argumentos_modo_auto(args)
+
+        if errores:
+            QMessageBox.critical(
+                None,
+                "Error de ejecución",
+                "No se puede iniciar la aplicación en modo automático.\n\n"
+                + "\n".join(errores),
+            )
+            sys.exit(1)
+
+        ventana = SeleccionOperarioView(
+            op=args.op.strip(),
+            area=args.area.strip(),
+            maquina=args.maquina.strip(),
+            evento_origen=args.evento_origen.strip()
+            if args.evento_origen and str(args.evento_origen).strip()
+            else None,
+        )
+        ventana.show()
+        sys.exit(app.exec_())
+
+    QMessageBox.critical(None, "Error", "Modo de ejecución no válido.")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -1,138 +1,146 @@
 from __future__ import annotations
 
 from core.enums import TipoPregunta
-from core.exceptions import DuplicateEntityError, NotFoundError
 from models.pregunta import Pregunta
 from repositories.pregunta_repository import PreguntaRepository
-from utils.id_generator import IdGenerator
+from utils.id_generator import generate_id
 
 
 class PreguntaService:
     def __init__(self) -> None:
         self.repository = PreguntaRepository()
 
-    def list_all(self) -> list[Pregunta]:
-        return self.repository.list_all()
+    def listar_preguntas(self, solo_activas: bool = False) -> list[dict]:
+        preguntas = self.repository.get_all()
 
-    def list_active(self) -> list[Pregunta]:
-        return self.repository.get_active()
+        if solo_activas:
+            preguntas = [p for p in preguntas if p.get("activa", True)]
 
-    def get_by_id(self, id_pregunta: str) -> Pregunta:
-        return self.repository.get_by_id(id_pregunta)
+        return sorted(preguntas, key=lambda x: x.get("orden", 0))
 
-    def get_by_rol(self, rol: str, solo_activas: bool = True) -> list[Pregunta]:
-        return self.repository.get_by_rol(rol, solo_activas)
+    def obtener_pregunta(self, id_pregunta: str) -> dict | None:
+        return self.repository.find_by_id(id_pregunta)
 
-    def get_by_area(self, area: str, solo_activas: bool = True) -> list[Pregunta]:
-        return self.repository.get_by_area(area, solo_activas)
-
-    def get_by_maquina(self, maquina: str, solo_activas: bool = True) -> list[Pregunta]:
-        return self.repository.get_by_maquina(maquina, solo_activas)
-
-    def get_applicable_questions(
-        self,
-        rol: str,
-        area: str,
-        maquina: str | None = None,
-        solo_activas: bool = True,
-    ) -> list[Pregunta]:
-        return self.repository.get_applicable_questions(
-            rol=rol,
-            area=area,
-            maquina=maquina,
-            solo_activas=solo_activas,
-        )
-
-    def create(
+    def crear_pregunta(
         self,
         texto: str,
-        tipo: TipoPregunta,
-        roles_asociados: list[str],
-        areas_asociadas: list[str],
-        maquinas_asociadas: list[str] | None = None,
+        tipo: str,
+        obligatoria: bool = True,
         activa: bool = True,
-    ) -> Pregunta:
-        preguntas_existentes = self.repository.list_all()
-        next_number = len(preguntas_existentes) + 1
-        id_pregunta = IdGenerator.generate("PREG", next_number)
+        orden: int = 1,
+        filtros_contexto: dict | None = None,
+        opciones_respuesta: list | None = None,
+    ) -> dict:
+        preguntas = self.repository.get_all()
 
-        pregunta = Pregunta(
-            id_pregunta=id_pregunta,
-            texto=texto,
-            tipo=tipo,
+        tipo_enum = self._parse_tipo(tipo)
+
+        nueva_pregunta = Pregunta(
+            id_pregunta=generate_id(preguntas, "PREG", "id_pregunta"),
+            texto=texto.strip(),
+            tipo=tipo_enum,
             activa=activa,
-            roles_asociados=roles_asociados,
-            areas_asociadas=areas_asociadas,
-            maquinas_asociadas=maquinas_asociadas or [],
+            obligatoria=obligatoria,
+            orden=orden,
+            filtros_contexto=filtros_contexto or {},
+            opciones_respuesta=opciones_respuesta or [],
         )
 
-        self.repository.add(pregunta)
-        return pregunta
+        self.repository.add(nueva_pregunta.to_dict())
+        return nueva_pregunta.to_dict()
 
-    def update(
+    def actualizar_pregunta(
         self,
         id_pregunta: str,
         texto: str,
-        tipo: TipoPregunta,
-        roles_asociados: list[str],
-        areas_asociadas: list[str],
-        maquinas_asociadas: list[str] | None = None,
+        tipo: str,
+        obligatoria: bool = True,
         activa: bool = True,
-    ) -> Pregunta:
-        pregunta_actual = self.repository.get_by_id(id_pregunta)
+        orden: int = 1,
+        filtros_contexto: dict | None = None,
+        opciones_respuesta: list | None = None,
+    ) -> bool:
+        pregunta_actual = self.repository.find_by_id(id_pregunta)
+        if not pregunta_actual:
+            raise ValueError("La pregunta no existe.")
+
+        tipo_enum = self._parse_tipo(tipo)
 
         pregunta_actualizada = Pregunta(
-            id_pregunta=pregunta_actual.id_pregunta,
-            texto=texto,
-            tipo=tipo,
+            id_pregunta=id_pregunta,
+            texto=texto.strip(),
+            tipo=tipo_enum,
             activa=activa,
-            roles_asociados=roles_asociados,
-            areas_asociadas=areas_asociadas,
-            maquinas_asociadas=maquinas_asociadas or [],
+            obligatoria=obligatoria,
+            orden=orden,
+            filtros_contexto=filtros_contexto or {},
+            opciones_respuesta=opciones_respuesta or [],
         )
 
-        self.repository.update(pregunta_actualizada)
-        return pregunta_actualizada
-
-    def activate(self, id_pregunta: str) -> Pregunta:
-        pregunta_actual = self.repository.get_by_id(id_pregunta)
-
-        pregunta_actualizada = Pregunta(
-            id_pregunta=pregunta_actual.id_pregunta,
-            texto=pregunta_actual.texto,
-            tipo=pregunta_actual.tipo,
-            activa=True,
-            roles_asociados=pregunta_actual.roles_asociados,
-            areas_asociadas=pregunta_actual.areas_asociadas,
-            maquinas_asociadas=pregunta_actual.maquinas_asociadas,
+        return self.repository.update_by_id(
+            id_pregunta,
+            pregunta_actualizada.to_dict(),
         )
 
-        self.repository.update(pregunta_actualizada)
-        return pregunta_actualizada
+    def desactivar_pregunta(self, id_pregunta: str) -> bool:
+        return self.repository.update_by_id(id_pregunta, {"activa": False})
 
-    def deactivate(self, id_pregunta: str) -> Pregunta:
-        pregunta_actual = self.repository.get_by_id(id_pregunta)
+    def eliminar_pregunta(self, id_pregunta: str) -> bool:
+        if hasattr(self.repository, "delete_by_id"):
+            return self.repository.delete_by_id(id_pregunta)
+        raise AttributeError("El repositorio no soporta delete_by_id")
 
-        pregunta_actualizada = Pregunta(
-            id_pregunta=pregunta_actual.id_pregunta,
-            texto=pregunta_actual.texto,
-            tipo=pregunta_actual.tipo,
-            activa=False,
-            roles_asociados=pregunta_actual.roles_asociados,
-            areas_asociadas=pregunta_actual.areas_asociadas,
-            maquinas_asociadas=pregunta_actual.maquinas_asociadas,
-        )
+    def listar_preguntas_para_contexto(self, contexto: dict) -> list[dict]:
+        preguntas = self.listar_preguntas(solo_activas=True)
+        resultado: list[dict] = []
 
-        self.repository.update(pregunta_actualizada)
-        return pregunta_actualizada
+        for pregunta in preguntas:
+            filtros = pregunta.get("filtros_contexto", {})
+            if self._cumple_filtros(contexto, filtros):
+                resultado.append(pregunta)
 
-    def delete(self, id_pregunta: str) -> None:
-        self.repository.delete(id_pregunta)
+        return sorted(resultado, key=lambda x: x.get("orden", 0))
 
-    def ensure_exists(self, id_pregunta: str) -> None:
-        try:
-            self.repository.get_by_id(id_pregunta)
-        except NotFoundError as exc:
-            raise NotFoundError(
-                f"no existe una pregunta con id '{id_pregunta}'"
-            ) from exc
+    def _cumple_filtros(self, contexto: dict, filtros: dict) -> bool:
+        if not filtros:
+            return True
+
+        for clave, valores_permitidos in filtros.items():
+            if not valores_permitidos:
+                continue
+
+            valor_contexto = contexto.get(clave)
+            if valor_contexto is None:
+                return False
+
+            valor_contexto_normalizado = str(valor_contexto).strip()
+
+            valores_normalizados = [
+                str(valor).strip() for valor in valores_permitidos if str(valor).strip()
+            ]
+
+            if valor_contexto_normalizado not in valores_normalizados:
+                return False
+
+        return True
+
+    def _parse_tipo(self, tipo: str | TipoPregunta) -> TipoPregunta:
+        if isinstance(tipo, TipoPregunta):
+            return tipo
+
+        if not isinstance(tipo, str):
+            raise TypeError("tipo debe ser string o TipoPregunta")
+
+        tipo_limpio = tipo.strip().lower()
+
+        mapa = {
+            "texto": TipoPregunta.TEXTO,
+            "numero": TipoPregunta.NUMERO,
+            "si_no": TipoPregunta.SI_NO,
+            "seleccion_unica": TipoPregunta.SELECCION_UNICA,
+        }
+
+        if tipo_limpio not in mapa:
+            raise ValueError(f"Tipo de pregunta no válido: {tipo}")
+
+        return mapa[tipo_limpio]

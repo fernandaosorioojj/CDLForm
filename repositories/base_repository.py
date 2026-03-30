@@ -1,107 +1,74 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Any, Optional
 
-from core.exceptions import DuplicateEntityError, NotFoundError, RepositoryError
 from utils.json_manager import JsonManager
 
-T = TypeVar("T")
 
-
-class BaseRepository(ABC, Generic[T]):
+class BaseRepository:
     def __init__(self, file_path: Path) -> None:
-        self.file_path = file_path
-        self._ensure_storage()
+        self.file_path = Path(file_path)
+        JsonManager.ensure_file_exists(str(self.file_path), default_data=[])
 
-    def _ensure_storage(self) -> None:
-        JsonManager.ensure_file_exists(self.file_path, [])
-
-    def _read_raw(self) -> list[dict]:
-        data = JsonManager.read_json(self.file_path, [])
-
+    def get_all(self) -> list[dict[str, Any]]:
+        data = JsonManager.read_json(str(self.file_path))
         if not isinstance(data, list):
-            raise RepositoryError(
-                f"el archivo '{self.file_path}' debe contener una lista de registros"
-            )
-
-        for index, item in enumerate(data, start=1):
-            if not isinstance(item, dict):
-                raise RepositoryError(
-                    f"el registro en posición {index} del archivo '{self.file_path}' no es un objeto válido"
-                )
-
+            return []
         return data
 
-    def _write_raw(self, items: list[dict]) -> None:
-        JsonManager.write_json(self.file_path, items)
+    def find_by_id(self, item_id: str) -> Optional[dict[str, Any]]:
+        data = self.get_all()
+        for item in data:
+            if self._get_item_id(item) == item_id:
+                return item
+        return None
 
-    @abstractmethod
-    def _from_dict(self, data: dict) -> T:
-        pass
+    def add(self, item: dict[str, Any]) -> dict[str, Any]:
+        data = self.get_all()
+        data.append(item)
+        JsonManager.write_json(str(self.file_path), data)
+        return item
 
-    @abstractmethod
-    def _get_entity_id(self, entity: T) -> str:
-        pass
+    def update_by_id(self, item_id: str, new_data: dict[str, Any]) -> bool:
+        data = self.get_all()
 
-    def list_all(self) -> list[T]:
-        return [self._from_dict(item) for item in self._read_raw()]
+        for index, item in enumerate(data):
+            if self._get_item_id(item) == item_id:
+                data[index] = new_data
+                JsonManager.write_json(str(self.file_path), data)
+                return True
 
-    def save_all(self, entities: list[T]) -> None:
-        serialized = [entity.to_dict() for entity in entities]
-        self._write_raw(serialized)
+        return False
 
-    def get_by_id(self, entity_id: str) -> T:
-        for entity in self.list_all():
-            if self._get_entity_id(entity) == entity_id:
-                return entity
+    def delete_by_id(self, item_id: str) -> bool:
+        data = self.get_all()
+        new_data = [item for item in data if self._get_item_id(item) != item_id]
 
-        raise NotFoundError(f"no se encontró un registro con id '{entity_id}'")
-
-    def exists(self, entity_id: str) -> bool:
-        try:
-            self.get_by_id(entity_id)
-            return True
-        except NotFoundError:
+        if len(new_data) == len(data):
             return False
 
-    def add(self, entity: T) -> None:
-        entity_id = self._get_entity_id(entity)
+        JsonManager.write_json(str(self.file_path), new_data)
+        return True
 
-        if self.exists(entity_id):
-            raise DuplicateEntityError(f"ya existe un registro con id '{entity_id}'")
+    def filter(self, **criteria: Any) -> list[dict[str, Any]]:
+        data = self.get_all()
+        resultado = []
 
-        entities = self.list_all()
-        entities.append(entity)
-        self.save_all(entities)
+        for item in data:
+            coincide = True
+            for key, value in criteria.items():
+                if item.get(key) != value:
+                    coincide = False
+                    break
 
-    def update(self, entity: T) -> None:
-        entity_id = self._get_entity_id(entity)
-        entities = self.list_all()
+            if coincide:
+                resultado.append(item)
 
-        updated = False
-        new_entities: list[T] = []
+        return resultado
 
-        for current in entities:
-            if self._get_entity_id(current) == entity_id:
-                new_entities.append(entity)
-                updated = True
-            else:
-                new_entities.append(current)
-
-        if not updated:
-            raise NotFoundError(f"no se encontró un registro con id '{entity_id}' para actualizar")
-
-        self.save_all(new_entities)
-
-    def delete(self, entity_id: str) -> None:
-        entities = self.list_all()
-        filtered_entities = [
-            entity for entity in entities if self._get_entity_id(entity) != entity_id
-        ]
-
-        if len(filtered_entities) == len(entities):
-            raise NotFoundError(f"no se encontró un registro con id '{entity_id}' para eliminar")
-
-        self.save_all(filtered_entities)
+    def _get_item_id(self, item: dict[str, Any]) -> Optional[str]:
+        for key, value in item.items():
+            if key.startswith("id_"):
+                return value
+        return None

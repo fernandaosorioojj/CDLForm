@@ -1,56 +1,42 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import os
 from typing import Any
-
-from config.settings import SETTINGS
-from core.exceptions import RepositoryError
 
 
 class JsonManager:
     @staticmethod
-    def ensure_file_exists(file_path: Path, default_data: Any) -> None:
-        try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
+    def ensure_file_exists(file_path: str, default_data: Any = None) -> None:
+        if default_data is None:
+            default_data = []
 
-            if not file_path.exists():
-                with file_path.open("w", encoding=SETTINGS.default_encoding) as file:
-                    json.dump(default_data, file, ensure_ascii=False, indent=4)
+        directory = os.path.dirname(file_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
 
-        except OSError as exc:
-            raise RepositoryError(
-                f"no fue posible asegurar la existencia del archivo '{file_path}'"
-            ) from exc
-
-    @staticmethod
-    def read_json(file_path: Path, default_data: Any) -> Any:
-        JsonManager.ensure_file_exists(file_path, default_data)
-
-        try:
-            with file_path.open("r", encoding=SETTINGS.default_encoding) as file:
-                return json.load(file)
-
-        except json.JSONDecodeError as exc:
-            raise RepositoryError(
-                f"el archivo '{file_path}' contiene json inválido"
-            ) from exc
-
-        except OSError as exc:
-            raise RepositoryError(
-                f"no fue posible leer el archivo '{file_path}'"
-            ) from exc
+        if not os.path.exists(file_path):
+            with open(file_path, "w", encoding="utf-8") as file:
+                json.dump(default_data, file, ensure_ascii=False, indent=4)
 
     @staticmethod
-    def write_json(file_path: Path, data: Any) -> None:
-        
+    def read_json(file_path: str) -> Any:
+        JsonManager.ensure_file_exists(file_path, default_data=[])
+
         try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(file_path, "r", encoding="utf-8") as file:
+                content = file.read().strip()
+                if not content:
+                    return []
+                return json.loads(content)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return []
 
-            with file_path.open("w", encoding=SETTINGS.default_encoding) as file:
-                json.dump(data, file, ensure_ascii=False, indent=4)
+    @staticmethod
+    def write_json(file_path: str, data: Any) -> None:
+        directory = os.path.dirname(file_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
 
-        except OSError as exc:
-            raise RepositoryError(
-                f"no fue posible escribir el archivo '{file_path}'"
-            ) from exc
+        with open(file_path, "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)

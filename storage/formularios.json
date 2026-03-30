@@ -1,1 +1,56 @@
-[] 
+[
+    {
+        "id_formulario": "FORM-0001",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "completado"
+    },
+    {
+        "id_formulario": "FORM-0002",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "completado"
+    },
+    {
+        "id_formulario": "FORM-0003",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "pendiente"
+    },
+    {
+        "id_formulario": "FORM-0004",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "completado"
+    },
+    {
+        "id_formulario": "FORM-0005",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "pendiente"
+    },
+    {
+        "id_formulario": "FORM-0006",
+        "op": "OP-123",
+        "area": "Laminado",
+        "maquina": "MAQ-01",
+        "operario": "Juan Soto",
+        "evento_origen": "EVT-001",
+        "estado": "pendiente"
+    }
+]

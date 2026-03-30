@@ -1,61 +1,69 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
-from core.enums import FormularioEstado, OrigenEvento
-from core.validators import optional_string, require_non_empty_string
+from typing import Optional, Dict, Any
 
 
-@dataclass(frozen=True)
+@dataclass
 class Formulario:
     id_formulario: str
     op: str
     area: str
     maquina: str
-    fecha: str
-    estado_formulario: FormularioEstado = FormularioEstado.PENDIENTE
-    id_evento_origen: str | None = None
-    origen_disparo: OrigenEvento | None = None
+    operario: Optional[str] = None
+    evento_origen: Optional[str] = None
+    estado: str = "pendiente"
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "id_formulario", require_non_empty_string(self.id_formulario, "id_formulario"))
-        object.__setattr__(self, "op", require_non_empty_string(self.op, "op"))
-        object.__setattr__(self, "area", require_non_empty_string(self.area, "area"))
-        object.__setattr__(self, "maquina", require_non_empty_string(self.maquina, "maquina"))
-        object.__setattr__(self, "fecha", require_non_empty_string(self.fecha, "fecha"))
-        object.__setattr__(
-            self,
-            "id_evento_origen",
-            optional_string(self.id_evento_origen, "id_evento_origen"),
-        )
+        self.id_formulario = str(self.id_formulario).strip()
+        self.op = str(self.op).strip()
+        self.area = str(self.area).strip()
+        self.maquina = str(self.maquina).strip()
+        self.estado = str(self.estado).strip()
 
-        if not isinstance(self.estado_formulario, FormularioEstado):
-            raise TypeError("estado_formulario debe ser una instancia de FormularioEstado")
+        if self.operario is not None:
+            self.operario = str(self.operario).strip()
 
-        if self.origen_disparo is not None and not isinstance(self.origen_disparo, OrigenEvento):
-            raise TypeError("origen_disparo debe ser una instancia de OrigenEvento o None")
+        if self.evento_origen is not None:
+            self.evento_origen = str(self.evento_origen).strip()
 
-    def to_dict(self) -> dict:
+        if not self.id_formulario:
+            raise ValueError("id_formulario es obligatorio.")
+
+        if not self.op:
+            raise ValueError("op es obligatoria.")
+
+        if not self.area:
+            raise ValueError("area es obligatoria.")
+
+        if not self.maquina:
+            raise ValueError("maquina es obligatoria.")
+
+        if not self.estado:
+            raise ValueError("estado es obligatorio.")
+
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "id_formulario": self.id_formulario,
             "op": self.op,
             "area": self.area,
             "maquina": self.maquina,
-            "fecha": self.fecha,
-            "estado_formulario": self.estado_formulario.value,
-            "id_evento_origen": self.id_evento_origen,
-            "origen_disparo": self.origen_disparo.value if self.origen_disparo else None,
+            "operario": self.operario,
+            "evento_origen": self.evento_origen,
+            "estado": self.estado,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Formulario":
+    def from_dict(cls, data: Dict[str, Any]) -> "Formulario":
+        if not isinstance(data, dict):
+            raise ValueError("Los datos del formulario deben venir en formato dict.")
+
         return cls(
-            id_formulario=data["id_formulario"],
-            op=data["op"],
-            area=data["area"],
-            maquina=data["maquina"],
-            fecha=data["fecha"],
-            estado_formulario=FormularioEstado(data.get("estado_formulario", FormularioEstado.PENDIENTE.value)),
-            id_evento_origen=data.get("id_evento_origen"),
-            origen_disparo=OrigenEvento(data["origen_disparo"]) if data.get("origen_disparo") else None,
+            id_formulario=data.get("id_formulario", ""),
+            op=data.get("op", ""),
+            area=data.get("area", ""),
+            maquina=data.get("maquina", ""),
+            operario=data.get("operario"),
+            evento_origen=data.get("evento_origen"),
+            estado=data.get("estado", "pendiente"),
         )
