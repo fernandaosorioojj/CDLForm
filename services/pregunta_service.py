@@ -32,7 +32,6 @@ class PreguntaService:
         opciones_respuesta: list | None = None,
     ) -> dict:
         preguntas = self.repository.get_all()
-
         tipo_enum = self._parse_tipo(tipo)
 
         nueva_pregunta = Pregunta(
@@ -91,12 +90,13 @@ class PreguntaService:
         raise AttributeError("El repositorio no soporta delete_by_id")
 
     def listar_preguntas_para_contexto(self, contexto: dict) -> list[dict]:
+        contexto_normalizado = self._normalizar_contexto(contexto)
         preguntas = self.listar_preguntas(solo_activas=True)
-        resultado: list[dict] = []
 
+        resultado: list[dict] = []
         for pregunta in preguntas:
             filtros = pregunta.get("filtros_contexto", {})
-            if self._cumple_filtros(contexto, filtros):
+            if self._cumple_filtros(contexto_normalizado, filtros):
                 resultado.append(pregunta)
 
         return sorted(resultado, key=lambda x: x.get("orden", 0))
@@ -106,23 +106,59 @@ class PreguntaService:
             return True
 
         for clave, valores_permitidos in filtros.items():
+            clave_normalizada = self._normalizar_clave_filtro(clave)
+
             if not valores_permitidos:
                 continue
 
-            valor_contexto = contexto.get(clave)
+            valor_contexto = contexto.get(clave_normalizada)
             if valor_contexto is None:
                 return False
 
-            valor_contexto_normalizado = str(valor_contexto).strip()
+            valor_contexto_normalizado = self._normalizar_valor(valor_contexto)
 
             valores_normalizados = [
-                str(valor).strip() for valor in valores_permitidos if str(valor).strip()
+                self._normalizar_valor(valor)
+                for valor in valores_permitidos
+                if self._normalizar_valor(valor)
             ]
 
             if valor_contexto_normalizado not in valores_normalizados:
                 return False
 
         return True
+
+    def _normalizar_contexto(self, contexto: dict) -> dict:
+        contexto_normalizado: dict[str, str] = {}
+
+        for clave, valor in contexto.items():
+            clave_normalizada = self._normalizar_clave_filtro(clave)
+            valor_normalizado = self._normalizar_valor(valor)
+
+            if valor_normalizado:
+                contexto_normalizado[clave_normalizada] = valor_normalizado
+
+        return contexto_normalizado
+
+    def _normalizar_clave_filtro(self, clave: str) -> str:
+        clave_limpia = str(clave).strip().lower()
+
+        aliases = {
+            "codsetor": "cod_setor",
+            "cod_setor": "cod_setor",
+            "codrecurso": "cod_recurso",
+            "cod_recurso": "cod_recurso",
+            "codativ": "cod_ativ",
+            "cod_ativ": "cod_ativ",
+            "tipotrabajo": "tipo_trabajo",
+            "tipo_trabajo": "tipo_trabajo",
+            "turno": "turno",
+        }
+
+        return aliases.get(clave_limpia, clave_limpia)
+
+    def _normalizar_valor(self, valor) -> str:
+        return str(valor).strip().upper()
 
     def _parse_tipo(self, tipo: str | TipoPregunta) -> TipoPregunta:
         if isinstance(tipo, TipoPregunta):

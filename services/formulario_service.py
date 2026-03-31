@@ -55,17 +55,18 @@ class FormularioService:
             estado=estado.strip(),
         )
 
-        self.formulario_repository.add(formulario)
+        self.formulario_repository.add_formulario(formulario)
         return formulario
 
     def obtener_formulario_por_id(self, id_formulario: str) -> Formulario:
         if not id_formulario or not id_formulario.strip():
             raise ValidationError("El id_formulario es obligatorio.")
 
-        try:
-            return self.formulario_repository.get_by_id(id_formulario.strip())
-        except NotFoundError:
+        formulario = self.formulario_repository.get_by_id(id_formulario.strip())
+        if not formulario:
             raise NotFoundError(f"No se encontró el formulario '{id_formulario}'.")
+
+        return formulario
 
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_repository.list_all()
@@ -92,7 +93,7 @@ class FormularioService:
         formulario = self.obtener_formulario_por_id(id_formulario.strip())
         formulario.estado = nuevo_estado.strip()
 
-        self.formulario_repository.update(formulario)
+        self.formulario_repository.update_formulario(id_formulario.strip(), formulario)
         return formulario
 
     def asignar_operario(self, id_formulario: str, operario: str) -> Formulario:
@@ -105,7 +106,7 @@ class FormularioService:
         formulario = self.obtener_formulario_por_id(id_formulario.strip())
         formulario.operario = operario.strip()
 
-        self.formulario_repository.update(formulario)
+        self.formulario_repository.update_formulario(id_formulario.strip(), formulario)
         return formulario
 
     def _validar_datos_obligatorios(

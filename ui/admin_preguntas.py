@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QWidget,
@@ -18,20 +16,24 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QSpinBox,
     QFormLayout,
+    QAbstractItemView,
 )
 
+from services.catalogo_contexto_service import CatalogoContextoService
 from services.pregunta_service import PreguntaService
 
 
 class AdminPreguntasView(QWidget):
+
     def __init__(self) -> None:
         super().__init__()
 
+        self.catalogo_contexto_service = CatalogoContextoService()
         self.pregunta_service = PreguntaService()
         self.id_pregunta_en_edicion: str | None = None
 
         self.setWindowTitle("Administración de Preguntas")
-        self.resize(1200, 700)
+        self.resize(1300, 760)
 
         self._init_ui()
         self.cargar_preguntas()
@@ -60,6 +62,7 @@ class AdminPreguntasView(QWidget):
         form_layout = QFormLayout()
 
         self.input_texto = QLineEdit()
+
         self.combo_tipo = QComboBox()
         self.combo_tipo.addItems(["texto", "numero", "si_no", "seleccion_unica"])
         self.combo_tipo.currentTextChanged.connect(self._actualizar_estado_opciones)
@@ -75,20 +78,21 @@ class AdminPreguntasView(QWidget):
         self.spin_orden.setMaximum(9999)
         self.spin_orden.setValue(1)
 
-        self.input_cod_setor = QLineEdit()
-        self.input_cod_setor.setPlaceholderText("Ej: LAM, COR, CAL")
-
-        self.input_cod_recurso = QLineEdit()
-        self.input_cod_recurso.setPlaceholderText("Ej: RC-01, RC-02")
-
-        self.input_cod_ativ = QLineEdit()
-        self.input_cod_ativ.setPlaceholderText("Ej: ATIV-10, PROC-20")
-
-        self.input_turno = QLineEdit()
-        self.input_turno.setPlaceholderText("Ej: DIA, NOCHE")
-
-        self.input_tipo_trabajo = QLineEdit()
-        self.input_tipo_trabajo.setPlaceholderText("Ej: MONTAJE, AJUSTE")
+        self.lista_cod_setor = self._crear_lista_multiseleccion(
+            self.catalogo_contexto_service.listar_cod_setor()
+        )
+        self.lista_cod_recurso = self._crear_lista_multiseleccion(
+            self.catalogo_contexto_service.listar_cod_recurso()
+        )
+        self.lista_cod_ativ = self._crear_lista_multiseleccion(
+            self.catalogo_contexto_service.listar_cod_ativ()
+        )
+        self.lista_turno = self._crear_lista_multiseleccion(
+            self.catalogo_contexto_service.listar_turnos()
+        )
+        self.lista_tipo_trabajo = self._crear_lista_multiseleccion(
+            self.catalogo_contexto_service.listar_tipos_trabajo()
+        )
 
         self.input_opciones = QTextEdit()
         self.input_opciones.setPlaceholderText(
@@ -106,11 +110,11 @@ class AdminPreguntasView(QWidget):
         form_layout.addRow("Orden:", self.spin_orden)
         form_layout.addRow("", self.check_obligatoria)
         form_layout.addRow("", self.check_activa)
-        form_layout.addRow("Filtro CodSetor:", self.input_cod_setor)
-        form_layout.addRow("Filtro CodRecurso:", self.input_cod_recurso)
-        form_layout.addRow("Filtro CodAtiv:", self.input_cod_ativ)
-        form_layout.addRow("Filtro Turno:", self.input_turno)
-        form_layout.addRow("Filtro TipoTrabajo:", self.input_tipo_trabajo)
+        form_layout.addRow("Filtro CodSetor:", self.lista_cod_setor)
+        form_layout.addRow("Filtro CodRecurso:", self.lista_cod_recurso)
+        form_layout.addRow("Filtro CodAtiv:", self.lista_cod_ativ)
+        form_layout.addRow("Filtro Turno:", self.lista_turno)
+        form_layout.addRow("Filtro TipoTrabajo:", self.lista_tipo_trabajo)
         form_layout.addRow("Opciones:", self.input_opciones)
 
         botones_layout = QHBoxLayout()
@@ -139,6 +143,17 @@ class AdminPreguntasView(QWidget):
         layout_principal.addLayout(panel_derecho, 1)
 
         self._actualizar_estado_opciones()
+
+    def _crear_lista_multiseleccion(self, valores: list[str]) -> QListWidget:
+        lista = QListWidget()
+        lista.setSelectionMode(QAbstractItemView.MultiSelection)
+        lista.setFixedHeight(90)
+
+        for valor in valores:
+            item = QListWidgetItem(valor)
+            lista.addItem(item)
+
+        return lista
 
     def cargar_preguntas(self) -> None:
         self.lista_preguntas.clear()
@@ -174,11 +189,11 @@ class AdminPreguntasView(QWidget):
         self.check_activa.setChecked(pregunta.get("activa", True))
 
         filtros = pregunta.get("filtros_contexto", {})
-        self.input_cod_setor.setText(", ".join(filtros.get("cod_setor", [])))
-        self.input_cod_recurso.setText(", ".join(filtros.get("cod_recurso", [])))
-        self.input_cod_ativ.setText(", ".join(filtros.get("cod_ativ", [])))
-        self.input_turno.setText(", ".join(filtros.get("turno", [])))
-        self.input_tipo_trabajo.setText(", ".join(filtros.get("tipo_trabajo", [])))
+        self._seleccionar_valores_lista(self.lista_cod_setor, filtros.get("cod_setor", []))
+        self._seleccionar_valores_lista(self.lista_cod_recurso, filtros.get("cod_recurso", []))
+        self._seleccionar_valores_lista(self.lista_cod_ativ, filtros.get("cod_ativ", []))
+        self._seleccionar_valores_lista(self.lista_turno, filtros.get("turno", []))
+        self._seleccionar_valores_lista(self.lista_tipo_trabajo, filtros.get("tipo_trabajo", []))
 
         opciones = pregunta.get("opciones_respuesta", [])
         lineas: list[str] = []
@@ -280,11 +295,11 @@ class AdminPreguntasView(QWidget):
         self.check_obligatoria.setChecked(True)
         self.check_activa.setChecked(True)
 
-        self.input_cod_setor.clear()
-        self.input_cod_recurso.clear()
-        self.input_cod_ativ.clear()
-        self.input_turno.clear()
-        self.input_tipo_trabajo.clear()
+        self._limpiar_seleccion_lista(self.lista_cod_setor)
+        self._limpiar_seleccion_lista(self.lista_cod_recurso)
+        self._limpiar_seleccion_lista(self.lista_cod_ativ)
+        self._limpiar_seleccion_lista(self.lista_turno)
+        self._limpiar_seleccion_lista(self.lista_tipo_trabajo)
 
         self.input_opciones.clear()
         self._actualizar_estado_opciones()
@@ -301,11 +316,11 @@ class AdminPreguntasView(QWidget):
     def _construir_filtros_contexto(self) -> dict[str, list[str]]:
         filtros: dict[str, list[str]] = {}
 
-        cod_setor = self._parse_lista_simple(self.input_cod_setor.text())
-        cod_recurso = self._parse_lista_simple(self.input_cod_recurso.text())
-        cod_ativ = self._parse_lista_simple(self.input_cod_ativ.text())
-        turno = self._parse_lista_simple(self.input_turno.text())
-        tipo_trabajo = self._parse_lista_simple(self.input_tipo_trabajo.text())
+        cod_setor = self._obtener_valores_seleccionados(self.lista_cod_setor)
+        cod_recurso = self._obtener_valores_seleccionados(self.lista_cod_recurso)
+        cod_ativ = self._obtener_valores_seleccionados(self.lista_cod_ativ)
+        turno = self._obtener_valores_seleccionados(self.lista_turno)
+        tipo_trabajo = self._obtener_valores_seleccionados(self.lista_tipo_trabajo)
 
         if cod_setor:
             filtros["cod_setor"] = cod_setor
@@ -334,7 +349,7 @@ class AdminPreguntasView(QWidget):
 
         opciones: list[dict] = []
 
-        for linea in texto_opciones.splitlines():
+        for indice, linea in enumerate(texto_opciones.splitlines(), start=1):
             linea = linea.strip()
             if not linea:
                 continue
@@ -352,6 +367,7 @@ class AdminPreguntasView(QWidget):
 
             opciones.append(
                 {
+                    "id_opcion": f"OPC-{indice:03d}",
                     "valor": valor,
                     "accion_correctiva": accion_correctiva,
                 }
@@ -362,18 +378,22 @@ class AdminPreguntasView(QWidget):
 
         return opciones
 
-    def _parse_lista_simple(self, texto: str) -> list[str]:
+    def _obtener_valores_seleccionados(self, lista: QListWidget) -> list[str]:
         valores: list[str] = []
-        vistos: set[str] = set()
-
-        for parte in texto.split(","):
-            valor = parte.strip()
-            if not valor:
-                continue
-
-            clave = valor.upper()
-            if clave not in vistos:
-                vistos.add(clave)
-                valores.append(valor)
-
+        for item in lista.selectedItems():
+            texto = item.text().strip()
+            if texto:
+                valores.append(texto)
         return valores
+
+    def _seleccionar_valores_lista(self, lista: QListWidget, valores: list[str]) -> None:
+        valores_normalizados = {str(valor).strip().upper() for valor in valores}
+
+        for i in range(lista.count()):
+            item = lista.item(i)
+            item.setSelected(item.text().strip().upper() in valores_normalizados)
+
+    def _limpiar_seleccion_lista(self, lista: QListWidget) -> None:
+        for i in range(lista.count()):
+            item = lista.item(i)
+            item.setSelected(False)

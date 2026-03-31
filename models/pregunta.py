@@ -51,8 +51,10 @@ class Pregunta:
             if not isinstance(clave, str) or not clave.strip():
                 raise ValueError("cada clave de filtros_contexto debe ser un string no vacío")
 
+            clave_normalizada = self._normalizar_clave_filtro(clave)
+
             if valores is None:
-                filtros_normalizados[clave.strip()] = []
+                filtros_normalizados[clave_normalizada] = []
                 continue
 
             if not isinstance(valores, list):
@@ -73,12 +75,12 @@ class Pregunta:
                 if not valor_limpio:
                     continue
 
-                valor_upper = valor_limpio.upper()
-                if valor_upper not in vistos:
-                    vistos.add(valor_upper)
-                    lista_limpia.append(valor_limpio)
+                valor_normalizado = valor_limpio.upper()
+                if valor_normalizado not in vistos:
+                    vistos.add(valor_normalizado)
+                    lista_limpia.append(valor_normalizado)
 
-            filtros_normalizados[clave.strip()] = lista_limpia
+            filtros_normalizados[clave_normalizada] = lista_limpia
 
         object.__setattr__(self, "filtros_contexto", filtros_normalizados)
 
@@ -106,6 +108,23 @@ class Pregunta:
                 raise ValueError(
                     "las preguntas de tipo texto o numero no deben tener opciones_respuesta"
                 )
+
+    def _normalizar_clave_filtro(self, clave: str) -> str:
+        clave_limpia = clave.strip().lower()
+
+        aliases = {
+            "codsetor": "cod_setor",
+            "cod_setor": "cod_setor",
+            "codrecurso": "cod_recurso",
+            "cod_recurso": "cod_recurso",
+            "codativ": "cod_ativ",
+            "cod_ativ": "cod_ativ",
+            "tipotrabajo": "tipo_trabajo",
+            "tipo_trabajo": "tipo_trabajo",
+            "turno": "turno",
+        }
+
+        return aliases.get(clave_limpia, clave_limpia)
 
     def to_dict(self) -> dict:
         return {

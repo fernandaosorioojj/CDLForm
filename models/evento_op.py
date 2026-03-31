@@ -1,96 +1,71 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
-
-from core.enums import EventoEstadoProcesamiento, OrigenEvento
-from core.validators import require_non_empty_string
+from dataclasses import dataclass, asdict
+from typing import Optional
 
 
-@dataclass(frozen=True)
+@dataclass
 class EventoOP:
     id_evento: str
-    op: str
+    num_ordem: str
     estado_anterior: str
     estado_nuevo: str
-    area: str
-    maquina: str
     fecha_evento: str
-    origen: OrigenEvento = OrigenEvento.JOBTRACK
-    estado_procesamiento: EventoEstadoProcesamiento = EventoEstadoProcesamiento.PENDIENTE
 
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "id_evento",
-            require_non_empty_string(self.id_evento, "id_evento"),
-        )
-        object.__setattr__(
-            self,
-            "op",
-            require_non_empty_string(self.op, "op"),
-        )
-        object.__setattr__(
-            self,
-            "estado_anterior",
-            require_non_empty_string(self.estado_anterior, "estado_anterior"),
-        )
-        object.__setattr__(
-            self,
-            "estado_nuevo",
-            require_non_empty_string(self.estado_nuevo, "estado_nuevo"),
-        )
-        object.__setattr__(
-            self,
-            "area",
-            require_non_empty_string(self.area, "area"),
-        )
-        object.__setattr__(
-            self,
-            "maquina",
-            require_non_empty_string(self.maquina, "maquina"),
-        )
-        object.__setattr__(
-            self,
-            "fecha_evento",
-            require_non_empty_string(self.fecha_evento, "fecha_evento"),
-        )
+    id_apontamento: Optional[float] = None
+    cod_recurso: Optional[str] = None
+    operador: Optional[str] = None
+    cod_ativ: Optional[str] = None
+    cod_setor: Optional[str] = None
+    turno: Optional[int] = None
 
-        if not isinstance(self.origen, OrigenEvento):
-            raise TypeError("origen debe ser una instancia de OrigenEvento")
+    dt_producao: Optional[str] = None
+    hora_inicio: Optional[str] = None
+    hora_fim: Optional[str] = None
 
-        if not isinstance(self.estado_procesamiento, EventoEstadoProcesamiento):
-            raise TypeError(
-                "estado_procesamiento debe ser una instancia de EventoEstadoProcesamiento"
-            )
+    descricao_op: Optional[str] = None
+    descricao_processo: Optional[str] = None
+    obs: Optional[str] = None
+
+    qtd_produzida: Optional[int] = None
+    qtd_planejado: Optional[float] = None
+    qtd_perdas: Optional[int] = None
+    justificativa_perda: Optional[str] = None
+
+    estacao_origen: Optional[str] = None
+    contexto_resuelto: Optional[dict] = None
+    id_formulario_generado: Optional[str] = None
+    mensaje_error: Optional[str] = None
+    procesado: bool = False
 
     def to_dict(self) -> dict:
-        return {
-            "id_evento": self.id_evento,
-            "op": self.op,
-            "estado_anterior": self.estado_anterior,
-            "estado_nuevo": self.estado_nuevo,
-            "area": self.area,
-            "maquina": self.maquina,
-            "fecha_evento": self.fecha_evento,
-            "origen": self.origen.value,
-            "estado_procesamiento": self.estado_procesamiento.value,
-        }
+        return asdict(self)
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "EventoOP":
-        return cls(
+    @staticmethod
+    def from_dict(data: dict) -> "EventoOP":
+        return EventoOP(
             id_evento=data["id_evento"],
-            op=data["op"],
+            num_ordem=data["num_ordem"],
             estado_anterior=data["estado_anterior"],
             estado_nuevo=data["estado_nuevo"],
-            area=data["area"],
-            maquina=data["maquina"],
             fecha_evento=data["fecha_evento"],
-            origen=OrigenEvento(data.get("origen", OrigenEvento.JOBTRACK.value)),
-            estado_procesamiento=EventoEstadoProcesamiento(
-                data.get(
-                    "estado_procesamiento",
-                    EventoEstadoProcesamiento.PENDIENTE.value,
-                )
-            ),
+            id_apontamento=data.get("id_apontamento"),
+            cod_recurso=data.get("cod_recurso"),
+            operador=data.get("operador"),
+            cod_ativ=data.get("cod_ativ"),
+            cod_setor=data.get("cod_setor"),
+            turno=data.get("turno"),
+            dt_producao=data.get("dt_producao"),
+            hora_inicio=data.get("hora_inicio"),
+            hora_fim=data.get("hora_fim"),
+            descricao_op=data.get("descricao_op"),
+            descricao_processo=data.get("descricao_processo"),
+            obs=data.get("obs"),
+            qtd_produzida=data.get("qtd_produzida"),
+            qtd_planejado=data.get("qtd_planejado"),
+            qtd_perdas=data.get("qtd_perdas"),
+            justificativa_perda=data.get("justificativa_perda"),
+            estacao_origen=data.get("estacao_origen"),
+            contexto_resuelto=data.get("contexto_resuelto"),
+            id_formulario_generado=data.get("id_formulario_generado"),
+            mensaje_error=data.get("mensaje_error"),
+            procesado=data.get("procesado", False),
         )

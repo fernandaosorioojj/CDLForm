@@ -59,6 +59,13 @@ class FormularioOperarioView(QWidget):
         self.input_identificador = QLineEdit()
         self.input_identificador.setPlaceholderText("Identificador / OP / referencia")
 
+        identificador_inicial = (
+            self.contexto.get("identificador")
+            or self.contexto.get("num_ordem")
+            or ""
+        )
+        self.input_identificador.setText(str(identificador_inicial).strip())
+
         cabecera.addWidget(QLabel("Identificador:"))
         cabecera.addWidget(self.input_identificador)
 
@@ -95,22 +102,44 @@ class FormularioOperarioView(QWidget):
         if nombre_operario:
             partes.append(f"Operario: {nombre_operario}")
 
-        for clave in ["cod_setor", "cod_recurso", "cod_ativ", "turno", "tipo_trabajo"]:
+        identificador = self.contexto.get("identificador")
+        if identificador:
+            partes.append(f"Identificador: {identificador}")
+
+        etiquetas = {
+            "cod_setor": "Setor",
+            "cod_recurso": "Recurso",
+            "cod_ativ": "Actividad",
+            "turno": "Turno",
+            "tipo_trabajo": "Tipo trabajo",
+        }
+
+        for clave, etiqueta in etiquetas.items():
             valor = self.contexto.get(clave)
             if valor:
-                partes.append(f"{clave}: {valor}")
+                partes.append(f"{etiqueta}: {valor}")
 
         if not partes:
             return "Sin contexto operativo cargado."
 
         return " | ".join(partes)
 
+    def _construir_contexto_preguntas(self) -> dict:
+        return {
+            "cod_setor": self.contexto.get("cod_setor"),
+            "cod_recurso": self.contexto.get("cod_recurso"),
+            "cod_ativ": self.contexto.get("cod_ativ"),
+            "turno": self.contexto.get("turno"),
+            "tipo_trabajo": self.contexto.get("tipo_trabajo"),
+        }
+
     def cargar_preguntas(self) -> None:
         self._limpiar_preguntas_ui()
         self.preguntas_widgets.clear()
 
         try:
-            preguntas = self.pregunta_service.listar_preguntas_para_contexto(self.contexto)
+            contexto = self._construir_contexto_preguntas()
+            preguntas = self.pregunta_service.listar_preguntas_para_contexto(contexto)
 
             if not preguntas:
                 aviso = QLabel("No hay preguntas configuradas para este contexto.")
@@ -126,7 +155,6 @@ class FormularioOperarioView(QWidget):
 
                 texto = pregunta.get("texto", "")
                 obligatoria = pregunta.get("obligatoria", True)
-                tipo = pregunta.get("tipo", "texto")
 
                 label = QLabel(
                     f"{pregunta.get('orden', 0)}. {texto}"
@@ -144,7 +172,11 @@ class FormularioOperarioView(QWidget):
                 self.preguntas_widgets.append((pregunta, widget_respuesta))
 
         except Exception as exc:
-            QMessageBox.critical(self, "Error", f"No se pudieron cargar las preguntas.\n{exc}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"No se pudieron cargar las preguntas.\n{exc}"
+            )
 
     def _crear_widget_respuesta(self, pregunta: dict) -> QWidget:
         tipo = pregunta.get("tipo", "texto")
@@ -179,6 +211,10 @@ class FormularioOperarioView(QWidget):
             if not identificador:
                 raise ValueError("El identificador es obligatorio.")
 
+            id_formulario_existente = str(self.contexto.get("id_formulario", "")).strip()
+            if not id_formulario_existente:
+                raise ValueError("No se encontró el formulario pendiente asociado al evento.")
+
             respuestas = []
             for pregunta, widget in self.preguntas_widgets:
                 respuesta = self._obtener_respuesta_widget(pregunta, widget)
@@ -186,31 +222,23 @@ class FormularioOperarioView(QWidget):
 
             self._validar_respuestas_obligatorias(respuestas)
 
-            datos_formulario = {
-                "identificador": identificador,
-                "operario": self.operario.get("nombre", ""),
-                "id_operario": self.operario.get("id_operario", ""),
-                "contexto": self.contexto,
-            }
-
-            formulario = self.formulario_service.crear_formulario(**datos_formulario)
-
-            id_formulario = formulario.get("id_formulario")
-            if not id_formulario:
-                raise ValueError("No se pudo obtener el id del formulario creado.")
-
             for respuesta in respuestas:
                 self.respuesta_service.crear_respuesta(
-                    id_formulario=id_formulario,
+                    id_formulario=id_formulario_existente,
                     id_pregunta=respuesta["id_pregunta"],
                     respuesta_texto=respuesta.get("respuesta_texto"),
                     respuesta_numero=respuesta.get("respuesta_numero"),
-                    opcion_seleccionada=respuesta.get("opcion_seleccionada"),
-                    accion_correctiva=respuesta.get("accion_correctiva", ""),
+                    id_opcion=respuesta.get("id_opcion"),
+                    accion_correctiva_aplicada=respuesta.get("accion_correctiva_aplicada", ""),
                 )
 
+            self.formulario_service.actualizar_estado_formulario(
+                id_formulario_existente,
+                "completado",
+            )
+
             QMessageBox.information(self, "Éxito", "Formulario guardado correctamente.")
-            self._reset_formulario()
+            self.close()
 
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
@@ -222,8 +250,8 @@ class FormularioOperarioView(QWidget):
             "id_pregunta": pregunta.get("id_pregunta"),
             "respuesta_texto": None,
             "respuesta_numero": None,
-            "opcion_seleccionada": None,
-            "accion_correctiva": "",
+            "id_opcion": None,
+            "accion_correctiva_aplicada": "",
             "obligatoria": pregunta.get("obligatoria", True),
             "texto_pregunta": pregunta.get("texto", ""),
         }
@@ -239,9 +267,9 @@ class FormularioOperarioView(QWidget):
         if tipo in {"si_no", "seleccion_unica"}:
             data = widget.currentData()
             if data:
-                resultado["opcion_seleccionada"] = data.get("valor", "")
+                resultado["id_opcion"] = data.get("id_opcion")
                 resultado["respuesta_texto"] = data.get("valor", "")
-                resultado["accion_correctiva"] = data.get("accion_correctiva", "")
+                resultado["accion_correctiva_aplicada"] = data.get("accion_correctiva", "")
             return resultado
 
         if isinstance(widget, QLineEdit):
@@ -260,16 +288,12 @@ class FormularioOperarioView(QWidget):
             if respuesta.get("respuesta_numero") is not None:
                 continue
 
-            if respuesta.get("opcion_seleccionada"):
+            if respuesta.get("id_opcion"):
                 continue
 
             raise ValueError(
                 f"Debes responder la pregunta obligatoria: {respuesta.get('texto_pregunta', '')}"
             )
-
-    def _reset_formulario(self) -> None:
-        self.input_identificador.clear()
-        self.cargar_preguntas()
 
     def _limpiar_preguntas_ui(self) -> None:
         while self.layout_preguntas.count():

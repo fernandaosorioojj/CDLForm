@@ -1,1 +1,30 @@
-[] 
+[
+    {
+        "id_evento": "EVOP-0001",
+        "num_ordem": "OP-0001",
+        "estado_anterior": "En proceso",
+        "estado_nuevo": "Terminado",
+        "fecha_evento": "2026-03-31 08:30:00",
+        "id_apontamento": 1001,
+        "cod_recurso": "MAQ-01",
+        "operador": "Juan Perez",
+        "cod_ativ": "ATIV-01",
+        "cod_setor": "AREA-LAM",
+        "turno": 1,
+        "dt_producao": "2026-03-31",
+        "hora_inicio": "2026-03-31 07:00:00",
+        "hora_fim": "2026-03-31 08:15:00",
+        "descricao_op": "Fabricación lote 1",
+        "descricao_processo": "Laminado",
+        "obs": "Proceso normal",
+        "qtd_produzida": 120,
+        "qtd_planejado": 150,
+        "qtd_perdas": 3,
+        "justificativa_perda": "Ajuste inicial",
+        "estacao_origen": "ESTACION-77",
+        "contexto_resuelto": null,
+        "id_formulario_generado": null,
+        "mensaje_error": null,
+        "procesado": false
+    }
+]

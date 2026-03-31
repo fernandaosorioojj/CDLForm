@@ -1,140 +1,97 @@
-from __future__ import annotations
-
-from core.enums import (
-    DisparadorEstado,
-    EventoEstadoProcesamiento,
-)
-from core.exceptions import BusinessRuleError, NotFoundError
-from models.disparador_formulario import DisparadorFormulario
-from models.evento_op import EventoOP
-from repositories.disparador_formulario_repository import (
-    DisparadorFormularioRepository,
-)
+from launcher.app_launcher import AppLauncher
+from services.catalogo_contexto_service import CatalogoContextoService
 from services.evento_op_service import EventoOPService
 from services.formulario_service import FormularioService
-from utils.datetime_utils import DateTimeUtils
-from utils.id_generator import IdGenerator
 
 
 class DisparadorService:
     def __init__(self) -> None:
-        self.repository = DisparadorFormularioRepository()
         self.evento_service = EventoOPService()
+        self.launcher = AppLauncher()
+        self.catalogo_service = CatalogoContextoService()
         self.formulario_service = FormularioService()
 
-    def list_all(self) -> list[DisparadorFormulario]:
-        return self.repository.list_all()
+    def normalizar_estado(self, estado: str | None) -> str:
+        return str(estado or "").strip().lower()
 
-    def get_by_id(self, id_disparador: str) -> DisparadorFormulario:
-        return self.repository.get_by_id(id_disparador)
+    def es_transicion_valida(self, estado_anterior: str, estado_nuevo: str) -> bool:
+        anterior = self.normalizar_estado(estado_anterior)
+        nuevo = self.normalizar_estado(estado_nuevo)
+        return anterior != "terminado" and nuevo == "terminado"
 
-    def get_by_evento(self, id_evento: str) -> list[DisparadorFormulario]:
-        return self.repository.get_by_evento(id_evento)
+    def debe_disparar(self, evento: dict) -> bool:
+        if not self.es_transicion_valida(
+            evento.get("estado_anterior", ""),
+            evento.get("estado_nuevo", ""),
+        ):
+            return False
 
-    def get_by_op(self, op: str) -> list[DisparadorFormulario]:
-        return self.repository.get_by_op(op)
-
-    def get_by_estado(
-        self,
-        estado_disparo: DisparadorEstado,
-    ) -> list[DisparadorFormulario]:
-        return self.repository.get_by_estado(estado_disparo)
-
-    def _next_id(self) -> str:
-        next_number = len(self.repository.list_all()) + 1
-        return IdGenerator.generate("DISP", next_number)
-
-    def _create_record(
-        self,
-        id_evento: str,
-        op: str,
-        estado_disparo: DisparadorEstado,
-        mensaje: str | None = None,
-    ) -> DisparadorFormulario:
-        disparador = DisparadorFormulario(
-            id_disparador=self._next_id(),
-            id_evento=id_evento,
-            op=op,
-            fecha_disparo=DateTimeUtils.now_as_string(),
-            estado_disparo=estado_disparo,
-            mensaje=mensaje,
+        contexto = self.catalogo_service.resolver_contexto(
+            cod_setor=evento.get("cod_setor"),
+            cod_recurso=evento.get("cod_recurso"),
+            cod_ativ=evento.get("cod_ativ"),
+            turno=evento.get("turno"),
         )
 
-        self.repository.add(disparador)
-        return disparador
+        if not contexto.get("cod_setor"):
+            return False
 
-    def process_event(self, id_evento: str) -> DisparadorFormulario:
-        evento = self.evento_service.get_by_id(id_evento)
+        if not contexto.get("cod_recurso"):
+            return False
 
-        if evento.estado_procesamiento == EventoEstadoProcesamiento.PROCESADO:
-            raise BusinessRuleError(
-                f"el evento '{id_evento}' ya fue procesado previamente"
-            )
+        return True
 
-        if self.get_by_evento(id_evento):
-            raise BusinessRuleError(
-                f"ya existe al menos un disparador asociado al evento '{id_evento}'"
-            )
+    def procesar_evento(self, evento: dict, operario: str = "PENDIENTE") -> dict:
+        resultado = {
+            "debe_disparar": False,
+            "formulario": None,
+            "contexto_resuelto": None,
+            "mensaje": "",
+        }
 
-        if not self.evento_service.is_trigger_status(evento.estado_nuevo):
-            disparador = self._create_record(
-                id_evento=evento.id_evento,
-                op=evento.op,
-                estado_disparo=DisparadorEstado.OMITIDO,
-                mensaje=(
-                    f"el estado '{evento.estado_nuevo}' no corresponde a un estado disparador"
-                ),
-            )
+        if not self.es_transicion_valida(
+            evento.get("estado_anterior", ""),
+            evento.get("estado_nuevo", ""),
+        ):
+            resultado["mensaje"] = "La transición de estado no es válida para disparar."
+            return resultado
 
-            self.evento_service.mark_as_processed(evento.id_evento)
-            return disparador
+        contexto = self.catalogo_service.resolver_contexto(
+            cod_setor=evento.get("cod_setor"),
+            cod_recurso=evento.get("cod_recurso"),
+            cod_ativ=evento.get("cod_ativ"),
+            turno=evento.get("turno"),
+        )
 
-        try:
-            formulario = self.formulario_service.create_from_event(
-                op=evento.op,
-                area=evento.area,
-                maquina=evento.maquina,
-                id_evento_origen=evento.id_evento,
-                origen_disparo=evento.origen,
-                fecha=evento.fecha_evento,
-            )
+        resultado["contexto_resuelto"] = contexto
 
-            disparador = self._create_record(
-                id_evento=evento.id_evento,
-                op=evento.op,
-                estado_disparo=DisparadorEstado.PROCESADO,
-                mensaje=(
-                    f"formulario '{formulario.id_formulario}' generado correctamente"
-                ),
-            )
+        if not contexto.get("cod_setor"):
+            resultado["mensaje"] = "No se pudo homologar el cod_setor del evento."
+            return resultado
 
-            self.evento_service.mark_as_processed(evento.id_evento)
-            return disparador
+        if not contexto.get("cod_recurso"):
+            resultado["mensaje"] = "No se pudo homologar el cod_recurso del evento."
+            return resultado
 
-        except Exception as exc:
-            return self._create_record(
-                id_evento=evento.id_evento,
-                op=evento.op,
-                estado_disparo=DisparadorEstado.FALLIDO,
-                mensaje=str(exc),
-            )
+        formulario = self.formulario_service.crear_formulario(
+            identificador=str(evento.get("num_ordem", "")).strip(),
+            operario=operario,
+            contexto=contexto,
+            evento_origen=str(evento.get("id_evento", "")).strip(),
+            estado="pendiente",
+        )
 
-    def process_pending_events(self) -> list[DisparadorFormulario]:
-        resultados: list[DisparadorFormulario] = []
+        self.evento_service.actualizar_evento(
+            str(evento.get("id_evento", "")).strip(),
+            {
+                "contexto_resuelto": contexto,
+                "id_formulario_generado": formulario.id_formulario,
+                "mensaje_error": None,
+                "procesado": True,
+            },
+        )
 
-        for evento in self.evento_service.get_pending_events():
-            resultado = self.process_event(evento.id_evento)
-            resultados.append(resultado)
-
-        return resultados
-
-    def delete(self, id_disparador: str) -> None:
-        self.repository.delete(id_disparador)
-
-    def ensure_exists(self, id_disparador: str) -> None:
-        try:
-            self.repository.get_by_id(id_disparador)
-        except NotFoundError as exc:
-            raise NotFoundError(
-                f"no existe un disparador con id '{id_disparador}'"
-            ) from exc
+        resultado["debe_disparar"] = True
+        resultado["formulario"] = formulario.to_dict()
+        resultado["mensaje"] = "Formulario generado correctamente."
+        return resultado

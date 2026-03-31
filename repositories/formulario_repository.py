@@ -17,11 +17,11 @@ class FormularioRepository(BaseRepository):
     def _get_entity_id(self, entity: Formulario) -> str:
         return entity.id_formulario
 
-    def get_all_formularios(self) -> List[Formulario]:
+    def list_all(self) -> List[Formulario]:
         registros = self.get_all()
         return [self._from_dict(item) for item in registros]
 
-    def get_formulario_by_id(self, id_formulario: str) -> Optional[Formulario]:
+    def get_by_id(self, id_formulario: str) -> Optional[Formulario]:
         if not id_formulario or not str(id_formulario).strip():
             return None
 
@@ -61,13 +61,13 @@ class FormularioRepository(BaseRepository):
         )
         return [self._from_dict(item) for item in registros]
 
-    def get_formularios_por_op(self, op: str) -> List[Formulario]:
-        if not op or not str(op).strip():
+    def get_formularios_por_identificador(self, identificador: str) -> List[Formulario]:
+        if not identificador or not str(identificador).strip():
             return []
 
-        op_normalizada = str(op).strip().lower()
+        identificador_normalizado = str(identificador).strip().lower()
 
         registros = self.filter(
-            lambda item: str(item.get("op", "")).strip().lower() == op_normalizada
+            lambda item: str(item.get("identificador", "")).strip().lower() == identificador_normalizado
         )
         return [self._from_dict(item) for item in registros]

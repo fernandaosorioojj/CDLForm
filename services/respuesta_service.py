@@ -56,7 +56,7 @@ class RespuestaService:
             ),
         )
 
-        self.respuesta_repository.add(respuesta)
+        self.respuesta_repository.add_respuesta(respuesta)
         return respuesta
 
     def guardar_respuestas_formulario(
@@ -92,10 +92,11 @@ class RespuestaService:
         if not id_respuesta or not id_respuesta.strip():
             raise ValidationError("El id_respuesta es obligatorio.")
 
-        try:
-            return self.respuesta_repository.get_by_id(id_respuesta.strip())
-        except NotFoundError:
+        respuesta = self.respuesta_repository.get_by_id(id_respuesta.strip())
+        if not respuesta:
             raise NotFoundError(f"No se encontró la respuesta '{id_respuesta}'.")
+
+        return respuesta
 
     def listar_respuestas(self) -> list[Respuesta]:
         return self.respuesta_repository.list_all()
