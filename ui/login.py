@@ -39,7 +39,7 @@ class LoginView(QWidget):
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setObjectName("titulo_login")
 
-        subtitulo = QLabel("Acceso para administración y gestión de formularios")
+        subtitulo = QLabel("")
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
 

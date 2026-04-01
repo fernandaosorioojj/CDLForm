@@ -1,1 +1,123 @@
-[] 
+[
+    {
+        "id_pregunta": "PREG-0001",
+        "texto": "¿Se realizó el control final?",
+        "tipo": "si_no",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 1,
+        "filtros_contexto": {
+            "cod_setor": [
+                "SETOR-A"
+            ],
+            "cod_recurso": [
+                "REC-10"
+            ],
+            "cod_ativ": [
+                "ATIV-20"
+            ],
+            "turno": [
+                "NOCHE"
+            ],
+            "tipo_trabajo": [
+                "PRODUCCION"
+            ]
+        },
+        "opciones_respuesta": [
+            {
+                "id_opcion": "OPC-001",
+                "valor": "Sí",
+                "accion_correctiva": ""
+            },
+            {
+                "id_opcion": "OPC-002",
+                "valor": "No",
+                "accion_correctiva": "Revisar control final antes de cerrar."
+            }
+        ]
+    },
+    {
+        "id_pregunta": "PREG-0002",
+        "texto": "Cantidad producida en el turno",
+        "tipo": "numero",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 2,
+        "filtros_contexto": {
+            "cod_setor": [
+                "SETOR-A"
+            ],
+            "cod_recurso": [
+                "REC-10"
+            ],
+            "cod_ativ": [
+                "ATIV-20"
+            ],
+            "turno": [
+                "NOCHE"
+            ],
+            "tipo_trabajo": [
+                "PRODUCCION"
+            ]
+        },
+        "opciones_respuesta": []
+    },
+    {
+        "id_pregunta": "PREG-0003",
+        "texto": "Observaciones del cierre",
+        "tipo": "texto",
+        "activa": true,
+        "obligatoria": false,
+        "orden": 3,
+        "filtros_contexto": {
+            "cod_setor": [
+                "SETOR-A"
+            ],
+            "cod_recurso": [
+                "REC-10"
+            ],
+            "cod_ativ": [
+                "ATIV-20"
+            ],
+            "turno": [
+                "NOCHE"
+            ],
+            "tipo_trabajo": [
+                "PRODUCCION"
+            ]
+        },
+        "opciones_respuesta": []
+    },
+    {
+        "id_pregunta": "[{'ID_PREGUNTA': 'PREG-0001', 'TEXTO': '¿SE REALIZÓ EL CONTROL FINAL?', 'TIPO': 'SI_NO', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 1, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-A'], 'COD_RECURSO': ['REC-10'], 'COD_ATIV': ['ATIV-20'], 'TURNO': ['NOCHE'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': [{'ID_OPCION': 'OPC-001', 'VALOR': 'SÍ', 'ACCION_CORRECTIVA': ''}, {'ID_OPCION': 'OPC-002', 'VALOR': 'NO', 'ACCION_CORRECTIVA': 'REVISAR CONTROL FINAL ANTES DE CERRAR.'}]}, {'ID_PREGUNTA': 'PREG-0002', 'TEXTO': 'CANTIDAD PRODUCIDA EN EL TURNO', 'TIPO': 'NUMERO', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 2, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-A'], 'COD_RECURSO': ['REC-10'], 'COD_ATIV': ['ATIV-20'], 'TURNO': ['NOCHE'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}, {'ID_PREGUNTA': 'PREG-0003', 'TEXTO': 'OBSERVACIONES DEL CIERRE', 'TIPO': 'TEXTO', 'ACTIVA': TRUE, 'OBLIGATORIA': FALSE, 'ORDEN': 3, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-A'], 'COD_RECURSO': ['REC-10'], 'COD_ATIV': ['ATIV-20'], 'TURNO': ['NOCHE'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}]-0001",
+        "texto": "¿Fueron retirados...?",
+        "tipo": "seleccion_unica",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 1,
+        "filtros_contexto": {
+            "cod_setor": [
+                "AREA-LAM"
+            ],
+            "cod_recurso": [
+                "MAQ-02"
+            ],
+            "turno": [
+                "1"
+            ],
+            "tipo_trabajo": [
+                "AJUSTE"
+            ]
+        },
+        "opciones_respuesta": [
+            {
+                "valor": "Si",
+                "accion_correctiva": ""
+            },
+            {
+                "valor": "No",
+                "accion_correctiva": "Retirar todo el scrap que haya...."
+            }
+        ]
+    }
+]

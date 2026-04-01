@@ -1,0 +1,344 @@
+/* =========================
+   CDLform - Estilo global
+   ========================= */
+
+QWidget {
+    background-color: #f4f6f8;
+    color: #1f2933;
+    font-family: "Segoe UI";
+    font-size: 13px;
+}
+
+/* =========================
+   Títulos y textos
+   ========================= */
+
+QLabel {
+    background: transparent;
+    color: #1f2933;
+}
+
+QLabel#titulo_dashboard {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f2747;
+    padding: 6px 0 2px 0;
+}
+
+/* =========================
+   Contenedores
+   ========================= */
+
+QFrame {
+    background-color: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+}
+
+/* =========================
+   Inputs
+   ========================= */
+
+QLineEdit,
+QTextEdit,
+QSpinBox,
+QComboBox,
+QListWidget,
+QTableWidget,
+QScrollArea {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 8px;
+    selection-background-color: #dbeafe;
+    selection-color: #0f172a;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QSpinBox:focus,
+QComboBox:focus,
+QListWidget:focus,
+QTableWidget:focus {
+    border: 2px solid #f4c430;
+}
+
+QLineEdit:disabled,
+QTextEdit:disabled,
+QSpinBox:disabled,
+QComboBox:disabled {
+    background-color: #eef2f6;
+    color: #7b8794;
+    border: 1px solid #d9e2ec;
+}
+
+/* =========================
+   ComboBox
+   ========================= */
+
+QComboBox {
+    min-height: 34px;
+    padding-right: 24px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 24px;
+    border-left: 1px solid #d9e2ec;
+    background-color: #eef2f6;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    selection-background-color: #dbeafe;
+    selection-color: #0f172a;
+    outline: 0;
+}
+
+/* =========================
+   SpinBox
+   ========================= */
+
+QSpinBox {
+    min-height: 34px;
+}
+
+/* =========================
+   Botones
+   ========================= */
+
+QPushButton {
+    background-color: #0f62fe;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    min-height: 38px;
+    padding: 8px 16px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: #0353e9;
+}
+
+QPushButton:pressed {
+    background-color: #013db3;
+}
+
+QPushButton:disabled {
+    background-color: #9fb3c8;
+    color: #eef2f6;
+}
+
+/* Botones por texto frecuente */
+QPushButton[text="Guardar"],
+QPushButton[text="Guardar formulario"],
+QPushButton[text="Buscar"] {
+    background-color: #0f62fe;
+    color: #ffffff;
+}
+
+QPushButton[text="Guardar"]:hover,
+QPushButton[text="Guardar formulario"]:hover,
+QPushButton[text="Buscar"]:hover {
+    background-color: #0353e9;
+}
+
+QPushButton[text="Nuevo"],
+QPushButton[text="Recargar preguntas"],
+QPushButton[text="Limpiar filtros"] {
+    background-color: #f4c430;
+    color: #1f2933;
+}
+
+QPushButton[text="Nuevo"]:hover,
+QPushButton[text="Recargar preguntas"]:hover,
+QPushButton[text="Limpiar filtros"]:hover {
+    background-color: #e0b51f;
+}
+
+QPushButton[text="Desactivar"],
+QPushButton[text="Cerrar sesión"] {
+    background-color: #7b8794;
+    color: #ffffff;
+}
+
+QPushButton[text="Desactivar"]:hover,
+QPushButton[text="Cerrar sesión"]:hover {
+    background-color: #616e7c;
+}
+
+QPushButton[text="Eliminar"] {
+    background-color: #d64545;
+    color: #ffffff;
+}
+
+QPushButton[text="Eliminar"]:hover {
+    background-color: #b83232;
+}
+
+QPushButton[text="Reportes"],
+QPushButton[text="Administrar Preguntas"],
+QPushButton[text="Eventos / Disparadores"] {
+    min-height: 52px;
+    font-size: 14px;
+    border-radius: 12px;
+}
+
+/* =========================
+   CheckBox
+   ========================= */
+
+QCheckBox {
+    spacing: 8px;
+    color: #1f2933;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #9fb3c8;
+    border-radius: 4px;
+    background-color: #ffffff;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #0f62fe;
+    border: 1px solid #0f62fe;
+}
+
+/* =========================
+   Listas
+   ========================= */
+
+QListWidget {
+    outline: 0;
+    padding: 4px;
+}
+
+QListWidget::item {
+    border-radius: 8px;
+    padding: 8px;
+    margin: 2px 0;
+}
+
+QListWidget::item:selected {
+    background-color: #dbeafe;
+    color: #0f172a;
+}
+
+QListWidget::item:hover {
+    background-color: #eef4fb;
+}
+
+/* =========================
+   Tablas
+   ========================= */
+
+QTableWidget {
+    gridline-color: #e5e7eb;
+    outline: 0;
+    alternate-background-color: #f8fafc;
+}
+
+QHeaderView::section {
+    background-color: #0f2747;
+    color: #ffffff;
+    padding: 8px;
+    border: none;
+    font-weight: 700;
+}
+
+QTableWidget::item {
+    padding: 6px;
+}
+
+QTableWidget::item:selected {
+    background-color: #dbeafe;
+    color: #0f172a;
+}
+
+/* =========================
+   Scrollbars
+   ========================= */
+
+QScrollBar:vertical {
+    background: #eef2f6;
+    width: 12px;
+    margin: 0;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background: #9fb3c8;
+    min-height: 24px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #7b8794;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+    border: none;
+}
+
+QScrollBar:horizontal {
+    background: #eef2f6;
+    height: 12px;
+    margin: 0;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #9fb3c8;
+    min-width: 24px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #7b8794;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: none;
+    border: none;
+}
+
+/* =========================
+   Formularios y paneles
+   ========================= */
+
+QFormLayout {
+    margin: 0;
+}
+
+QScrollArea {
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
+
+/* =========================
+   Mensajes visuales suaves
+   ========================= */
+
+QToolTip {
+    background-color: #0f2747;
+    color: #ffffff;
+    border: 1px solid #0f2747;
+    padding: 6px 8px;
+    border-radius: 6px;
+}

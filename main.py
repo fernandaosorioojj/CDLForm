@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 
 import sys
 import argparse
@@ -8,6 +9,28 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from ui.login import LoginView
 from ui.seleccion_operario import SeleccionOperarioView
 
+
+
+def cargar_estilos(app: QApplication) -> None:
+    ruta_estilos = Path("assets/styles.qss")
+
+    if not ruta_estilos.exists():
+        print(f"No se encontró la hoja de estilos: {ruta_estilos}")
+        return
+
+    app.setStyleSheet(ruta_estilos.read_text(encoding="utf-8"))
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    cargar_estilos(app)
+
+    ventana = LoginView()
+    ventana.show()
+
+    sys.exit(app.exec_())
+    
 
 def parse_args():
     parser = argparse.ArgumentParser(description="CDLform")

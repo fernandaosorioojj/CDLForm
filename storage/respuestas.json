@@ -1,1 +1,29 @@
-[] 
+[
+    {
+        "id_respuesta": "RESP-0001",
+        "id_formulario": "FORM-0001",
+        "id_pregunta": "PREG-0001",
+        "respuesta_texto": "No",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-002",
+        "accion_correctiva_aplicada": "Revisar control final antes de cerrar."
+    },
+    {
+        "id_respuesta": "RESP-0002",
+        "id_formulario": "FORM-0001",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": null,
+        "respuesta_numero": 1250,
+        "id_opcion": null,
+        "accion_correctiva_aplicada": null
+    },
+    {
+        "id_respuesta": "RESP-0003",
+        "id_formulario": "FORM-0001",
+        "id_pregunta": "PREG-0003",
+        "respuesta_texto": "Turno sin incidentes mayores.",
+        "respuesta_numero": null,
+        "id_opcion": null,
+        "accion_correctiva_aplicada": null
+    }
+]

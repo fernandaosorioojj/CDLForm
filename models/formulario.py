@@ -7,37 +7,42 @@ from typing import Optional, Dict, Any
 @dataclass
 class Formulario:
     id_formulario: str
-    op: str
-    area: str
-    maquina: str
-    operario: Optional[str] = None
+    identificador: str
+    operario: str
+    id_operario: str = ""
+    cod_setor: str = ""
+    cod_recurso: str = ""
+    cod_ativ: str = ""
+    turno: str = ""
+    tipo_trabajo: str = ""
     evento_origen: Optional[str] = None
     estado: str = "pendiente"
 
     def __post_init__(self) -> None:
         self.id_formulario = str(self.id_formulario).strip()
-        self.op = str(self.op).strip()
-        self.area = str(self.area).strip()
-        self.maquina = str(self.maquina).strip()
+        self.identificador = str(self.identificador).strip()
+        self.operario = str(self.operario).strip()
+        self.id_operario = str(self.id_operario).strip()
+        self.cod_setor = str(self.cod_setor).strip()
+        self.cod_recurso = str(self.cod_recurso).strip()
+        self.cod_ativ = str(self.cod_ativ).strip()
+        self.turno = str(self.turno).strip()
+        self.tipo_trabajo = str(self.tipo_trabajo).strip()
         self.estado = str(self.estado).strip()
-
-        if self.operario is not None:
-            self.operario = str(self.operario).strip()
 
         if self.evento_origen is not None:
             self.evento_origen = str(self.evento_origen).strip()
+            if not self.evento_origen:
+                self.evento_origen = None
 
         if not self.id_formulario:
             raise ValueError("id_formulario es obligatorio.")
 
-        if not self.op:
-            raise ValueError("op es obligatoria.")
+        if not self.identificador:
+            raise ValueError("identificador es obligatorio.")
 
-        if not self.area:
-            raise ValueError("area es obligatoria.")
-
-        if not self.maquina:
-            raise ValueError("maquina es obligatoria.")
+        if not self.operario:
+            raise ValueError("operario es obligatorio.")
 
         if not self.estado:
             raise ValueError("estado es obligatorio.")
@@ -45,10 +50,14 @@ class Formulario:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id_formulario": self.id_formulario,
-            "op": self.op,
-            "area": self.area,
-            "maquina": self.maquina,
+            "identificador": self.identificador,
             "operario": self.operario,
+            "id_operario": self.id_operario,
+            "cod_setor": self.cod_setor,
+            "cod_recurso": self.cod_recurso,
+            "cod_ativ": self.cod_ativ,
+            "turno": self.turno,
+            "tipo_trabajo": self.tipo_trabajo,
             "evento_origen": self.evento_origen,
             "estado": self.estado,
         }
@@ -60,10 +69,14 @@ class Formulario:
 
         return cls(
             id_formulario=data.get("id_formulario", ""),
-            op=data.get("op", ""),
-            area=data.get("area", ""),
-            maquina=data.get("maquina", ""),
-            operario=data.get("operario"),
+            identificador=data.get("identificador", ""),
+            operario=data.get("operario", ""),
+            id_operario=data.get("id_operario", ""),
+            cod_setor=data.get("cod_setor", ""),
+            cod_recurso=data.get("cod_recurso", ""),
+            cod_ativ=data.get("cod_ativ", ""),
+            turno=data.get("turno", ""),
+            tipo_trabajo=data.get("tipo_trabajo", ""),
             evento_origen=data.get("evento_origen"),
             estado=data.get("estado", "pendiente"),
         )

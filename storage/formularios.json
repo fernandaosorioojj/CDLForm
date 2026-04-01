@@ -1,1 +1,15 @@
-[]
+[
+    {
+        "id_formulario": "FORM-0001",
+        "identificador": "FLE37858",
+        "operario": "Juan Pérez",
+        "id_operario": "OPE-001",
+        "cod_setor": "SETOR-A",
+        "cod_recurso": "REC-10",
+        "cod_ativ": "ATIV-20",
+        "turno": "NOCHE",
+        "tipo_trabajo": "PRODUCCION",
+        "evento_origen": "EVT-0001",
+        "estado": "completado"
+    }
+]
