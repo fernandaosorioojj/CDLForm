@@ -67,6 +67,15 @@ class FormularioService:
             raise NotFoundError(f"No se encontró el formulario '{id_formulario}'.")
 
         return formulario
+    
+    def obtener_formulario_por_evento_origen(self, evento_origen: str) -> Formulario | None:
+        if not evento_origen or not str(evento_origen).strip():
+            return None
+
+        return self.formulario_repository.get_by_evento_origen(
+            str(evento_origen).strip()
+        )
+
 
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_repository.list_all()

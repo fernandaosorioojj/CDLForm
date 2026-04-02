@@ -20,7 +20,7 @@ class DisparadorService:
         database: str,
         username: str,
         password: str,
-        driver: str = "ODBC Driver 17 for SQL Server",
+        driver: str = "ODBC Driver 18 for SQL Server",
         processed_file: str | Path = "storage/apontamentos_procesados.json",
     ) -> None:
         self.server = server

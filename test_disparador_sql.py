@@ -1,11 +1,13 @@
 from services.disparador_service import DisparadorService
 
+
 def main() -> None:
     service = DisparadorService(
-        server=" 172.16.2.251",
+        server="172.16.2.251",
         database="MetricsProd",
         username="fosorio",
-        password="Bo123456+",
+        password="Bop123456+",
+        driver="ODBC Driver 18 for SQL Server",
     )
 
     pendientes = service.buscar_apontamentos_pendientes()

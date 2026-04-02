@@ -11,6 +11,9 @@ class FormularioRepository(BaseRepository):
     def __init__(self, file_path: Path | None = None) -> None:
         super().__init__(file_path or Path("storage/formularios.json"))
 
+    def __init__(self, file_path: Path | None = None) -> None:
+        super().__init__(file_path or Path("storage/formularios.json"))
+
     def _from_dict(self, data: dict) -> Formulario:
         return Formulario.from_dict(data)
 
@@ -30,6 +33,21 @@ class FormularioRepository(BaseRepository):
             return None
 
         return self._from_dict(data)
+    
+    def get_by_evento_origen(self, evento_origen: str) -> Formulario | None:
+        if not evento_origen or not str(evento_origen).strip():
+            return None
+
+        evento_normalizado = str(evento_origen).strip()
+
+        registros = self.filter(
+            lambda item: str(item.get("evento_origen", "")).strip() == evento_normalizado
+    )
+
+        if not registros:
+            return None
+
+        return self._from_dict(registros[0])
 
     def add_formulario(self, formulario: Formulario) -> Formulario:
         self.add(formulario.to_dict())
