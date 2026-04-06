@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
 
-import pyodbc
-
-from launcher.app_launcher import AppLauncher
+from services.apontamento_procesado_service import ApontamentoProcesadoService
+from services.apontamento_query_service import ApontamentoQueryService
 from services.catalogo_contexto_service import CatalogoContextoService
-from services.evento_op_service import EventoOPService
 from services.formulario_service import FormularioService
 from services.jobtrack_config_service import JobtrackConfigService
 
@@ -21,147 +17,69 @@ class DisparadorService:
         username: str,
         password: str,
         driver: str = "ODBC Driver 18 for SQL Server",
-        processed_file: str | Path = "storage/apontamentos_procesados.json",
+        processed_file: str = "storage/apontamentos_procesados.json",
     ) -> None:
-        self.server = server
-        self.database = database
-        self.username = username
-        self.password = password
-        self.driver = driver
-
-        self.evento_service = EventoOPService()
-        self.launcher = AppLauncher()
         self.catalogo_service = CatalogoContextoService()
         self.formulario_service = FormularioService()
         self.jobtrack_config_service = JobtrackConfigService()
 
-        self.processed_file = Path(processed_file)
-        self._ensure_processed_file()
-
-    def _ensure_processed_file(self) -> None:
-        self.processed_file.parent.mkdir(parents=True, exist_ok=True)
-        if not self.processed_file.exists():
-            self.processed_file.write_text("[]", encoding="utf-8")
-
-    def _read_processed(self) -> list[dict[str, Any]]:
-        try:
-            return json.loads(self.processed_file.read_text(encoding="utf-8"))
-        except Exception:
-            return []
-
-    def _write_processed(self, data: list[dict[str, Any]]) -> None:
-        self.processed_file.write_text(
-            json.dumps(data, ensure_ascii=False, indent=4),
-            encoding="utf-8",
+        self.apontamento_query_service = ApontamentoQueryService(
+            server=server,
+            database=database,
+            username=username,
+            password=password,
+            driver=driver,
         )
 
-    def ya_procesado(self, id_apontamento: str | int) -> bool:
-        id_normalizado = str(id_apontamento).strip()
-        registros = self._read_processed()
-
-        return any(
-            str(item.get("id_apontamento", "")).strip() == id_normalizado
-            for item in registros
+        self.apontamento_procesado_service = ApontamentoProcesadoService(
+            processed_file=processed_file,
         )
 
-    def marcar_como_procesado(self, id_apontamento: str | int, num_ordem: str = "") -> None:
-        if self.ya_procesado(id_apontamento):
-            return
-
-        registros = self._read_processed()
-        registros.append(
-            {
-                "id_apontamento": str(id_apontamento).strip(),
-                "num_ordem": str(num_ordem).strip(),
-            }
-        )
-        self._write_processed(registros)
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
 
     def obtener_estacion_actual(self) -> str:
         return self.jobtrack_config_service.obtener_estacion_actual()
 
-    def _get_connection(self) -> pyodbc.Connection:
-        connection_string = (
-            f"DRIVER={{{self.driver}}};"
-            f"SERVER={self.server};"
-            f"DATABASE={self.database};"
-            f"UID={self.username};"
-            f"PWD={self.password};"
-            "TrustServerCertificate=yes;"
-        )
-        return pyodbc.connect(connection_string)
-
     def buscar_apontamentos_pendientes(self) -> list[dict[str, Any]]:
         estacion = self.obtener_estacion_actual()
 
-        sql = """
-        SELECT
-            [IdApontamento],
-            [NumOrdem],
-            [CodRecurso],
-            [CodSetor],
-            [CodAtiv],
-            [Turno],
-            [HoraFim],
-            [Operador],
-            [DescricaoOP],
-            [DescricaoProcesso],
-            [QtdProduzida],
-            [QtdPlanejado],
-            [QtdPerdas],
-            [JustificativaPerda]
-        FROM [MetricsProd].[dbo].[Apontamentos]
-        WHERE [HoraFim] IS NOT NULL
-          AND [HoraFim] <> '1899-12-30 00:00:00.000'
-          AND [CodRecurso] = ?
-        ORDER BY [HoraFim] DESC
-        """
+        if not estacion:
+            return []
 
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(sql, (estacion,))
-            columns = [column[0] for column in cursor.description]
-            rows = cursor.fetchall()
+        ids_procesados = self.apontamento_procesado_service.listar_ids_procesados()
 
-        candidatos: list[dict[str, Any]] = []
-
-        for row in rows:
-            registro = dict(zip(columns, row))
-            id_apontamento = registro.get("IdApontamento")
-
-            if id_apontamento is None:
-                continue
-
-            if self.ya_procesado(id_apontamento):
-                continue
-
-            candidatos.append(registro)
-
-        return candidatos
+        return self.apontamento_query_service.buscar_apontamentos_pendientes(
+            estacion=estacion,
+            ids_excluidos=ids_procesados,
+        )
 
     def homologar_evento_desde_apontamento(self, apontamento: dict[str, Any]) -> dict[str, Any]:
         return {
-            "id_evento": str(apontamento.get("IdApontamento", "")).strip(),
-            "id_apontamento": str(apontamento.get("IdApontamento", "")).strip(),
-            "num_ordem": str(apontamento.get("NumOrdem", "")).strip(),
-            "cod_recurso": str(apontamento.get("CodRecurso", "")).strip(),
-            "cod_setor": str(apontamento.get("CodSetor", "")).strip(),
-            "cod_ativ": str(apontamento.get("CodAtiv", "")).strip(),
-            "turno": str(apontamento.get("Turno", "")).strip(),
-            "hora_fim": str(apontamento.get("HoraFim", "")).strip(),
-            "operador": str(apontamento.get("Operador", "")).strip(),
-            "descripcion_op": str(apontamento.get("DescricaoOP", "")).strip(),
-            "descripcion_proceso": str(apontamento.get("DescricaoProcesso", "")).strip(),
+            "id_evento": self._normalizar_texto(apontamento.get("IdApontamento")),
+            "id_apontamento": self._normalizar_texto(apontamento.get("IdApontamento")),
+            "num_ordem": self._normalizar_texto(apontamento.get("NumOrdem")),
+            "cod_recurso": self._normalizar_texto(apontamento.get("CodRecurso")),
+            "cod_setor": self._normalizar_texto(apontamento.get("CodSetor")),
+            "cod_ativ": self._normalizar_texto(apontamento.get("CodAtiv")),
+            "turno": self._normalizar_texto(apontamento.get("Turno")),
+            "hora_fim": self._normalizar_texto(apontamento.get("HoraFim")),
+            "operador": self._normalizar_texto(apontamento.get("Operador")),
+            "descripcion_op": self._normalizar_texto(apontamento.get("DescricaoOP")),
+            "descripcion_proceso": self._normalizar_texto(apontamento.get("DescricaoProcesso")),
             "qtd_produzida": apontamento.get("QtdProduzida"),
             "qtd_planejado": apontamento.get("QtdPlanejado"),
             "qtd_perdas": apontamento.get("QtdPerdas"),
-            "justificativa_perda": str(apontamento.get("JustificativaPerda", "")).strip(),
+            "justificativa_perda": self._normalizar_texto(apontamento.get("JustificativaPerda")),
         }
 
     def debe_disparar(self, apontamento: dict[str, Any]) -> bool:
-        id_apontamento = str(apontamento.get("IdApontamento", "")).strip()
-        hora_fim = str(apontamento.get("HoraFim", "")).strip()
-        cod_recurso = str(apontamento.get("CodRecurso", "")).strip()
+        id_apontamento = self._normalizar_texto(apontamento.get("IdApontamento"))
+        hora_fim = self._normalizar_texto(apontamento.get("HoraFim"))
+        cod_recurso = self._normalizar_texto(apontamento.get("CodRecurso"))
 
         if not id_apontamento:
             return False
@@ -172,19 +90,20 @@ class DisparadorService:
         if not hora_fim:
             return False
 
-        if hora_fim == "1899-12-30 00:00:00":
+        if hora_fim in {"1899-12-30 00:00:00", "1899-12-30 00:00:00.000"}:
             return False
 
-        if hora_fim == "1899-12-30 00:00:00.000":
-            return False
-
-        if self.ya_procesado(id_apontamento):
+        if self.apontamento_procesado_service.ya_procesado(id_apontamento):
             return False
 
         return True
 
-    def procesar_apontamento(self, apontamento: dict[str, Any], operario: str = "PENDIENTE") -> dict:
-        resultado = {
+    def procesar_apontamento(
+        self,
+        apontamento: dict[str, Any],
+        operario: str = "PENDIENTE",
+    ) -> dict[str, Any]:
+        resultado: dict[str, Any] = {
             "debe_disparar": False,
             "formulario": None,
             "contexto_resuelto": None,
@@ -216,17 +135,28 @@ class DisparadorService:
             resultado["mensaje"] = "No se pudo homologar el cod_recurso del apontamento."
             return resultado
 
+        identificador = self._normalizar_texto(evento.get("num_ordem"))
+
+        if not identificador:
+            resultado["mensaje"] = "El apontamento no trae num_ordem para generar el formulario."
+            return resultado
+
         formulario = self.formulario_service.crear_formulario(
-            identificador=str(evento.get("num_ordem", "")).strip(),
+            identificador=identificador,
             operario=operario,
             contexto=contexto,
-            evento_origen=str(evento.get("id_evento", "")).strip(),
+            evento_origen=self._normalizar_texto(evento.get("id_evento")),
             estado="pendiente",
         )
 
-        self.marcar_como_procesado(
+        self.apontamento_procesado_service.marcar_como_procesado(
             id_apontamento=evento.get("id_apontamento", ""),
             num_ordem=evento.get("num_ordem", ""),
+            datos_extra={
+                "cod_recurso": evento.get("cod_recurso", ""),
+                "turno": evento.get("turno", ""),
+                "hora_fim": evento.get("hora_fim", ""),
+            },
         )
 
         resultado["debe_disparar"] = True
@@ -234,9 +164,9 @@ class DisparadorService:
         resultado["mensaje"] = "Formulario generado correctamente desde apontamento."
         return resultado
 
-    def procesar_pendientes(self, operario: str = "PENDIENTE") -> list[dict]:
+    def procesar_pendientes(self, operario: str = "PENDIENTE") -> list[dict[str, Any]]:
         pendientes = self.buscar_apontamentos_pendientes()
-        resultados: list[dict] = []
+        resultados: list[dict[str, Any]] = []
 
         for apontamento in pendientes:
             resultado = self.procesar_apontamento(apontamento, operario=operario)

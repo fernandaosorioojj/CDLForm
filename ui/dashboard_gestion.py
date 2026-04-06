@@ -31,35 +31,46 @@ class DashboardGestionView(QWidget):
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setSpacing(20)
+        layout_principal.setContentsMargins(32, 28, 32, 28)
 
         titulo = QLabel("Panel de Gestión CDLform")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setObjectName("titulo_dashboard")
+        titulo.setProperty("role", "title")
 
         subtitulo = QLabel("Administración general del sistema de formularios")
         subtitulo.setAlignment(Qt.AlignCenter)
+        subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
 
         layout_principal.addWidget(titulo)
         layout_principal.addWidget(subtitulo)
+        layout_principal.addSpacing(10)
 
         contenedor = QFrame()
+        contenedor.setProperty("card", "true")
+
         grid = QGridLayout(contenedor)
-        grid.setSpacing(15)
+        grid.setSpacing(16)
+        grid.setContentsMargins(24, 24, 24, 24)
 
         btn_preguntas = QPushButton("Administrar Preguntas")
         btn_reportes = QPushButton("Reportes")
-        btn_eventos = QPushButton("Eventos / Disparadores")
         btn_salir = QPushButton("Cerrar sesión")
+
+        btn_reportes.setProperty("variant", "secondary")
+        btn_salir.setProperty("variant", "danger")
+
+        btn_preguntas.setMinimumHeight(54)
+        btn_reportes.setMinimumHeight(54)
+        btn_salir.setMinimumHeight(50)
 
         btn_preguntas.clicked.connect(self.abrir_admin_preguntas)
         btn_reportes.clicked.connect(self.abrir_reportes)
-        btn_eventos.clicked.connect(self.abrir_eventos)
         btn_salir.clicked.connect(self.close)
 
         grid.addWidget(btn_preguntas, 0, 0)
         grid.addWidget(btn_reportes, 0, 1)
-        grid.addWidget(btn_eventos, 1, 0, 1, 2)
-        grid.addWidget(btn_salir, 2, 0, 1, 2)
+        grid.addWidget(btn_salir, 1, 0, 1, 2)
 
         layout_principal.addWidget(contenedor)
         layout_principal.addStretch()
@@ -85,10 +96,3 @@ class DashboardGestionView(QWidget):
                 "Error",
                 f"No fue posible abrir el módulo de reportes.\n\n{str(e)}",
             )
-
-    def abrir_eventos(self) -> None:
-        QMessageBox.information(
-            self,
-            "Pendiente",
-            "Aquí se conectará el módulo de eventos y disparadores.",
-        )

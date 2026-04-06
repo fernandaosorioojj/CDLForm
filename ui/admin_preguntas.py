@@ -41,20 +41,27 @@ class AdminPreguntasView(QWidget):
 
     def _init_ui(self) -> None:
         layout_principal = QHBoxLayout(self)
-        layout_principal.setContentsMargins(18, 18, 18, 18)
+        layout_principal.setContentsMargins(24, 24, 24, 24)
         layout_principal.setSpacing(18)
 
         panel_izquierdo = QFrame()
+        panel_izquierdo.setProperty("card", "true")
         panel_izquierdo.setMinimumWidth(360)
         panel_izquierdo.setMaximumWidth(430)
         panel_izquierdo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+
         layout_izquierdo = QVBoxLayout(panel_izquierdo)
-        layout_izquierdo.setContentsMargins(16, 16, 16, 16)
+        layout_izquierdo.setContentsMargins(18, 18, 18, 18)
         layout_izquierdo.setSpacing(12)
 
         titulo = QLabel("Gestión de Preguntas")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        titulo.setProperty("role", "title")
+
+        subtitulo = QLabel("Crea, edita y organiza las preguntas del formulario dinámico.")
+        subtitulo.setAlignment(Qt.AlignCenter)
+        subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
 
         self.input_busqueda = QLineEdit()
         self.input_busqueda.setPlaceholderText(
@@ -63,23 +70,28 @@ class AdminPreguntasView(QWidget):
         self.input_busqueda.textChanged.connect(self.filtrar_preguntas)
 
         label_lista = QLabel("Listado de preguntas")
+        label_lista.setProperty("role", "section")
 
         self.lista_preguntas = QListWidget()
         self.lista_preguntas.itemClicked.connect(self.cargar_pregunta_seleccionada)
         self.lista_preguntas.setMinimumHeight(540)
 
         layout_izquierdo.addWidget(titulo)
+        layout_izquierdo.addWidget(subtitulo)
+        layout_izquierdo.addSpacing(6)
         layout_izquierdo.addWidget(self.input_busqueda)
         layout_izquierdo.addWidget(label_lista)
         layout_izquierdo.addWidget(self.lista_preguntas, 1)
 
         panel_derecho = QFrame()
+        panel_derecho.setProperty("card", "true")
+
         layout_derecho_externo = QVBoxLayout(panel_derecho)
-        layout_derecho_externo.setContentsMargins(16, 16, 16, 16)
+        layout_derecho_externo.setContentsMargins(18, 18, 18, 18)
         layout_derecho_externo.setSpacing(12)
 
         titulo_form = QLabel("Configuración de pregunta")
-        titulo_form.setStyleSheet("font-size: 18px; font-weight: bold;")
+        titulo_form.setProperty("role", "section")
         layout_derecho_externo.addWidget(titulo_form)
 
         self.scroll_form = QScrollArea()
@@ -94,6 +106,8 @@ class AdminPreguntasView(QWidget):
         form_wrapper.setSpacing(18)
 
         bloque_basico = QFrame()
+        bloque_basico.setProperty("card", "true")
+
         layout_basico = QFormLayout(bloque_basico)
         layout_basico.setContentsMargins(14, 14, 14, 14)
         layout_basico.setSpacing(12)
@@ -133,12 +147,14 @@ class AdminPreguntasView(QWidget):
         layout_basico.addRow("Estado:", checks_widget)
 
         bloque_contexto = QFrame()
+        bloque_contexto.setProperty("card", "true")
+
         layout_contexto = QVBoxLayout(bloque_contexto)
         layout_contexto.setContentsMargins(14, 14, 14, 14)
         layout_contexto.setSpacing(12)
 
         label_contexto = QLabel("Filtros de contexto")
-        label_contexto.setStyleSheet("font-weight: bold;")
+        label_contexto.setProperty("role", "section")
 
         contexto_fila_1 = QHBoxLayout()
         contexto_fila_1.setSpacing(12)
@@ -166,15 +182,18 @@ class AdminPreguntasView(QWidget):
         layout_contexto.addLayout(contexto_fila_2)
 
         self.panel_opciones = QFrame()
+        self.panel_opciones.setProperty("card", "true")
+
         layout_opciones = QVBoxLayout(self.panel_opciones)
         layout_opciones.setContentsMargins(14, 14, 14, 14)
         layout_opciones.setSpacing(12)
 
         label_opciones = QLabel("Opciones de respuesta")
-        label_opciones.setStyleSheet("font-weight: bold;")
+        label_opciones.setProperty("role", "section")
 
         self.label_info_opciones = QLabel("")
         self.label_info_opciones.setWordWrap(True)
+        self.label_info_opciones.setProperty("role", "subtitle")
 
         fila_opcion = QHBoxLayout()
         fila_opcion.setSpacing(10)
@@ -186,6 +205,7 @@ class AdminPreguntasView(QWidget):
         self.input_opcion_accion.setPlaceholderText("Acción correctiva (opcional)")
 
         self.btn_agregar_opcion = QPushButton("Agregar opción")
+        self.btn_agregar_opcion.setProperty("variant", "secondary")
         self.btn_agregar_opcion.clicked.connect(self.agregar_opcion)
 
         fila_opcion.addWidget(self.input_opcion_valor, 2)
@@ -200,9 +220,11 @@ class AdminPreguntasView(QWidget):
         fila_botones_opciones.setSpacing(10)
 
         self.btn_eliminar_opcion = QPushButton("Eliminar opción")
+        self.btn_eliminar_opcion.setProperty("variant", "danger")
         self.btn_eliminar_opcion.clicked.connect(self.eliminar_opcion_seleccionada)
 
         self.btn_limpiar_opciones = QPushButton("Limpiar opciones")
+        self.btn_limpiar_opciones.setProperty("variant", "secondary")
         self.btn_limpiar_opciones.clicked.connect(self.limpiar_opciones)
 
         fila_botones_opciones.addStretch()
@@ -226,15 +248,19 @@ class AdminPreguntasView(QWidget):
         botones_layout.setSpacing(10)
 
         self.btn_guardar = QPushButton("Guardar")
+        self.btn_guardar.setProperty("variant", "success")
         self.btn_guardar.clicked.connect(self.guardar_pregunta)
 
         self.btn_nuevo = QPushButton("Nuevo")
+        self.btn_nuevo.setProperty("variant", "secondary")
         self.btn_nuevo.clicked.connect(self.limpiar_formulario)
 
         self.btn_desactivar = QPushButton("Desactivar")
+        self.btn_desactivar.setProperty("variant", "secondary")
         self.btn_desactivar.clicked.connect(self.desactivar_pregunta)
 
         self.btn_eliminar = QPushButton("Eliminar")
+        self.btn_eliminar.setProperty("variant", "danger")
         self.btn_eliminar.clicked.connect(self.eliminar_pregunta)
 
         botones_layout.addStretch()
@@ -263,13 +289,15 @@ class AdminPreguntasView(QWidget):
         return lista
 
     def _crear_bloque_lista(self, titulo: str, lista: QListWidget) -> QWidget:
-        contenedor = QWidget()
+        contenedor = QFrame()
+        contenedor.setProperty("card", "true")
+
         layout = QVBoxLayout(contenedor)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(6)
 
         label = QLabel(titulo)
-        label.setStyleSheet("font-weight: 600;")
+        label.setProperty("role", "section")
 
         layout.addWidget(label)
         layout.addWidget(lista)

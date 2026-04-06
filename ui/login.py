@@ -28,20 +28,24 @@ class LoginView(QWidget):
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setAlignment(Qt.AlignCenter)
+        layout_principal.setContentsMargins(32, 32, 32, 32)
 
         contenedor = QFrame()
         contenedor.setMaximumWidth(380)
+        contenedor.setProperty("card", "true")
 
         layout = QVBoxLayout(contenedor)
         layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
 
         titulo = QLabel("Ingreso Gestión")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setObjectName("titulo_login")
+        titulo.setProperty("role", "title")
 
-        subtitulo = QLabel("")
+        subtitulo = QLabel("Accede al panel de administración del sistema.")
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
 
         self.input_usuario = QLineEdit()
         self.input_usuario.setPlaceholderText("Usuario")
@@ -55,8 +59,10 @@ class LoginView(QWidget):
 
         layout.addWidget(titulo)
         layout.addWidget(subtitulo)
+        layout.addSpacing(8)
         layout.addWidget(self.input_usuario)
         layout.addWidget(self.input_password)
+        layout.addSpacing(8)
         layout.addWidget(self.btn_ingresar)
 
         layout_principal.addWidget(contenedor)
@@ -69,7 +75,6 @@ class LoginView(QWidget):
             QMessageBox.warning(self, "Validación", "Debes ingresar usuario y contraseña.")
             return
 
-        # Login temporal de desarrollo
         if usuario == "admin" and password == "1234":
             self.dashboard_gestion = DashboardGestionView()
             self.dashboard_gestion.show()

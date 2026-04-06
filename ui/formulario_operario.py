@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -33,28 +34,77 @@ class FormularioOperarioView(QWidget):
         self.respuesta_service = RespuestaService()
 
         self.preguntas_widgets: list[tuple[dict, QWidget]] = []
+        self.formulario_enviado = False
 
         self.setWindowTitle("Formulario Operario")
         self.resize(1200, 800)
 
+        self._configurar_modo_operario_bloqueante()
         self._init_ui()
         self.cargar_preguntas()
 
+    def _configurar_modo_operario_bloqueante(self) -> None:
+        self.setWindowFlags(
+            Qt.Window
+            | Qt.CustomizeWindowHint
+            | Qt.WindowStaysOnTopHint
+        )
+        self.setWindowModality(Qt.ApplicationModal)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self.showFullScreen()
+        self.raise_()
+        self.activateWindow()
+
+    def closeEvent(self, event) -> None:
+        if not self.formulario_enviado:
+            QMessageBox.warning(
+                self,
+                "Formulario pendiente",
+                "Debes enviar el formulario antes de cerrar la ventana.",
+            )
+            event.ignore()
+            return
+
+        event.accept()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if not self.formulario_enviado and event.key() == Qt.Key_Escape:
+            event.ignore()
+            return
+
+        super().keyPressEvent(event)
+
+    def marcar_formulario_enviado(self) -> None:
+        self.formulario_enviado = True
+
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
+        layout_principal.setContentsMargins(24, 24, 24, 24)
+        layout_principal.setSpacing(16)
+
+        cabecera = QFrame()
+        cabecera.setProperty("card", "true")
+
+        layout_cabecera = QVBoxLayout(cabecera)
+        layout_cabecera.setContentsMargins(20, 20, 20, 20)
+        layout_cabecera.setSpacing(10)
 
         titulo = QLabel("Formulario de Operario")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setStyleSheet("font-size: 22px; font-weight: bold;")
+        titulo.setProperty("role", "title")
 
         subtitulo = QLabel(self._build_contexto_texto())
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
 
-        layout_principal.addWidget(titulo)
-        layout_principal.addWidget(subtitulo)
+        fila_identificador = QHBoxLayout()
+        fila_identificador.setSpacing(10)
 
-        cabecera = QHBoxLayout()
+        label_identificador = QLabel("Identificador:")
+        label_identificador.setProperty("role", "section")
 
         self.input_identificador = QLineEdit()
         self.input_identificador.setPlaceholderText("Identificador / OP / referencia")
@@ -66,34 +116,60 @@ class FormularioOperarioView(QWidget):
         )
         self.input_identificador.setText(str(identificador_inicial).strip())
 
-        cabecera.addWidget(QLabel("Identificador:"))
-        cabecera.addWidget(self.input_identificador)
+        fila_identificador.addWidget(label_identificador)
+        fila_identificador.addWidget(self.input_identificador, 1)
 
-        layout_principal.addLayout(cabecera)
+        layout_cabecera.addWidget(titulo)
+        layout_cabecera.addWidget(subtitulo)
+        layout_cabecera.addLayout(fila_identificador)
+
+        layout_principal.addWidget(cabecera)
+
+        panel_preguntas = QFrame()
+        panel_preguntas.setProperty("card", "true")
+
+        layout_panel_preguntas = QVBoxLayout(panel_preguntas)
+        layout_panel_preguntas.setContentsMargins(18, 18, 18, 18)
+        layout_panel_preguntas.setSpacing(12)
+
+        label_preguntas = QLabel("Preguntas")
+        label_preguntas.setProperty("role", "section")
+        layout_panel_preguntas.addWidget(label_preguntas)
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
 
         self.contenedor_preguntas = QWidget()
         self.layout_preguntas = QVBoxLayout(self.contenedor_preguntas)
         self.layout_preguntas.setAlignment(Qt.AlignTop)
+        self.layout_preguntas.setSpacing(12)
 
         self.scroll_area.setWidget(self.contenedor_preguntas)
-        layout_principal.addWidget(self.scroll_area)
+        layout_panel_preguntas.addWidget(self.scroll_area)
 
-        botones = QHBoxLayout()
+        layout_principal.addWidget(panel_preguntas, 1)
 
-        self.btn_guardar = QPushButton("Guardar formulario")
-        self.btn_guardar.clicked.connect(self.guardar_formulario)
+        barra_acciones = QFrame()
+        barra_acciones.setProperty("card", "true")
+
+        layout_acciones = QHBoxLayout(barra_acciones)
+        layout_acciones.setContentsMargins(18, 14, 18, 14)
+        layout_acciones.setSpacing(10)
 
         self.btn_recargar = QPushButton("Recargar preguntas")
+        self.btn_recargar.setProperty("variant", "secondary")
         self.btn_recargar.clicked.connect(self.cargar_preguntas)
 
-        botones.addStretch()
-        botones.addWidget(self.btn_recargar)
-        botones.addWidget(self.btn_guardar)
+        self.btn_guardar = QPushButton("Guardar formulario")
+        self.btn_guardar.setProperty("variant", "success")
+        self.btn_guardar.clicked.connect(self.guardar_formulario)
 
-        layout_principal.addLayout(botones)
+        layout_acciones.addStretch()
+        layout_acciones.addWidget(self.btn_recargar)
+        layout_acciones.addWidget(self.btn_guardar)
+
+        layout_principal.addWidget(barra_acciones)
 
     def _build_contexto_texto(self) -> str:
         partes: list[str] = []
@@ -144,14 +220,17 @@ class FormularioOperarioView(QWidget):
             if not preguntas:
                 aviso = QLabel("No hay preguntas configuradas para este contexto.")
                 aviso.setAlignment(Qt.AlignCenter)
+                aviso.setProperty("role", "subtitle")
                 self.layout_preguntas.addWidget(aviso)
                 return
 
             for pregunta in preguntas:
                 frame = QFrame()
-                frame.setFrameShape(QFrame.StyledPanel)
+                frame.setProperty("card", "true")
 
                 layout = QVBoxLayout(frame)
+                layout.setContentsMargins(16, 16, 16, 16)
+                layout.setSpacing(10)
 
                 texto = pregunta.get("texto", "")
                 obligatoria = pregunta.get("obligatoria", True)
@@ -161,7 +240,7 @@ class FormularioOperarioView(QWidget):
                     + (" *" if obligatoria else "")
                 )
                 label.setWordWrap(True)
-                label.setStyleSheet("font-size: 14px; font-weight: bold;")
+                label.setProperty("role", "section")
 
                 layout.addWidget(label)
 
@@ -184,7 +263,7 @@ class FormularioOperarioView(QWidget):
 
         if tipo == "texto":
             widget = QTextEdit()
-            widget.setFixedHeight(90)
+            widget.setFixedHeight(110)
             return widget
 
         if tipo == "numero":
@@ -238,6 +317,7 @@ class FormularioOperarioView(QWidget):
             )
 
             QMessageBox.information(self, "Éxito", "Formulario guardado correctamente.")
+            self.marcar_formulario_enviado()
             self.close()
 
         except Exception as exc:

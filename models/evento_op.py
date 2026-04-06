@@ -1,53 +1,108 @@
-from dataclasses import dataclass, asdict
-from typing import Optional
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+from typing import Any
 
 
 @dataclass
 class EventoOP:
     id_evento: str
+    id_apontamento: str
     num_ordem: str
-    estado_anterior: str
-    estado_nuevo: str
-    fecha_evento: str
 
-    id_apontamento: Optional[float] = None
-    cod_recurso: Optional[str] = None
-    operador: Optional[str] = None
-    cod_ativ: Optional[str] = None
-    cod_setor: Optional[str] = None
-    turno: Optional[int] = None
+    cod_recurso: str | None = None
+    operador: str | None = None
+    cod_ativ: str | None = None
+    cod_setor: str | None = None
+    turno: str | None = None
 
-    dt_producao: Optional[str] = None
-    hora_inicio: Optional[str] = None
-    hora_fim: Optional[str] = None
+    dt_producao: str | None = None
+    hora_inicio: str | None = None
+    hora_fim: str | None = None
 
-    descricao_op: Optional[str] = None
-    descricao_processo: Optional[str] = None
-    obs: Optional[str] = None
+    descricao_op: str | None = None
+    descricao_processo: str | None = None
+    obs: str | None = None
 
-    qtd_produzida: Optional[int] = None
-    qtd_planejado: Optional[float] = None
-    qtd_perdas: Optional[int] = None
-    justificativa_perda: Optional[str] = None
+    qtd_produzida: int | float | None = None
+    qtd_planejado: int | float | None = None
+    qtd_perdas: int | float | None = None
+    justificativa_perda: str | None = None
 
-    estacao_origen: Optional[str] = None
-    contexto_resuelto: Optional[dict] = None
-    id_formulario_generado: Optional[str] = None
-    mensaje_error: Optional[str] = None
+    estacao_origen: str | None = None
+    contexto_resuelto: dict[str, Any] | None = None
+    id_formulario_generado: str | None = None
+    mensaje_error: str | None = None
     procesado: bool = False
 
-    def to_dict(self) -> dict:
+    estado_anterior: str | None = None
+    estado_nuevo: str | None = None
+    fecha_evento: str | None = None
+
+    def __post_init__(self) -> None:
+        self.id_evento = str(self.id_evento).strip()
+        self.id_apontamento = str(self.id_apontamento).strip()
+        self.num_ordem = str(self.num_ordem).strip()
+
+        if not self.id_evento:
+            raise ValueError("id_evento es obligatorio.")
+
+        if not self.id_apontamento:
+            raise ValueError("id_apontamento es obligatorio.")
+
+        if not self.num_ordem:
+            raise ValueError("num_ordem es obligatorio.")
+
+        self.cod_recurso = self._normalizar_opcional(self.cod_recurso)
+        self.operador = self._normalizar_opcional(self.operador)
+        self.cod_ativ = self._normalizar_opcional(self.cod_ativ)
+        self.cod_setor = self._normalizar_opcional(self.cod_setor)
+        self.turno = self._normalizar_opcional(self.turno)
+
+        self.dt_producao = self._normalizar_opcional(self.dt_producao)
+        self.hora_inicio = self._normalizar_opcional(self.hora_inicio)
+        self.hora_fim = self._normalizar_opcional(self.hora_fim)
+
+        self.descricao_op = self._normalizar_opcional(self.descricao_op)
+        self.descricao_processo = self._normalizar_opcional(self.descricao_processo)
+        self.obs = self._normalizar_opcional(self.obs)
+
+        self.justificativa_perda = self._normalizar_opcional(self.justificativa_perda)
+
+        self.estacao_origen = self._normalizar_opcional(self.estacao_origen)
+        self.id_formulario_generado = self._normalizar_opcional(self.id_formulario_generado)
+        self.mensaje_error = self._normalizar_opcional(self.mensaje_error)
+
+        self.estado_anterior = self._normalizar_opcional(self.estado_anterior)
+        self.estado_nuevo = self._normalizar_opcional(self.estado_nuevo)
+        self.fecha_evento = self._normalizar_opcional(self.fecha_evento)
+
+        if self.contexto_resuelto is not None and not isinstance(self.contexto_resuelto, dict):
+            raise ValueError("contexto_resuelto debe ser un diccionario o None.")
+
+        self.procesado = bool(self.procesado)
+
+    @staticmethod
+    def _normalizar_opcional(valor: Any) -> str | None:
+        if valor is None:
+            return None
+
+        valor_normalizado = str(valor).strip()
+        return valor_normalizado or None
+
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @staticmethod
-    def from_dict(data: dict) -> "EventoOP":
+    def from_dict(data: dict[str, Any]) -> "EventoOP":
         return EventoOP(
             id_evento=data["id_evento"],
+            id_apontamento=str(
+                data.get("id_apontamento")
+                or data.get("id_evento")
+                or ""
+            ).strip(),
             num_ordem=data["num_ordem"],
-            estado_anterior=data["estado_anterior"],
-            estado_nuevo=data["estado_nuevo"],
-            fecha_evento=data["fecha_evento"],
-            id_apontamento=data.get("id_apontamento"),
             cod_recurso=data.get("cod_recurso"),
             operador=data.get("operador"),
             cod_ativ=data.get("cod_ativ"),
@@ -68,4 +123,7 @@ class EventoOP:
             id_formulario_generado=data.get("id_formulario_generado"),
             mensaje_error=data.get("mensaje_error"),
             procesado=data.get("procesado", False),
+            estado_anterior=data.get("estado_anterior"),
+            estado_nuevo=data.get("estado_nuevo"),
+            fecha_evento=data.get("fecha_evento"),
         )

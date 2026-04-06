@@ -1,4 +1,6 @@
-{
-    "ESTACION-77": ["ESTACION-77", "MAQ-01", "MAQ-01A"],
-    "ESTACION-88": ["ESTACION-88", "MAQ-02"]
-}
+[
+    {
+        "estacion": "ESTACION-77",
+        "codigos_recurso": ["REC-01"]
+    }
+]

@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QComboBox,
     QHeaderView,
+    QFrame,
 )
 
 from services.catalogo_contexto_service import CatalogoContextoService
@@ -34,14 +35,37 @@ class ReportesView(QWidget):
 
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
+        layout_principal.setContentsMargins(24, 24, 24, 24)
+        layout_principal.setSpacing(16)
 
         titulo = QLabel("Reportes de Formularios")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        titulo.setProperty("role", "title")
+
+        subtitulo = QLabel("Consulta, filtra y revisa la información registrada en los formularios.")
+        subtitulo.setAlignment(Qt.AlignCenter)
+        subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
+
         layout_principal.addWidget(titulo)
+        layout_principal.addWidget(subtitulo)
+
+        panel_filtros = QFrame()
+        panel_filtros.setProperty("card", "true")
+
+        layout_filtros = QVBoxLayout(panel_filtros)
+        layout_filtros.setContentsMargins(18, 18, 18, 18)
+        layout_filtros.setSpacing(12)
+
+        label_filtros = QLabel("Filtros")
+        label_filtros.setProperty("role", "section")
+        layout_filtros.addWidget(label_filtros)
 
         filtros_fila_1 = QHBoxLayout()
+        filtros_fila_1.setSpacing(10)
+
         filtros_fila_2 = QHBoxLayout()
+        filtros_fila_2.setSpacing(10)
 
         self.input_identificador = QLineEdit()
         self.input_identificador.setPlaceholderText("Buscar identificador...")
@@ -109,18 +133,32 @@ class ReportesView(QWidget):
         filtros_fila_2.addWidget(self.input_texto_pregunta)
         filtros_fila_2.addWidget(self.combo_con_accion_correctiva)
 
-        layout_principal.addLayout(filtros_fila_1)
-        layout_principal.addLayout(filtros_fila_2)
+        layout_filtros.addLayout(filtros_fila_1)
+        layout_filtros.addLayout(filtros_fila_2)
 
         botones = QHBoxLayout()
+        botones.setSpacing(10)
 
         self.btn_limpiar = QPushButton("Limpiar filtros")
+        self.btn_limpiar.setProperty("variant", "secondary")
         self.btn_limpiar.clicked.connect(self.limpiar_filtros)
 
         botones.addStretch()
         botones.addWidget(self.btn_limpiar)
 
-        layout_principal.addLayout(botones)
+        layout_filtros.addLayout(botones)
+        layout_principal.addWidget(panel_filtros)
+
+        panel_tabla = QFrame()
+        panel_tabla.setProperty("card", "true")
+
+        layout_tabla = QVBoxLayout(panel_tabla)
+        layout_tabla.setContentsMargins(18, 18, 18, 18)
+        layout_tabla.setSpacing(12)
+
+        label_resultados = QLabel("Resultados")
+        label_resultados.setProperty("role", "section")
+        layout_tabla.addWidget(label_resultados)
 
         self.tabla_reportes = QTableWidget()
         self.tabla_reportes.setColumnCount(14)
@@ -148,11 +186,14 @@ class ReportesView(QWidget):
         self.tabla_reportes.verticalHeader().setVisible(False)
         self.tabla_reportes.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        layout_principal.addWidget(self.tabla_reportes)
+        layout_tabla.addWidget(self.tabla_reportes)
 
         self.label_total = QLabel("Total registros: 0")
         self.label_total.setAlignment(Qt.AlignRight)
-        layout_principal.addWidget(self.label_total)
+        self.label_total.setProperty("role", "subtitle")
+        layout_tabla.addWidget(self.label_total)
+
+        layout_principal.addWidget(panel_tabla, 1)
 
         self._conectar_filtros()
 
