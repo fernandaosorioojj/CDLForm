@@ -1,135 +1,88 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import pyodbc
+
+from config.sql_server_config import build_connection_string
+from services.catalogo_contexto_service import CatalogoContextoService
+from services.jobtrack_config_service import JobtrackConfigService
 
 
 class ApontamentoQueryService:
     def __init__(
         self,
-        server: str,
-        database: str,
-        username: str,
-        password: str,
-        driver: str = "ODBC Driver 18 for SQL Server",
-        estaciones_file: str | Path = "storage/estaciones_recursos.json",
-        usar_estacion_como_recurso_por_defecto: bool = True,
+        catalogo_contexto_service: CatalogoContextoService | None = None,
+        jobtrack_config_service: JobtrackConfigService | None = None,
     ) -> None:
-        self.server = server
-        self.database = database
-        self.username = username
-        self.password = password
-        self.driver = driver
-
-        self.estaciones_file = Path(estaciones_file)
-        self.usar_estacion_como_recurso_por_defecto = usar_estacion_como_recurso_por_defecto
-        self._ensure_estaciones_file()
-
-    def _ensure_estaciones_file(self) -> None:
-        self.estaciones_file.parent.mkdir(parents=True, exist_ok=True)
-        if not self.estaciones_file.exists():
-            self.estaciones_file.write_text("[]", encoding="utf-8")
+        self.catalogo_contexto_service = (
+            catalogo_contexto_service or CatalogoContextoService()
+        )
+        self.jobtrack_config_service = (
+            jobtrack_config_service or JobtrackConfigService()
+        )
 
     @staticmethod
-    def _normalizar_texto(valor: Any) -> str:
-        if valor is None:
-            return ""
-        return str(valor).strip()
+    def _normalizar_cod_recursos(cod_recursos: Sequence[str]) -> list[str]:
+        normalizados = [
+            str(cod).strip()
+            for cod in cod_recursos
+            if str(cod).strip()
+        ]
 
-    def _read_estaciones_data(self) -> list[dict[str, Any]]:
-        try:
-            data = json.loads(self.estaciones_file.read_text(encoding="utf-8"))
-            if isinstance(data, list):
-                return [item for item in data if isinstance(item, dict)]
-            return []
-        except Exception:
-            return []
+        unicos: list[str] = []
+        for cod in normalizados:
+            if cod not in unicos:
+                unicos.append(cod)
 
-    def _normalizar_lista_recursos(self, valor: Any) -> list[str]:
-        if valor is None:
-            return []
-
-        if isinstance(valor, list):
-            resultado: list[str] = []
-            for item in valor:
-                texto = self._normalizar_texto(item)
-                if texto and texto not in resultado:
-                    resultado.append(texto)
-            return resultado
-
-        texto = self._normalizar_texto(valor)
-        if not texto:
-            return []
-
-        if "," in texto:
-            resultado: list[str] = []
-            for item in texto.split(","):
-                normalizado = self._normalizar_texto(item)
-                if normalizado and normalizado not in resultado:
-                    resultado.append(normalizado)
-            return resultado
-
-        return [texto]
-
-    def _resolver_codigos_recurso(self, estacion: str) -> list[str]:
-        estacion_normalizada = self._normalizar_texto(estacion)
-
-        if not estacion_normalizada:
-            return []
-
-        for item in self._read_estaciones_data():
-            estacion_item = self._normalizar_texto(
-                item.get("estacion")
-                or item.get("estacao")
-                or item.get("estacao_local")
+        if not unicos:
+            raise ValueError(
+                "Debe indicar al menos un CodRecurso válido para consultar apuntamientos."
             )
 
-            if estacion_item != estacion_normalizada:
-                continue
+        return unicos
 
-            recursos = self._normalizar_lista_recursos(
-                item.get("codigos_recurso")
-                or item.get("cod_recurso")
-                or item.get("recursos")
-            )
+    @staticmethod
+    def _normalizar_limit(limit: int) -> int:
+        limit_normalizado = int(limit)
 
-            if recursos:
-                return recursos
+        if limit_normalizado <= 0:
+            raise ValueError("El límite debe ser mayor que cero.")
 
-        if self.usar_estacion_como_recurso_por_defecto:
-            return [estacion_normalizada]
+        return limit_normalizado
 
-        return []
-
-    def _get_connection(self) -> pyodbc.Connection:
-        connection_string = (
-            f"DRIVER={{{self.driver}}};"
-            f"SERVER={self.server};"
-            f"DATABASE={self.database};"
-            f"UID={self.username};"
-            f"PWD={self.password};"
-            "TrustServerCertificate=yes;"
-        )
-        return pyodbc.connect(connection_string)
-
-    def buscar_apontamentos_pendientes(
-        self,
-        estacion: str,
-        ids_excluidos: set[str] | None = None,
+    @staticmethod
+    def _rows_to_dicts(
+        cursor: pyodbc.Cursor,
+        rows: list[pyodbc.Row],
     ) -> list[dict[str, Any]]:
-        codigos_recurso = self._resolver_codigos_recurso(estacion)
+        columnas = [columna[0] for columna in cursor.description]
+        return [dict(zip(columnas, row)) for row in rows]
 
-        if not codigos_recurso:
-            return []
+    def listar_apontamentos_por_cod_recursos(
+        self,
+        cod_recursos: Sequence[str],
+        limit: int = 20,
+        solo_finalizados: bool = True,
+    ) -> list[dict[str, Any]]:
+        cod_recursos_normalizados = self._normalizar_cod_recursos(cod_recursos)
+        limit_normalizado = self._normalizar_limit(limit)
+        placeholders = self.catalogo_contexto_service.construir_placeholders_in(
+            len(cod_recursos_normalizados)
+        )
 
-        ids_excluidos = ids_excluidos or set()
-        placeholders = ", ".join("?" for _ in codigos_recurso)
+        where_clauses: list[str] = []
+        params: list[Any] = []
+
+        if solo_finalizados:
+            where_clauses.append("[HoraFim] IS NOT NULL")
+            where_clauses.append("[HoraFim] <> '1899-12-30 00:00:00.000'")
+
+        where_clauses.append(f"LTRIM(RTRIM([CodRecurso])) IN ({placeholders})")
+        params.extend(cod_recursos_normalizados)
 
         sql = f"""
-        SELECT
+        SELECT TOP ({limit_normalizado})
             [IdApontamento],
             [NumOrdem],
             [CodRecurso],
@@ -143,32 +96,77 @@ class ApontamentoQueryService:
             [QtdProduzida],
             [QtdPlanejado],
             [QtdPerdas],
-            [JustificativaPerda]
-        FROM [MetricsProd].[dbo].[Apontamentos]
-        WHERE [HoraFim] IS NOT NULL
-          AND [HoraFim] <> '1899-12-30 00:00:00.000'
-          AND [CodRecurso] IN ({placeholders})
-        ORDER BY [HoraFim] DESC
+            [JustificativaPerda],
+            [Obs]
+        FROM [dbo].[Apontamentos]
+        WHERE {" AND ".join(where_clauses)}
+        ORDER BY [HoraFim] DESC, [IdApontamento] DESC
         """
 
-        with self._get_connection() as conn:
+        with pyodbc.connect(build_connection_string()) as conn:
             cursor = conn.cursor()
-            cursor.execute(sql, tuple(codigos_recurso))
-            columns = [column[0] for column in cursor.description]
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+            return self._rows_to_dicts(cursor, rows)
+
+    def listar_apontamentos_por_estacion(
+        self,
+        estacion: str,
+        limit: int = 20,
+        solo_finalizados: bool = True,
+    ) -> list[dict[str, Any]]:
+        cod_recursos = self.catalogo_contexto_service.obtener_cod_recursos_por_estacion(
+            estacion
+        )
+
+        return self.listar_apontamentos_por_cod_recursos(
+            cod_recursos=cod_recursos,
+            limit=limit,
+            solo_finalizados=solo_finalizados,
+        )
+
+    def listar_apontamentos_estacion_actual(
+        self,
+        limit: int = 20,
+        solo_finalizados: bool = True,
+    ) -> list[dict[str, Any]]:
+        estacion = self.jobtrack_config_service.obtener_estacion_local()
+
+        return self.listar_apontamentos_por_estacion(
+            estacion=estacion,
+            limit=limit,
+            solo_finalizados=solo_finalizados,
+        )
+
+    def obtener_contexto_estacion_actual(self) -> dict[str, object]:
+        estacion = self.jobtrack_config_service.obtener_estacion_local()
+        return self.catalogo_contexto_service.resolver_contexto_desde_estacion(estacion)
+
+    def listar_cod_recursos_disponibles(
+        self,
+        patron: str | None = None,
+        limit: int = 100,
+    ) -> list[str]:
+        limit_normalizado = self._normalizar_limit(limit)
+
+        sql = f"""
+        SELECT DISTINCT TOP ({limit_normalizado})
+            LTRIM(RTRIM([CodRecurso])) AS CodRecurso
+        FROM [dbo].[Apontamentos]
+        WHERE [CodRecurso] IS NOT NULL
+        """
+
+        params: list[Any] = []
+
+        if patron and patron.strip():
+            sql += "\n  AND LTRIM(RTRIM([CodRecurso])) LIKE ?"
+            params.append(f"%{patron.strip()}%")
+
+        sql += "\nORDER BY CodRecurso"
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
 
-        candidatos: list[dict[str, Any]] = []
-
-        for row in rows:
-            registro = dict(zip(columns, row))
-            id_apontamento = self._normalizar_texto(registro.get("IdApontamento"))
-
-            if not id_apontamento:
-                continue
-
-            if id_apontamento in ids_excluidos:
-                continue
-
-            candidatos.append(registro)
-
-        return candidatos
+        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]

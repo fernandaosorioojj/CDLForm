@@ -1,23 +1,28 @@
+from __future__ import annotations
+
 import pyodbc
 
-server = "172.16.2.251"
-database = "MetricsBetaProductivo"
-username = "fosorio"
-password = "Bop123456+"
-driver = "ODBC Driver 18 for SQL Server"
+from config.sql_server_config import build_connection_string
 
-connection_string = (
-    f"DRIVER={{{driver}}};"
-    f"SERVER={server};"
-    f"DATABASE={database};"
-    f"UID={username};"
-    f"PWD={password};"
-    "TrustServerCertificate=yes;"
-)
+
+connection_string = build_connection_string()
+
+sql = """
+SELECT DISTINCT
+    LTRIM(RTRIM([CodRecurso])) AS CodRecurso
+FROM [dbo].[Apontamentos]
+WHERE [CodRecurso] LIKE ?
+   OR [CodRecurso] LIKE ?
+   OR [CodRecurso] LIKE ?
+   OR [CodRecurso] LIKE ?
+ORDER BY CodRecurso
+"""
 
 with pyodbc.connect(connection_string) as conn:
     cursor = conn.cursor()
-    cursor.execute("SELECT TOP 1 name FROM sys.tables ORDER BY name")
-    row = cursor.fetchone()
-    print("Conexión OK")
-    print(row)
+    cursor.execute(sql, ("%77%", "%UTECO%", "%MONTAJE%", "%LAMIN%"))
+    rows = cursor.fetchall()
+
+    print("CodRecursos encontrados:")
+    for row in rows:
+        print(row[0])

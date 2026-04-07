@@ -1,174 +1,169 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any
 
-from core.exceptions import ValidationError, NotFoundError
-from models.operario import Operario
 from repositories.operario_repository import OperarioRepository
-from utils.id_generator import generate_id
 
 
 class OperarioService:
-    def __init__(self, operario_repository: Optional[OperarioRepository] = None):
+    def __init__(
+        self,
+        operario_repository: OperarioRepository | None = None,
+    ) -> None:
         self.operario_repository = operario_repository or OperarioRepository()
 
-    def crear_operario(
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
+
+    @staticmethod
+    def _normalizar_lista(valores: Any) -> list[str]:
+        if valores is None:
+            return []
+
+        if isinstance(valores, list):
+            resultado: list[str] = []
+            for valor in valores:
+                texto = str(valor).strip()
+                if texto and texto not in resultado:
+                    resultado.append(texto)
+            return resultado
+
+        texto = str(valores).strip()
+        return [texto] if texto else []
+
+    def _obtener_todos(self) -> list[dict]:
+        if hasattr(self.operario_repository, "listar_operarios"):
+            return self.operario_repository.listar_operarios()
+
+        if hasattr(self.operario_repository, "list_all"):
+            return self.operario_repository.list_all()
+
+        raise AttributeError(
+            "OperarioRepository no tiene ni 'listar_operarios' ni 'list_all'."
+        )
+
+    def _coincide_contexto(
         self,
-        nombre: str,
-        area: str,
-        maquina: str,
-        activo: bool = True,
-    ) -> Operario:
-        self._validar_datos_obligatorios(
-            nombre=nombre,
-            area=area,
-            maquina=maquina,
+        operario: dict,
+        cod_recurso: str | None = None,
+        cod_setor: str | None = None,
+    ) -> bool:
+        cod_recurso = self._normalizar_texto(cod_recurso)
+        cod_setor = self._normalizar_texto(cod_setor)
+
+        recursos_operario = self._normalizar_lista(
+            operario.get("cod_recursos")
+            or operario.get("maquinas")
+            or operario.get("cod_recurso")
+            or operario.get("maquina")
         )
 
-        registros_existentes = self.operario_repository.get_all()
-
-        id_operario = generate_id(
-            prefix="OPER",
-            records=registros_existentes,
-            field_name="id_operario",
+        setores_operario = self._normalizar_lista(
+            operario.get("cod_setores")
+            or operario.get("areas")
+            or operario.get("cod_setor")
+            or operario.get("area")
         )
 
-        operario = Operario(
-            id_operario=id_operario,
-            nombre=nombre.strip(),
-            area=area.strip(),
-            maquina=maquina.strip(),
-            activo=activo,
-        )
+        coincide_recurso = True
+        coincide_setor = True
 
-        self.operario_repository.add_operario(operario)
-        return operario
+        if cod_recurso and recursos_operario:
+            coincide_recurso = cod_recurso in recursos_operario
 
-    def obtener_operario_por_id(self, id_operario: str) -> Operario:
-        if not id_operario or not str(id_operario).strip():
-            raise ValidationError("El id_operario es obligatorio.")
+        if cod_setor and setores_operario:
+            coincide_setor = cod_setor in setores_operario
 
-        operario = self.operario_repository.get_operario_by_id(id_operario.strip())
+        return coincide_recurso and coincide_setor
 
-        if not operario:
-            raise NotFoundError(f"No se encontró el operario '{id_operario}'.")
-
-        return operario
-
-    def listar_operarios(self, solo_activos: bool = True) -> List[Operario]:
-        if solo_activos:
-            return self.operario_repository.get_operarios_activos()
-
-        return self.operario_repository.get_all_operarios()
-
-    def listar_operarios_por_area(self, area: str, solo_activos: bool = True) -> List[Operario]:
-        if not area or not area.strip():
-            raise ValidationError("El área es obligatoria.")
-
-        return self.operario_repository.get_operarios_por_area(
-            area=area.strip(),
-            solo_activos=solo_activos,
-        )
-
-    def listar_operarios_por_maquina(self, maquina: str, solo_activos: bool = True) -> List[Operario]:
-        if not maquina or not maquina.strip():
-            raise ValidationError("La máquina es obligatoria.")
-
-        return self.operario_repository.get_operarios_por_maquina(
-            maquina=maquina.strip(),
-            solo_activos=solo_activos,
-        )
-
-    def listar_operarios_por_area_y_maquina(
+    def listar_operarios(
         self,
-        area: str,
-        maquina: str,
         solo_activos: bool = True,
-    ) -> List[Operario]:
-        if not area or not area.strip():
-            raise ValidationError("El área es obligatoria.")
+        cod_recurso: str | None = None,
+        cod_setor: str | None = None,
+    ) -> list[dict]:
+        operarios = self._obtener_todos()
+        resultado: list[dict] = []
 
-        if not maquina or not maquina.strip():
-            raise ValidationError("La máquina es obligatoria.")
+        for operario in operarios:
+            activo = operario.get("activo", operario.get("activa", True))
 
-        return self.operario_repository.get_operarios_por_area_y_maquina(
-            area=area.strip(),
-            maquina=maquina.strip(),
+            if solo_activos and not bool(activo):
+                continue
+
+            if not self._coincide_contexto(
+                operario=operario,
+                cod_recurso=cod_recurso,
+                cod_setor=cod_setor,
+            ):
+                continue
+
+            resultado.append(operario)
+
+        return resultado
+
+    def obtener_operario_preseleccionado(
+        self,
+        formulario: dict[str, Any],
+    ) -> str:
+        return self._normalizar_texto(
+            formulario.get("operario") or formulario.get("operador")
+        )
+
+    def listar_operarios_para_formulario(
+        self,
+        formulario: dict[str, Any],
+        solo_activos: bool = True,
+    ) -> list[dict]:
+        operario_preseleccionado = self.obtener_operario_preseleccionado(formulario)
+
+        if operario_preseleccionado:
+            return [
+                {
+                    "id_operario": operario_preseleccionado,
+                    "nombre": operario_preseleccionado,
+                    "activo": True,
+                    "origen": "apontamento",
+                }
+            ]
+
+        cod_recurso = self._normalizar_texto(
+            formulario.get("cod_recurso") or formulario.get("maquina")
+        )
+        cod_setor = self._normalizar_texto(
+            formulario.get("cod_setor") or formulario.get("area")
+        )
+
+        return self.listar_operarios(
+            solo_activos=solo_activos,
+            cod_recurso=cod_recurso,
+            cod_setor=cod_setor,
+        )
+
+    def listar_nombres_operarios_para_formulario(
+        self,
+        formulario: dict[str, Any],
+        solo_activos: bool = True,
+    ) -> list[str]:
+        operarios = self.listar_operarios_para_formulario(
+            formulario=formulario,
             solo_activos=solo_activos,
         )
 
-    def cambiar_estado_operario(self, id_operario: str, activo: bool) -> Operario:
-        if not id_operario or not id_operario.strip():
-            raise ValidationError("El id_operario es obligatorio.")
+        nombres: list[str] = []
 
-        operario_actual = self.operario_repository.get_operario_by_id(id_operario.strip())
+        for operario in operarios:
+            nombre = self._normalizar_texto(
+                operario.get("nombre")
+                or operario.get("nombre_operario")
+                or operario.get("operario")
+                or operario.get("id_operario")
+            )
 
-        if not operario_actual:
-            raise NotFoundError(f"No se encontró el operario '{id_operario}'.")
+            if nombre and nombre not in nombres:
+                nombres.append(nombre)
 
-        operario_actualizado = Operario(
-            id_operario=operario_actual.id_operario,
-            nombre=operario_actual.nombre,
-            area=operario_actual.area,
-            maquina=operario_actual.maquina,
-            activo=activo,
-        )
-
-        self.operario_repository.update_operario(
-            id_operario=operario_actualizado.id_operario,
-            operario=operario_actualizado,
-        )
-
-        return operario_actualizado
-
-    def actualizar_operario(
-        self,
-        id_operario: str,
-        nombre: str,
-        area: str,
-        maquina: str,
-        activo: bool = True,
-    ) -> Operario:
-        if not id_operario or not id_operario.strip():
-            raise ValidationError("El id_operario es obligatorio.")
-
-        self._validar_datos_obligatorios(
-            nombre=nombre,
-            area=area,
-            maquina=maquina,
-        )
-
-        operario_existente = self.operario_repository.get_operario_by_id(id_operario.strip())
-
-        if not operario_existente:
-            raise NotFoundError(f"No se encontró el operario '{id_operario}'.")
-
-        operario_actualizado = Operario(
-            id_operario=id_operario.strip(),
-            nombre=nombre.strip(),
-            area=area.strip(),
-            maquina=maquina.strip(),
-            activo=activo,
-        )
-
-        self.operario_repository.update_operario(
-            id_operario=operario_actualizado.id_operario,
-            operario=operario_actualizado,
-        )
-
-        return operario_actualizado
-
-    def _validar_datos_obligatorios(
-        self,
-        nombre: str,
-        area: str,
-        maquina: str,
-    ) -> None:
-        if not nombre or not nombre.strip():
-            raise ValidationError("El nombre del operario es obligatorio.")
-
-        if not area or not area.strip():
-            raise ValidationError("El área del operario es obligatoria.")
-
-        if not maquina or not maquina.strip():
-            raise ValidationError("La máquina del operario es obligatoria.")
+        return nombres

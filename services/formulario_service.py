@@ -1,134 +1,306 @@
 from __future__ import annotations
 
-from typing import Optional
+from datetime import datetime
+from typing import Any
 
-from core.exceptions import NotFoundError, ValidationError
-from models.formulario import Formulario
 from repositories.formulario_repository import FormularioRepository
-from utils.id_generator import generate_id
 
 
 class FormularioService:
-    def __init__(self, formulario_repository: Optional[FormularioRepository] = None):
+    def __init__(
+        self,
+        formulario_repository: FormularioRepository | None = None,
+    ) -> None:
         self.formulario_repository = formulario_repository or FormularioRepository()
 
-    def crear_formulario(
-        self,
-        identificador: str,
-        operario: str,
-        id_operario: str = "",
-        contexto: Optional[dict] = None,
-        evento_origen: Optional[str] = None,
-        estado: str = "pendiente",
-    ) -> Formulario:
-        self._validar_datos_obligatorios(
-            identificador=identificador,
-            operario=operario,
-            estado=estado,
-        )
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
 
-        registros_existentes = [
-            formulario.to_dict() for formulario in self.formulario_repository.list_all()
-        ]
-
-        id_formulario = generate_id(
-            prefix="FORM",
-            records=registros_existentes,
-            field_name="id_formulario",
-        )
-
-        contexto = contexto or {}
-
-        formulario = Formulario(
-            id_formulario=id_formulario,
-            identificador=identificador.strip(),
-            operario=operario.strip(),
-            id_operario=id_operario.strip() if isinstance(id_operario, str) else "",
-            cod_setor=str(contexto.get("cod_setor", "")).strip(),
-            cod_recurso=str(contexto.get("cod_recurso", "")).strip(),
-            cod_ativ=str(contexto.get("cod_ativ", "")).strip(),
-            turno=str(contexto.get("turno", "")).strip(),
-            tipo_trabajo=str(contexto.get("tipo_trabajo", "")).strip(),
-            evento_origen=evento_origen.strip()
-            if isinstance(evento_origen, str) and evento_origen.strip()
-            else None,
-            estado=estado.strip(),
-        )
-
-        self.formulario_repository.add_formulario(formulario)
-        return formulario
-
-    def obtener_formulario_por_id(self, id_formulario: str) -> Formulario:
-        if not id_formulario or not id_formulario.strip():
-            raise ValidationError("El id_formulario es obligatorio.")
-
-        formulario = self.formulario_repository.get_by_id(id_formulario.strip())
-        if not formulario:
-            raise NotFoundError(f"No se encontró el formulario '{id_formulario}'.")
-
-        return formulario
-    
-    def obtener_formulario_por_evento_origen(self, evento_origen: str) -> Formulario | None:
-        if not evento_origen or not str(evento_origen).strip():
+    @staticmethod
+    def _serializar_valor(valor: Any) -> Any:
+        if valor is None:
             return None
 
-        return self.formulario_repository.get_by_evento_origen(
-            str(evento_origen).strip()
+        if isinstance(valor, datetime):
+            return valor.isoformat()
+
+        if hasattr(valor, "isoformat"):
+            try:
+                return valor.isoformat()
+            except TypeError:
+                pass
+
+        return valor
+
+    @staticmethod
+    def _normalizar_id_apontamento(valor: Any) -> str:
+        if valor is None:
+            raise ValueError("El IdApontamento no puede venir vacío.")
+
+        if isinstance(valor, int):
+            return str(valor)
+
+        if isinstance(valor, float):
+            if valor.is_integer():
+                return str(int(valor))
+            return str(valor).strip()
+
+        texto = str(valor).strip()
+        if not texto:
+            raise ValueError("El IdApontamento no puede venir vacío.")
+
+        try:
+            numero = float(texto)
+            if numero.is_integer():
+                return str(int(numero))
+        except ValueError:
+            pass
+
+        return texto
+
+    def _generar_id_formulario(self) -> str:
+        formularios = self.formulario_repository.listar_formularios()
+        maximo = 0
+
+        for formulario in formularios:
+            valor = str(formulario.get("id_formulario", "")).strip()
+            if not valor.startswith("FORM-"):
+                continue
+
+            try:
+                numero = int(valor.split("-")[-1])
+            except ValueError:
+                continue
+
+            if numero > maximo:
+                maximo = numero
+
+        return f"FORM-{maximo + 1:04d}"
+
+    def _obtener_fecha_formulario(self, hora_fim: Any) -> str:
+        if isinstance(hora_fim, datetime):
+            return hora_fim.date().isoformat()
+
+        texto = self._normalizar_texto(hora_fim)
+        if not texto:
+            return datetime.now().date().isoformat()
+
+        try:
+            return datetime.fromisoformat(texto).date().isoformat()
+        except ValueError:
+            return datetime.now().date().isoformat()
+
+    def listar_formularios(self) -> list[dict]:
+        return self.formulario_repository.listar_formularios()
+
+    def listar_formularios_por_estado(self, estado: str) -> list[dict]:
+        return self.formulario_repository.listar_por_estado(estado)
+
+    def listar_formularios_pendientes_operario(self) -> list[dict]:
+        pendientes = self.listar_formularios_por_estado("pendiente_operario")
+
+        return sorted(
+            pendientes,
+            key=lambda formulario: (
+                self._normalizar_texto(formulario.get("fecha_creacion")),
+                self._normalizar_texto(formulario.get("id_formulario")),
+            ),
         )
 
+    def obtener_siguiente_formulario_pendiente_operario(self) -> dict | None:
+        pendientes = self.listar_formularios_pendientes_operario()
+        if not pendientes:
+            return None
+        return pendientes[0]
 
-    def listar_formularios(self) -> list[Formulario]:
-        return self.formulario_repository.list_all()
+    def obtener_formulario_por_id(self, id_formulario: str) -> dict | None:
+        return self.formulario_repository.obtener_por_id(id_formulario)
 
-    def listar_formularios_por_estado(self, estado: str) -> list[Formulario]:
-        if not estado or not estado.strip():
-            raise ValidationError("El estado es obligatorio para filtrar formularios.")
-
-        return self.formulario_repository.get_formularios_por_estado(estado.strip())
-
-    def listar_formularios_por_operario(self, operario: str) -> list[Formulario]:
-        if not operario or not operario.strip():
-            raise ValidationError("El operario es obligatorio para filtrar formularios.")
-
-        return self.formulario_repository.get_formularios_por_operario(operario.strip())
-
-    def actualizar_estado_formulario(self, id_formulario: str, nuevo_estado: str) -> Formulario:
-        if not id_formulario or not id_formulario.strip():
-            raise ValidationError("El id_formulario es obligatorio.")
-
-        if not nuevo_estado or not nuevo_estado.strip():
-            raise ValidationError("El nuevo estado es obligatorio.")
-
-        formulario = self.obtener_formulario_por_id(id_formulario.strip())
-        formulario.estado = nuevo_estado.strip()
-
-        self.formulario_repository.update_formulario(id_formulario.strip(), formulario)
-        return formulario
-
-    def asignar_operario(self, id_formulario: str, operario: str) -> Formulario:
-        if not id_formulario or not id_formulario.strip():
-            raise ValidationError("El id_formulario es obligatorio.")
-
-        if not operario or not operario.strip():
-            raise ValidationError("El operario es obligatorio.")
-
-        formulario = self.obtener_formulario_por_id(id_formulario.strip())
-        formulario.operario = operario.strip()
-
-        self.formulario_repository.update_formulario(id_formulario.strip(), formulario)
-        return formulario
-
-    def _validar_datos_obligatorios(
+    def obtener_formulario_por_id_apontamento(
         self,
-        identificador: str,
-        operario: str,
+        id_apontamento: Any,
+    ) -> dict | None:
+        id_normalizado = self._normalizar_id_apontamento(id_apontamento)
+        return self.formulario_repository.obtener_por_id_apontamento(id_normalizado)
+
+    def existe_formulario_para_apontamento(self, id_apontamento: Any) -> bool:
+        return self.obtener_formulario_por_id_apontamento(id_apontamento) is not None
+
+    def crear_formulario_pendiente_desde_registro_apontamento(
+        self,
+        registro: dict[str, Any],
+    ) -> dict[str, Any]:
+        id_apontamento = self._normalizar_id_apontamento(
+            registro.get("id_apontamento")
+        )
+
+        existente = self.obtener_formulario_por_id_apontamento(id_apontamento)
+        if existente:
+            return {
+                "ya_existia": True,
+                "formulario": existente,
+            }
+
+        identificador = self._normalizar_texto(
+            registro.get("num_ordem") or registro.get("identificador")
+        )
+        if not identificador:
+            raise ValueError(
+                "No se puede crear formulario sin identificador o NumOrdem."
+            )
+
+        cod_recurso = self._normalizar_texto(
+            registro.get("cod_recurso") or registro.get("maquina")
+        )
+        if not cod_recurso:
+            raise ValueError("No se puede crear formulario sin CodRecurso.")
+
+        cod_setor = self._normalizar_texto(
+            registro.get("cod_setor") or registro.get("area")
+        )
+
+        hora_fim = self._serializar_valor(
+            registro.get("hora_fim") or registro.get("HoraFim")
+        )
+        fecha_formulario = self._obtener_fecha_formulario(hora_fim)
+        ahora = datetime.now().isoformat(timespec="seconds")
+
+        formulario = {
+            "id_formulario": self._generar_id_formulario(),
+            "identificador": identificador,
+            "id_apontamento": id_apontamento,
+            "fecha_formulario": fecha_formulario,
+            "area": cod_setor,
+            "maquina": cod_recurso,
+            "cod_recurso": cod_recurso,
+            "cod_setor": cod_setor,
+            "cod_ativ": self._serializar_valor(
+                registro.get("cod_ativ") or registro.get("CodAtiv")
+            ),
+            "turno": self._serializar_valor(
+                registro.get("turno") or registro.get("Turno")
+            ),
+            "hora_fim": hora_fim,
+            "operario": self._normalizar_texto(
+                registro.get("operador") or registro.get("operario")
+            ),
+            "estacion": self._normalizar_texto(registro.get("estacion")),
+            "evento_origen": "apontamento_sql",
+            "estado": "pendiente_operario",
+            "descripcion_op": self._normalizar_texto(
+                registro.get("descripcion_op") or registro.get("DescricaoOP")
+            ),
+            "descripcion_proceso": self._normalizar_texto(
+                registro.get("descripcion_proceso")
+                or registro.get("descricao_processo")
+                or registro.get("DescricaoProcesso")
+            ),
+            "observacion_general": self._normalizar_texto(
+                registro.get("obs")
+            ),
+            "fecha_creacion": ahora,
+            "fecha_actualizacion": ahora,
+        }
+
+        guardado = self.formulario_repository.add_formulario(formulario)
+
+        return {
+            "ya_existia": False,
+            "formulario": guardado,
+        }
+
+    def actualizar_estado_formulario(
+        self,
+        id_formulario: str,
         estado: str,
-    ) -> None:
-        if not identificador or not identificador.strip():
-            raise ValidationError("El identificador es obligatorio.")
+        observacion_general: str | None = None,
+    ) -> dict:
+        formulario = self.obtener_formulario_por_id(id_formulario)
+        if not formulario:
+            raise ValueError(f"No existe el formulario {id_formulario}.")
 
-        if not operario or not operario.strip():
-            raise ValidationError("El operario es obligatorio.")
+        cambios = {
+            "estado": self._normalizar_texto(estado),
+            "fecha_actualizacion": datetime.now().isoformat(timespec="seconds"),
+        }
 
-        if not estado or not estado.strip():
-            raise ValidationError("El estado del formulario es obligatorio.")
+        if observacion_general is not None:
+            cambios["observacion_general"] = self._normalizar_texto(
+                observacion_general
+            )
+
+        actualizado = self.formulario_repository.actualizar_formulario(
+            id_formulario,
+            cambios,
+        )
+
+        if not actualizado:
+            raise ValueError(f"No se pudo actualizar el formulario {id_formulario}.")
+
+        return actualizado
+
+    def actualizar_campos_formulario(
+        self,
+        id_formulario: str,
+        cambios: dict[str, Any],
+    ) -> dict:
+        formulario = self.obtener_formulario_por_id(id_formulario)
+        if not formulario:
+            raise ValueError(f"No existe el formulario {id_formulario}.")
+
+        cambios_normalizados = dict(cambios)
+        cambios_normalizados["fecha_actualizacion"] = datetime.now().isoformat(
+            timespec="seconds"
+        )
+
+        actualizado = self.formulario_repository.actualizar_formulario(
+            id_formulario,
+            cambios_normalizados,
+        )
+
+        if not actualizado:
+            raise ValueError(f"No se pudo actualizar el formulario {id_formulario}.")
+
+        return actualizado
+
+    def asignar_operario(
+        self,
+        id_formulario: str,
+        operario: str,
+    ) -> dict:
+        operario_normalizado = self._normalizar_texto(operario)
+        if not operario_normalizado:
+            raise ValueError("El operario no puede venir vacío.")
+
+        return self.actualizar_campos_formulario(
+            id_formulario=id_formulario,
+            cambios={
+                "operario": operario_normalizado,
+            },
+        )
+
+    def marcar_formulario_en_apertura(self, id_formulario: str) -> dict:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado="en_apertura",
+        )
+
+    def marcar_formulario_pendiente_operario(self, id_formulario: str) -> dict:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado="pendiente_operario",
+        )
+
+    def marcar_formulario_completado(
+        self,
+        id_formulario: str,
+        observacion_general: str | None = None,
+    ) -> dict:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado="completado",
+            observacion_general=observacion_general,
+        )

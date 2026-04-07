@@ -2,76 +2,43 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from models.operario import Operario
 from repositories.base_repository import BaseRepository
+from utils.json_manager import JsonManager
 
 
 class OperarioRepository(BaseRepository):
     def __init__(self, file_path: Path | None = None) -> None:
-        super().__init__(file_path or Path("storage/operarios.json"))
+        self.file_path = Path(file_path or "storage/operarios.json")
+        super().__init__(self.file_path)
 
-    def _from_dict(self, data: dict) -> Operario:
-        return Operario.from_dict(data)
+    def list_all(self) -> list[dict]:
+        return self.get_all()
 
-    def _get_entity_id(self, entity: Operario) -> str:
-        return entity.id_operario
+    def listar_operarios(self) -> list[dict]:
+        return self.get_all()
 
-    def get_operarios_activos(self) -> list[Operario]:
-        return [operario for operario in self.list_all() if operario.activo]
+    def obtener_por_id(self, id_operario: str) -> dict | None:
+        id_normalizado = str(id_operario).strip()
 
-    def get_operarios_por_area(
-        self,
-        area: str,
-        solo_activos: bool = True,
-    ) -> list[Operario]:
-        area_normalizada = area.strip().lower()
+        for operario in self.get_all():
+            if str(operario.get("id_operario", "")).strip() == id_normalizado:
+                return operario
 
-        operarios = [
-            operario
-            for operario in self.list_all()
-            if operario.area.strip().lower() == area_normalizada
-        ]
+        return None
 
-        if solo_activos:
-            operarios = [operario for operario in operarios if operario.activo]
+    def add_operario(self, operario: dict) -> dict:
+        return self.add(operario)
 
-        return operarios
+    def actualizar_operario(self, id_operario: str, cambios: dict) -> dict | None:
+        id_normalizado = str(id_operario).strip()
+        operarios = self.get_all()
 
-    def get_operarios_por_maquina(
-        self,
-        maquina: str,
-        solo_activos: bool = True,
-    ) -> list[Operario]:
-        maquina_normalizada = maquina.strip().lower()
+        for indice, operario in enumerate(operarios):
+            if str(operario.get("id_operario", "")).strip() == id_normalizado:
+                operario_actualizado = dict(operario)
+                operario_actualizado.update(cambios)
+                operarios[indice] = operario_actualizado
+                JsonManager.write_json(str(self.file_path), operarios)
+                return operario_actualizado
 
-        operarios = [
-            operario
-            for operario in self.list_all()
-            if operario.maquina.strip().lower() == maquina_normalizada
-        ]
-
-        if solo_activos:
-            operarios = [operario for operario in operarios if operario.activo]
-
-        return operarios
-
-    def get_operarios_por_area_y_maquina(
-        self,
-        area: str,
-        maquina: str,
-        solo_activos: bool = True,
-    ) -> list[Operario]:
-        area_normalizada = area.strip().lower()
-        maquina_normalizada = maquina.strip().lower()
-
-        operarios = [
-            operario
-            for operario in self.list_all()
-            if operario.area.strip().lower() == area_normalizada
-            and operario.maquina.strip().lower() == maquina_normalizada
-        ]
-
-        if solo_activos:
-            operarios = [operario for operario in operarios if operario.activo]
-
-        return operarios
+        return None

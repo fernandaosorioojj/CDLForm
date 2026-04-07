@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QFrame,
 )
 
+from models import operario
 from services.formulario_service import FormularioService
 from services.pregunta_service import PreguntaService
 from services.respuesta_service import RespuestaService
@@ -42,6 +43,44 @@ class FormularioOperarioView(QWidget):
         self._configurar_modo_operario_bloqueante()
         self._init_ui()
         self.cargar_preguntas()
+
+    @staticmethod
+    def _normalizar_texto(valor):
+        if valor is None:
+            return ""
+        return str(valor).strip()
+
+
+    def _normalizar_operario(self, operario):
+        if isinstance(operario, dict):
+            return operario
+
+        nombre = self._normalizar_texto(operario)
+
+        if not nombre:
+            return {
+                "id_operario": "",
+                "nombre": "",
+                "nombre_operario": "",
+            }
+
+        return {
+            "id_operario": nombre,
+            "nombre": nombre,
+            "nombre_operario": nombre,
+        }
+
+
+    def _obtener_nombre_operario(self) -> str:
+        if isinstance(self.operario, dict):
+            return (
+                self._normalizar_texto(self._obtener_nombre_operario())
+                or self._normalizar_texto(self._obtener_nombre_operario())
+                or self._normalizar_texto(self._obtener_nombre_operario())
+                or self._normalizar_texto(self._obtener_nombre_operario())
+            )
+
+        return self._normalizar_texto(self.operario)
 
     def _configurar_modo_operario_bloqueante(self) -> None:
         self.setWindowFlags(
@@ -174,7 +213,7 @@ class FormularioOperarioView(QWidget):
     def _build_contexto_texto(self) -> str:
         partes: list[str] = []
 
-        nombre_operario = self.operario.get("nombre") or self.operario.get("nombre_operario")
+        nombre_operario = self._obtener_nombre_operario()
         if nombre_operario:
             partes.append(f"Operario: {nombre_operario}")
 

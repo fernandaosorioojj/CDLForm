@@ -1,162 +1,216 @@
+from __future__ import annotations
+
+import inspect
+from typing import Any
+
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QLabel,
-    QPushButton,
     QComboBox,
-    QMessageBox
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt5.QtCore import Qt
 
 from services.formulario_service import FormularioService
 from services.operario_service import OperarioService
+from services.pregunta_service import PreguntaService
+from services.respuesta_service import RespuestaService
 from ui.formulario_operario import FormularioOperarioView
 
 
 class SeleccionOperarioView(QWidget):
-    def __init__(self, evento: dict | None = None):
+    def __init__(
+        self,
+        formulario: dict[str, Any] | None = None,
+        id_formulario: str | None = None,
+        formulario_service: FormularioService | None = None,
+        operario_service: OperarioService | None = None,
+        pregunta_service: PreguntaService | None = None,
+        respuesta_service: RespuestaService | None = None,
+        on_close=None,
+    ) -> None:
         super().__init__()
-        self.evento = evento or {}
-        self.operario_service = OperarioService()
-        self.formulario_service = FormularioService()
-        self.formulario_view = None
 
-        self.setWindowTitle("Selección de Operario")
-        self.init_ui()
-        self.cargar_operarios()
+        self.formulario_service = formulario_service or FormularioService()
+        self.operario_service = operario_service or OperarioService()
+        self.pregunta_service = pregunta_service or PreguntaService()
+        self.respuesta_service = respuesta_service or RespuestaService()
+        self.on_close = on_close
 
-    def init_ui(self) -> None:
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
+        self.formulario = self._resolver_formulario(formulario, id_formulario)
+        self.formulario_operario_view = None
 
-        titulo = QLabel("Seleccione Operario")
-        titulo.setAlignment(Qt.AlignCenter)
+        self.setWindowTitle("Selección de operario")
+        self.resize(520, 220)
 
-        self.label_contexto = QLabel(self.obtener_texto_contexto())
-        self.label_contexto.setAlignment(Qt.AlignCenter)
-        self.label_contexto.setWordWrap(True)
-
+        self.lbl_info = QLabel(self._build_info_text())
         self.combo_operarios = QComboBox()
-        self.combo_operarios.addItem("Seleccione un operario", None)
+        self.btn_continuar = QPushButton("Continuar")
 
-        btn_continuar = QPushButton("Continuar")
-        btn_continuar.clicked.connect(self.continuar)
-
-        layout.addWidget(titulo)
-        layout.addWidget(self.label_contexto)
+        layout = QVBoxLayout()
+        layout.addWidget(self.lbl_info)
         layout.addWidget(self.combo_operarios)
-        layout.addWidget(btn_continuar)
-
+        layout.addWidget(self.btn_continuar)
         self.setLayout(layout)
 
-    def obtener_texto_contexto(self) -> str:
-        num_ordem = self.evento.get("num_ordem", "")
-        contexto_resuelto = self.evento.get("contexto_resuelto") or {}
+        self.btn_continuar.clicked.connect(self.continuar)
 
-        cod_setor = contexto_resuelto.get("cod_setor") or self.evento.get("cod_setor", "")
-        cod_recurso = contexto_resuelto.get("cod_recurso") or self.evento.get("cod_recurso", "")
-        cod_ativ = contexto_resuelto.get("cod_ativ") or self.evento.get("cod_ativ", "")
-        turno = contexto_resuelto.get("turno") or self.evento.get("turno", "")
-        descricao_processo = self.evento.get("descricao_processo", "")
+        self.cargar_operarios()
 
-        partes = []
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
 
-        if num_ordem:
-            partes.append(f"Identificador: {num_ordem}")
-        if cod_setor:
-            partes.append(f"Setor: {cod_setor}")
-        if cod_recurso:
-            partes.append(f"Recurso: {cod_recurso}")
-        if cod_ativ:
-            partes.append(f"Actividad: {cod_ativ}")
-        if turno:
-            partes.append(f"Turno: {turno}")
-        if descricao_processo:
-            partes.append(f"Proceso: {descricao_processo}")
+    def _resolver_formulario(
+        self,
+        formulario: dict[str, Any] | None,
+        id_formulario: str | None,
+    ) -> dict[str, Any]:
+        if formulario is not None:
+            return formulario
 
-        return " | ".join(partes) if partes else "Sin contexto de evento."
+        if id_formulario:
+            encontrado = self.formulario_service.obtener_formulario_por_id(id_formulario)
+            if encontrado:
+                return encontrado
+
+        raise ValueError("No se pudo resolver el formulario para la selección de operario.")
+
+    def _build_info_text(self) -> str:
+        identificador = self._normalizar_texto(
+            self.formulario.get("identificador")
+        )
+        maquina = self._normalizar_texto(
+            self.formulario.get("maquina") or self.formulario.get("cod_recurso")
+        )
+        area = self._normalizar_texto(
+            self.formulario.get("area") or self.formulario.get("cod_setor")
+        )
+
+        return (
+            f"Formulario: {self._normalizar_texto(self.formulario.get('id_formulario'))}\n"
+            f"Identificador: {identificador}\n"
+            f"Máquina: {maquina}\n"
+            f"Área: {area}"
+        )
 
     def cargar_operarios(self) -> None:
+        self.combo_operarios.clear()
+
         try:
-            operarios = self.operario_service.listar_operarios()
-        except Exception as e:
+            operarios = self.operario_service.listar_operarios_para_formulario(
+                formulario=self.formulario,
+                solo_activos=True,
+            )
+        except Exception as exc:
             QMessageBox.critical(
                 self,
                 "Error",
-                f"No se pudieron cargar los operarios.\n{e}"
+                f"No se pudieron cargar los operarios.\n{exc}",
             )
             return
 
         for operario in operarios:
-            nombre = operario.get("nombre", "Sin nombre")
-            self.combo_operarios.addItem(nombre, operario)
+            nombre = self._normalizar_texto(
+                operario.get("nombre")
+                or operario.get("nombre_operario")
+                or operario.get("operario")
+                or operario.get("id_operario")
+            )
 
-    def _obtener_formulario_pendiente(self):
-        formularios = self.formulario_service.listar_formularios_por_estado("pendiente")
-        evento_id = str(self.evento.get("id_evento", "")).strip()
-        identificador = str(self.evento.get("num_ordem", "")).strip()
+            if not nombre:
+                continue
 
-        for formulario in formularios:
-            if evento_id and str(formulario.evento_origen or "").strip() == evento_id:
-                return formulario
+            self.combo_operarios.addItem(nombre, nombre)
 
-        for formulario in formularios:
-            if identificador and str(formulario.identificador).strip() == identificador:
-                return formulario
+        if self.combo_operarios.count() == 0:
+            QMessageBox.warning(
+                self,
+                "Operarios",
+                "No se encontraron operarios para este formulario.",
+            )
+            return
 
-        return None
+        if self.combo_operarios.count() == 1:
+            QTimer.singleShot(0, self.continuar)
+
+    def _instanciar_formulario_operario_view(self, operario: str) -> Any:
+        kwargs_disponibles = {
+            "formulario": self.formulario,
+            "id_formulario": self.formulario.get("id_formulario"),
+            "formulario_service": self.formulario_service,
+            "pregunta_service": self.pregunta_service,
+            "respuesta_service": self.respuesta_service,
+            "operario": operario,
+        }
+
+        signature = inspect.signature(FormularioOperarioView.__init__)
+        kwargs_aceptados: dict[str, Any] = {}
+
+        for nombre_parametro in list(signature.parameters.keys())[1:]:
+            if nombre_parametro in kwargs_disponibles:
+                kwargs_aceptados[nombre_parametro] = kwargs_disponibles[
+                    nombre_parametro
+                ]
+
+        errores: list[str] = []
+
+        try:
+            return FormularioOperarioView(**kwargs_aceptados)
+        except TypeError as exc:
+            errores.append(str(exc))
+
+        intentos = [
+            lambda: FormularioOperarioView(self.formulario, operario),
+            lambda: FormularioOperarioView(self.formulario),
+            lambda: FormularioOperarioView(self.formulario.get("id_formulario")),
+            lambda: FormularioOperarioView(),
+        ]
+
+        for intento in intentos:
+            try:
+                return intento()
+            except TypeError as exc:
+                errores.append(str(exc))
+
+        raise RuntimeError(
+            "No se pudo instanciar FormularioOperarioView con las firmas probadas. "
+            f"Errores detectados: {' | '.join(errores)}"
+        )
 
     def continuar(self) -> None:
         operario = self.combo_operarios.currentData()
+        if operario is None:
+            operario = self.combo_operarios.currentText()
+
+        operario = self._normalizar_texto(operario)
 
         if not operario:
-            QMessageBox.warning(self, "Atención", "Debes seleccionar un operario.")
-            return
-
-        formulario = self._obtener_formulario_pendiente()
-
-        if formulario is None:
             QMessageBox.warning(
                 self,
-                "Atención",
-                "No se encontró un formulario pendiente para este evento."
+                "Operario",
+                "Debe seleccionar un operario.",
             )
             return
 
-        nombre_operario = str(operario.get("nombre", "")).strip()
-        id_operario = str(operario.get("id_operario", "")).strip()
+        id_formulario = self._normalizar_texto(self.formulario.get("id_formulario"))
+        self.formulario_service.asignar_operario(id_formulario, operario)
+        self.formulario = self.formulario_service.obtener_formulario_por_id(id_formulario)
 
-        try:
-            formulario_actualizado = self.formulario_service.asignar_operario(
-                formulario.id_formulario,
-                nombre_operario
-            )
+        self.formulario_operario_view = self._instanciar_formulario_operario_view(
+            operario=operario,
+        )
 
-            contexto = {
-                "id_formulario": formulario_actualizado.id_formulario,
-                "identificador": formulario_actualizado.identificador,
-                "id_operario": id_operario,
-                "operario": nombre_operario,
-                "cod_setor": formulario_actualizado.cod_setor,
-                "cod_recurso": formulario_actualizado.cod_recurso,
-                "cod_ativ": formulario_actualizado.cod_ativ,
-                "turno": formulario_actualizado.turno,
-                "tipo_trabajo": formulario_actualizado.tipo_trabajo,
-                "evento_origen": formulario_actualizado.evento_origen,
-                "estado": formulario_actualizado.estado,
-                "evento": self.evento,
-            }
+        if hasattr(self.formulario_operario_view, "destroyed"):
+            self.formulario_operario_view.destroyed.connect(self.close)
 
-            self.formulario_view = FormularioOperarioView(
-                operario=operario,
-                contexto=contexto
-            )
-            self.formulario_view.showMaximized()
-            self.close()
+        if hasattr(self.formulario_operario_view, "showMaximized"):
+            self.formulario_operario_view.showMaximized()
+        else:
+            self.formulario_operario_view.show()
 
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"No se pudo asignar el operario al formulario.\n{e}"
-            )
+        self.hide()

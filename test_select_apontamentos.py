@@ -1,52 +1,32 @@
-import pyodbc
+from __future__ import annotations
 
-server = "172.16.2.251"
-database = "MetricsBetaProductivo"
-username = "fosorio"
-password = "Bop123456+"
-driver = "ODBC Driver 18 for SQL Server"
+from services.apontamento_procesado_service import ApontamentoProcesadoService
 
-cod_recurso = "CodRecurso"
 
-connection_string = (
-    f"DRIVER={{{driver}}};"
-    f"SERVER={server};"
-    f"DATABASE={database};"
-    f"UID={username};"
-    f"PWD={password};"
-    "TrustServerCertificate=yes;"
+apontamento_procesado_service = ApontamentoProcesadoService()
+
+resultado = apontamento_procesado_service.listar_apontamientos_pendientes_estacion_actual(
+    limit=20,
+    solo_finalizados=True,
+    solo_con_num_ordem=True,
 )
 
-sql = """
-SELECT TOP 20
-    [IdApontamento],
-    [NumOrdem],
-    [CodRecurso],
-    [CodSetor],
-    [CodAtiv],
-    [Turno],
-    [HoraFim],
-    [Operador],
-    [DescricaoOP],
-    [DescricaoProcesso],
-    [QtdProduzida],
-    [QtdPlanejado],
-    [QtdPerdas],
-    [JustificativaPerda],
-    [Obs]
-FROM [MetricsBetaProductivo].[dbo].[Apontamentos]
-WHERE [HoraFim] IS NOT NULL
-  AND [HoraFim] <> '1899-12-30 00:00:00.000'
-ORDER BY [HoraFim] DESC
-"""
+contexto = resultado["contexto"]
+pendientes = resultado["apontamientos_pendientes"]
 
-with pyodbc.connect(connection_string) as conn:
-    cursor = conn.cursor()
-    cursor.execute(sql, (cod_recurso,))
-    rows = cursor.fetchall()
+print(f"Estación local: {contexto['estacion']}")
+print(f"CodRecursos homologados: {contexto['cod_recursos']}")
+print(f"Total consultados: {resultado['total_consultados']}")
+print(f"Total pendientes: {resultado['total_pendientes']}")
+print(
+    "Total omitidos por ya procesados: "
+    f"{resultado['total_omitidos_ya_procesados']}"
+)
+print(
+    "Total omitidos por NumOrdem vacío: "
+    f"{resultado['total_omitidos_sin_num_ordem']}"
+)
+print()
 
-    print(f"Total filas obtenidas: {len(rows)}")
-    print()
-
-    for row in rows:
-        print(row)
+for row in pendientes:
+    print(row)

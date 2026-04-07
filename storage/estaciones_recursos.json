@@ -1,6 +1,41 @@
-[
-    {
-        "estacion": "ESTACION-77",
-        "codigos_recurso": ["REC-01"]
-    }
-]
+{
+    "ESTACION-01": ["ROTOMEC_2"],
+    "ESTACION-02": ["SOTECH_1"],
+    "ESTACION-03": ["SOTECH_2"],
+    "ESTACION-04": ["POLYTYPE"],
+    "ESTACION-05": ["LAMINADORA_3"],
+    "ESTACION-06": ["LAMINADORA_5"],
+    "ESTACION-07": ["LAMINADORA_6"],
+    "ESTACION-08": ["LAMINADORA_7"],
+    "ESTACION-09": ["LAMINADORA_8"],
+    "ESTACION-10": ["JINMING", "MACRO_5", "JINMING+BO"],
+    "ESTACION-11": ["FX-8"],
+    "ESTACION-12": ["COMEXI"],
+    "ESTACION-13": ["GOEBEL"],
+    "ESTACION-14": ["NOVAGRAF_1"],
+    "ESTACION-15": ["NOVAGRAF_2"],
+    "ESTACION-16": ["NOVAGRAF_3"],
+    "ESTACION-17": ["NOVAGRAF_4"],
+    "ESTACION-18": ["POUCHERA_6"],
+    "ESTACION-19": ["POUCHERA_2", "POUCHERA_3", "POUCHERA_5"],
+    "ESTACION-20": ["BIMEC"],
+    "ESTACION-22": ["REBOBINADORA", "REVISADORA_2"],
+    "ESTACION-23": ["EKOFA"],
+    "ESTACION-24": ["LAMINADORA_4", "POUCHERA_4"],
+    "ESTACION-25": ["MAQUILAS VARIAS"],
+    "ESTACION-26": ["LAMINADORA_9"],
+    "ESTACION-27": ["POUCHERA_7"],
+    "ESTACION-28": ["POUCHERA_3"],
+    "ESTACION-29": ["REVISADORA_1"],
+    "ESTACION-30": ["COMEXI F2"],
+    "ESTACION-31": ["LAMINADO_L10"],
+    "ESTACION-69": ["MONTAJE"],
+    "ESTACION-70": ["FoodService"],
+    "ESTACION-75": ["ESTACION 75"],
+    "ESTACION-76": ["UTECO"],
+    "ESTACION-77": ["ESTACION-77"],
+    "ESTACION-80": ["Maq_Maquila"],
+    "ESTACION-100": ["TROQ_HMAS_01", "TROQ_HMAS_02", "TROQ_SOPER"],
+    "ESTACION-777": ["777"],
+    "Pruebas": ["Pruebas"]
+}
