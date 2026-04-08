@@ -117,7 +117,9 @@ class AdminPreguntasView(QWidget):
         self.input_texto = QLineEdit()
 
         self.combo_tipo = QComboBox()
-        self.combo_tipo.addItems(["texto", "numero", "seleccion_unica"])
+        self.combo_tipo.addItems(
+            ["texto", "numero", "seleccion_unica", "seleccion_multiple"]
+        )
         self.combo_tipo.currentTextChanged.connect(self._actualizar_estado_opciones)
 
         self.spin_orden = QSpinBox()
@@ -469,7 +471,7 @@ class AdminPreguntasView(QWidget):
     def agregar_opcion(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
 
-        if tipo != "seleccion_unica":
+        if tipo not in {"seleccion_unica", "seleccion_multiple"}:
             return
 
         valor = self.input_opcion_valor.text().strip()
@@ -510,7 +512,7 @@ class AdminPreguntasView(QWidget):
 
     def _actualizar_estado_opciones(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
-        requiere_opciones = tipo == "seleccion_unica"
+        requiere_opciones = tipo in {"seleccion_unica", "seleccion_multiple"}
 
         self.panel_opciones.setVisible(requiere_opciones)
 
@@ -528,10 +530,17 @@ class AdminPreguntasView(QWidget):
             self.btn_limpiar_opciones.setEnabled(False)
             return
 
-        self.label_info_opciones.setText(
-            "Agrega opciones desde los campos inferiores. "
-            "Cada opción puede tener una acción correctiva opcional."
-        )
+        if tipo == "seleccion_multiple":
+            self.label_info_opciones.setText(
+                "Agrega opciones para selección múltiple. "
+                "El operario podrá marcar más de una y cada una puede tener su propia acción correctiva."
+            )
+        else:
+            self.label_info_opciones.setText(
+                "Agrega opciones para selección única. "
+                "Cada opción puede tener una acción correctiva opcional."
+            )
+
         self.input_opcion_valor.setEnabled(True)
         self.input_opcion_accion.setEnabled(True)
         self.btn_agregar_opcion.setEnabled(True)
@@ -557,7 +566,7 @@ class AdminPreguntasView(QWidget):
     def _construir_opciones_respuesta(self) -> list[dict]:
         tipo = self.combo_tipo.currentText().strip().lower()
 
-        if tipo != "seleccion_unica":
+        if tipo not in {"seleccion_unica", "seleccion_multiple"}:
             return []
 
         opciones: list[dict] = []
@@ -582,7 +591,7 @@ class AdminPreguntasView(QWidget):
 
         if not opciones:
             raise ValueError(
-                "Debes ingresar opciones_respuesta para preguntas de tipo seleccion_unica."
+                "Debes ingresar opciones de respuesta para preguntas de selección."
             )
 
         return opciones

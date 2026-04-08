@@ -59,6 +59,40 @@ class ApontamentoQueryService:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    def _listar_valores_distintos(
+        self,
+        nombre_columna: str,
+        alias_columna: str,
+        patron: str | None = None,
+        limit: int = 100,
+    ) -> list[str]:
+        limit_normalizado = self._normalizar_limit(limit)
+
+        expresion = f"LTRIM(RTRIM(CAST([{nombre_columna}] AS VARCHAR(100))))"
+
+        sql = f"""
+        SELECT DISTINCT TOP ({limit_normalizado})
+            {expresion} AS {alias_columna}
+        FROM [dbo].[Apontamentos]
+        WHERE [{nombre_columna}] IS NOT NULL
+          AND {expresion} <> ''
+        """
+
+        params: list[Any] = []
+
+        if patron and patron.strip():
+            sql += f"\n  AND {expresion} LIKE ?"
+            params.append(f"%{patron.strip()}%")
+
+        sql += f"\nORDER BY {alias_columna}"
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+
+        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
+
     def listar_apontamentos_por_cod_recursos(
         self,
         cod_recursos: Sequence[str],
@@ -147,26 +181,45 @@ class ApontamentoQueryService:
         patron: str | None = None,
         limit: int = 100,
     ) -> list[str]:
-        limit_normalizado = self._normalizar_limit(limit)
+        return self._listar_valores_distintos(
+            nombre_columna="CodRecurso",
+            alias_columna="CodRecurso",
+            patron=patron,
+            limit=limit,
+        )
 
-        sql = f"""
-        SELECT DISTINCT TOP ({limit_normalizado})
-            LTRIM(RTRIM([CodRecurso])) AS CodRecurso
-        FROM [dbo].[Apontamentos]
-        WHERE [CodRecurso] IS NOT NULL
-        """
+    def listar_cod_setores_disponibles(
+        self,
+        patron: str | None = None,
+        limit: int = 100,
+    ) -> list[str]:
+        return self._listar_valores_distintos(
+            nombre_columna="CodSetor",
+            alias_columna="CodSetor",
+            patron=patron,
+            limit=limit,
+        )
 
-        params: list[Any] = []
+    def listar_turnos_disponibles(
+        self,
+        patron: str | None = None,
+        limit: int = 100,
+    ) -> list[str]:
+        return self._listar_valores_distintos(
+            nombre_columna="Turno",
+            alias_columna="Turno",
+            patron=patron,
+            limit=limit,
+        )
 
-        if patron and patron.strip():
-            sql += "\n  AND LTRIM(RTRIM([CodRecurso])) LIKE ?"
-            params.append(f"%{patron.strip()}%")
-
-        sql += "\nORDER BY CodRecurso"
-
-        with pyodbc.connect(build_connection_string()) as conn:
-            cursor = conn.cursor()
-            cursor.execute(sql, tuple(params))
-            rows = cursor.fetchall()
-
-        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
+    def listar_cod_ativ_disponibles(
+        self,
+        patron: str | None = None,
+        limit: int = 100,
+    ) -> list[str]:
+        return self._listar_valores_distintos(
+            nombre_columna="CodAtiv",
+            alias_columna="CodAtiv",
+            patron=patron,
+            limit=limit,
+        )

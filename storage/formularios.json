@@ -11,15 +11,15 @@
         "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T03:54:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "en_apertura",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:39:17"
+        "fecha_actualizacion": "2026-04-08T13:06:19"
     },
     {
         "id_formulario": "FORM-0002",
@@ -107,7 +107,7 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:22:11"
+        "fecha_actualizacion": "2026-04-08T13:01:28"
     },
     {
         "id_formulario": "FORM-0006",

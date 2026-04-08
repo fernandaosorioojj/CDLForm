@@ -33,6 +33,10 @@ class PreguntaService:
     ) -> dict:
         preguntas = self.repository.get_all()
         tipo_enum = self._parse_tipo(tipo)
+        opciones_normalizadas = self._normalizar_opciones_respuesta(
+            tipo=tipo_enum,
+            opciones_respuesta=opciones_respuesta or [],
+        )
 
         nueva_pregunta = Pregunta(
             id_pregunta=generate_id(preguntas, "PREG", "id_pregunta"),
@@ -42,7 +46,7 @@ class PreguntaService:
             obligatoria=obligatoria,
             orden=orden,
             filtros_contexto=filtros_contexto or {},
-            opciones_respuesta=opciones_respuesta or [],
+            opciones_respuesta=opciones_normalizadas,
         )
 
         self.repository.add(nueva_pregunta.to_dict())
@@ -64,6 +68,10 @@ class PreguntaService:
             raise ValueError("La pregunta no existe.")
 
         tipo_enum = self._parse_tipo(tipo)
+        opciones_normalizadas = self._normalizar_opciones_respuesta(
+            tipo=tipo_enum,
+            opciones_respuesta=opciones_respuesta or [],
+        )
 
         pregunta_actualizada = Pregunta(
             id_pregunta=id_pregunta,
@@ -73,7 +81,7 @@ class PreguntaService:
             obligatoria=obligatoria,
             orden=orden,
             filtros_contexto=filtros_contexto or {},
-            opciones_respuesta=opciones_respuesta or [],
+            opciones_respuesta=opciones_normalizadas,
         )
 
         return self.repository.update_by_id(
@@ -160,6 +168,52 @@ class PreguntaService:
     def _normalizar_valor(self, valor) -> str:
         return str(valor).strip().upper()
 
+    def _normalizar_opciones_respuesta(
+        self,
+        tipo: TipoPregunta,
+        opciones_respuesta: list,
+    ) -> list:
+        if tipo not in {
+            TipoPregunta.SELECCION_UNICA,
+            TipoPregunta.SELECCION_MULTIPLE,
+            TipoPregunta.SI_NO,
+        }:
+            return []
+
+        opciones_normalizadas: list[dict] = []
+
+        for opcion in opciones_respuesta:
+            if not isinstance(opcion, dict):
+                raise ValueError(
+                    "Cada opción de respuesta debe ser un diccionario."
+                )
+
+            valor = str(opcion.get("valor", "")).strip()
+            if not valor:
+                raise ValueError(
+                    "Cada opción de respuesta debe tener un valor."
+                )
+
+            opciones_normalizadas.append(
+                {
+                    "id_opcion": str(opcion.get("id_opcion", "")).strip(),
+                    "valor": valor,
+                    "accion_correctiva": str(
+                        opcion.get("accion_correctiva", "")
+                    ).strip(),
+                }
+            )
+
+        if tipo in {
+            TipoPregunta.SELECCION_UNICA,
+            TipoPregunta.SELECCION_MULTIPLE,
+        } and not opciones_normalizadas:
+            raise ValueError(
+                "Las preguntas de selección deben tener al menos una opción."
+            )
+
+        return opciones_normalizadas
+
     def _parse_tipo(self, tipo: str | TipoPregunta) -> TipoPregunta:
         if isinstance(tipo, TipoPregunta):
             return tipo
@@ -174,6 +228,7 @@ class PreguntaService:
             "numero": TipoPregunta.NUMERO,
             "si_no": TipoPregunta.SI_NO,
             "seleccion_unica": TipoPregunta.SELECCION_UNICA,
+            "seleccion_multiple": TipoPregunta.SELECCION_MULTIPLE,
         }
 
         if tipo_limpio not in mapa:

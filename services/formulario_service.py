@@ -99,8 +99,30 @@ class FormularioService:
     def listar_formularios_por_estado(self, estado: str) -> list[dict]:
         return self.formulario_repository.listar_por_estado(estado)
 
+    def listar_formularios_por_estados(self, estados: list[str]) -> list[dict]:
+        estados_normalizados = {
+            self._normalizar_texto(estado)
+            for estado in estados
+            if self._normalizar_texto(estado)
+        }
+
+        if not estados_normalizados:
+            return []
+
+        return [
+            formulario
+            for formulario in self.listar_formularios()
+            if self._normalizar_texto(formulario.get("estado")) in estados_normalizados
+        ]
+
     def listar_formularios_pendientes_operario(self) -> list[dict]:
-        pendientes = self.listar_formularios_por_estado("pendiente_operario")
+        pendientes = self.listar_formularios_por_estados(
+            [
+                "en_progreso",
+                "pendiente_operario",
+                "en_apertura",
+            ]
+        )
 
         return sorted(
             pendientes,
@@ -189,7 +211,7 @@ class FormularioService:
             ),
             "estacion": self._normalizar_texto(registro.get("estacion")),
             "evento_origen": "apontamento_sql",
-            "estado": "pendiente_operario",
+            "estado": "en_progreso",
             "descripcion_op": self._normalizar_texto(
                 registro.get("descripcion_op") or registro.get("DescricaoOP")
             ),
@@ -282,25 +304,51 @@ class FormularioService:
             },
         )
 
-    def marcar_formulario_en_apertura(self, id_formulario: str) -> dict:
-        return self.actualizar_estado_formulario(
-            id_formulario=id_formulario,
-            estado="en_apertura",
-        )
-
-    def marcar_formulario_pendiente_operario(self, id_formulario: str) -> dict:
-        return self.actualizar_estado_formulario(
-            id_formulario=id_formulario,
-            estado="pendiente_operario",
-        )
-
-    def marcar_formulario_completado(
+    def marcar_formulario_en_progreso(
         self,
         id_formulario: str,
         observacion_general: str | None = None,
     ) -> dict:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
-            estado="completado",
+            estado="en_progreso",
+            observacion_general=observacion_general,
+        )
+
+    def marcar_formulario_enviado(
+        self,
+        id_formulario: str,
+        observacion_general: str | None = None,
+    ) -> dict:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado="enviado",
+            observacion_general=observacion_general,
+        )
+
+    def marcar_formulario_cancelado(
+        self,
+        id_formulario: str,
+        observacion_general: str | None = None,
+    ) -> dict:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado="cancelado",
+            observacion_general=observacion_general,
+        )
+
+    def marcar_formulario_en_apertura(self, id_formulario: str) -> dict:
+        return self.marcar_formulario_en_progreso(id_formulario)
+
+    def marcar_formulario_pendiente_operario(self, id_formulario: str) -> dict:
+        return self.marcar_formulario_en_progreso(id_formulario)
+
+    def marcar_formulario_completado(
+        self,
+        id_formulario: str,
+        observacion_general: str | None = None,
+    ) -> dict:
+        return self.marcar_formulario_enviado(
+            id_formulario=id_formulario,
             observacion_general=observacion_general,
         )

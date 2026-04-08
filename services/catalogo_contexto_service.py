@@ -7,8 +7,25 @@ from utils.json_manager import JsonManager
 
 
 class CatalogoContextoService:
-    def __init__(self, storage_dir: str | Path = "storage") -> None:
+    def __init__(
+        self,
+        storage_dir: str | Path = "storage",
+        apontamento_query_service=None,
+        usar_sql_catalogos: bool = True,
+    ) -> None:
         self.storage_dir = Path(storage_dir)
+        self.apontamento_query_service = apontamento_query_service
+        self.usar_sql_catalogos = usar_sql_catalogos
+
+    def _obtener_apontamento_query_service(self):
+        if self.apontamento_query_service is None:
+            from services.apontamento_query_service import ApontamentoQueryService
+
+            self.apontamento_query_service = ApontamentoQueryService(
+                catalogo_contexto_service=self
+            )
+
+        return self.apontamento_query_service
 
     def _leer_json(self, nombre_archivo: str, default: Any) -> Any:
         file_path = self.storage_dir / nombre_archivo
@@ -32,7 +49,25 @@ class CatalogoContextoService:
 
         return normalizados
 
+    def _obtener_catalogo_desde_sql(self, nombre_metodo: str) -> list[str]:
+        if not self.usar_sql_catalogos:
+            return []
+
+        try:
+            query_service = self._obtener_apontamento_query_service()
+            metodo = getattr(query_service, nombre_metodo)
+            resultado = metodo()
+            return self._normalizar_lista(resultado)
+        except Exception:
+            return []
+
     def listar_cod_recursos(self) -> list[str]:
+        valores_sql = self._obtener_catalogo_desde_sql(
+            "listar_cod_recursos_disponibles"
+        )
+        if valores_sql:
+            return valores_sql
+
         data = self._leer_json("cod_recurso.json", [])
 
         if isinstance(data, list):
@@ -43,7 +78,16 @@ class CatalogoContextoService:
 
         return []
 
+    def listar_cod_recurso(self) -> list[str]:
+        return self.listar_cod_recursos()
+
     def listar_cod_setores(self) -> list[str]:
+        valores_sql = self._obtener_catalogo_desde_sql(
+            "listar_cod_setores_disponibles"
+        )
+        if valores_sql:
+            return valores_sql
+
         data = self._leer_json("cod_setor.json", [])
 
         if isinstance(data, list):
@@ -54,7 +98,16 @@ class CatalogoContextoService:
 
         return []
 
+    def listar_cod_setor(self) -> list[str]:
+        return self.listar_cod_setores()
+
     def listar_cod_ativ(self) -> list[str]:
+        valores_sql = self._obtener_catalogo_desde_sql(
+            "listar_cod_ativ_disponibles"
+        )
+        if valores_sql:
+            return valores_sql
+
         data = self._leer_json("cod_ativ.json", [])
 
         if isinstance(data, list):
@@ -66,6 +119,12 @@ class CatalogoContextoService:
         return []
 
     def listar_turnos(self) -> list[str]:
+        valores_sql = self._obtener_catalogo_desde_sql(
+            "listar_turnos_disponibles"
+        )
+        if valores_sql:
+            return valores_sql
+
         data = self._leer_json("turnos.json", [])
 
         if isinstance(data, list):

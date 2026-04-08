@@ -7,11 +7,21 @@
         "obligatoria": true,
         "orden": 1,
         "filtros_contexto": {
-            "cod_setor": ["SETOR-01"],
-            "cod_recurso": ["REC-01"],
-            "cod_ativ": ["ATIV-01"],
-            "turno": ["1"],
-            "tipo_trabajo": ["Produccion"]
+            "cod_setor": [
+                "SETOR-01"
+            ],
+            "cod_recurso": [
+                "REC-01"
+            ],
+            "cod_ativ": [
+                "ATIV-01"
+            ],
+            "turno": [
+                "1"
+            ],
+            "tipo_trabajo": [
+                "Produccion"
+            ]
         },
         "opciones_respuesta": [
             {
@@ -34,11 +44,21 @@
         "obligatoria": true,
         "orden": 2,
         "filtros_contexto": {
-            "cod_setor": ["SETOR-01"],
-            "cod_recurso": ["REC-01"],
-            "cod_ativ": ["ATIV-01"],
-            "turno": ["1"],
-            "tipo_trabajo": ["Produccion"]
+            "cod_setor": [
+                "SETOR-01"
+            ],
+            "cod_recurso": [
+                "REC-01"
+            ],
+            "cod_ativ": [
+                "ATIV-01"
+            ],
+            "turno": [
+                "1"
+            ],
+            "tipo_trabajo": [
+                "Produccion"
+            ]
         },
         "opciones_respuesta": []
     },
@@ -50,12 +70,84 @@
         "obligatoria": false,
         "orden": 3,
         "filtros_contexto": {
-            "cod_setor": ["SETOR-01"],
-            "cod_recurso": ["REC-01"],
-            "cod_ativ": ["ATIV-01"],
-            "turno": ["1"],
-            "tipo_trabajo": ["Produccion"]
+            "cod_setor": [
+                "SETOR-01"
+            ],
+            "cod_recurso": [
+                "REC-01"
+            ],
+            "cod_ativ": [
+                "ATIV-01"
+            ],
+            "turno": [
+                "1"
+            ],
+            "tipo_trabajo": [
+                "Produccion"
+            ]
         },
         "opciones_respuesta": []
+    },
+    {
+        "id_pregunta": "[{'ID_PREGUNTA': 'PREG-0001', 'TEXTO': '¿LA MÁQUINA QUEDÓ LIMPIA AL CIERRE DE LA OP?', 'TIPO': 'SELECCION_UNICA', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 1, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': [{'ID_OPCION': 'OPC-0001', 'VALOR': 'SÍ', 'ACCION_CORRECTIVA': ''}, {'ID_OPCION': 'OPC-0002', 'VALOR': 'NO', 'ACCION_CORRECTIVA': 'REALIZAR LIMPIEZA Y REGISTRAR NOVEDAD.'}]}, {'ID_PREGUNTA': 'PREG-0002', 'TEXTO': 'INGRESE LA CANTIDAD PRODUCIDA INFORMADA POR EL OPERADOR.', 'TIPO': 'NUMERO', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 2, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}, {'ID_PREGUNTA': 'PREG-0003', 'TEXTO': 'OBSERVACIONES DEL CIERRE DEL PROCESO.', 'TIPO': 'TEXTO', 'ACTIVA': TRUE, 'OBLIGATORIA': FALSE, 'ORDEN': 3, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}]-0001",
+        "texto": "¿Fueron retirados todos los scraps...?",
+        "tipo": "seleccion_multiple",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 1,
+        "filtros_contexto": {
+            "cod_setor": [
+                "IMP_HUEGO"
+            ],
+            "cod_recurso": [
+                "UTECO"
+            ],
+            "turno": [
+                "3"
+            ]
+        },
+        "opciones_respuesta": [
+            {
+                "id_opcion": "OPC-001",
+                "valor": "Si",
+                "accion_correctiva": ""
+            }
+        ]
+    },
+    {
+        "id_pregunta": "[{'ID_PREGUNTA': 'PREG-0001', 'TEXTO': '¿LA MÁQUINA QUEDÓ LIMPIA AL CIERRE DE LA OP?', 'TIPO': 'SELECCION_UNICA', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 1, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': [{'ID_OPCION': 'OPC-0001', 'VALOR': 'SÍ', 'ACCION_CORRECTIVA': ''}, {'ID_OPCION': 'OPC-0002', 'VALOR': 'NO', 'ACCION_CORRECTIVA': 'REALIZAR LIMPIEZA Y REGISTRAR NOVEDAD.'}]}, {'ID_PREGUNTA': 'PREG-0002', 'TEXTO': 'INGRESE LA CANTIDAD PRODUCIDA INFORMADA POR EL OPERADOR.', 'TIPO': 'NUMERO', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 2, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}, {'ID_PREGUNTA': 'PREG-0003', 'TEXTO': 'OBSERVACIONES DEL CIERRE DEL PROCESO.', 'TIPO': 'TEXTO', 'ACTIVA': TRUE, 'OBLIGATORIA': FALSE, 'ORDEN': 3, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}, {'ID_PREGUNTA': \"[{'ID_PREGUNTA': 'PREG-0001', 'TEXTO': '¿LA MÁQUINA QUEDÓ LIMPIA AL CIERRE DE LA OP?', 'TIPO': 'SELECCION_UNICA', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 1, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': [{'ID_OPCION': 'OPC-0001', 'VALOR': 'SÍ', 'ACCION_CORRECTIVA': ''}, {'ID_OPCION': 'OPC-0002', 'VALOR': 'NO', 'ACCION_CORRECTIVA': 'REALIZAR LIMPIEZA Y REGISTRAR NOVEDAD.'}]}, {'ID_PREGUNTA': 'PREG-0002', 'TEXTO': 'INGRESE LA CANTIDAD PRODUCIDA INFORMADA POR EL OPERADOR.', 'TIPO': 'NUMERO', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 2, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}, {'ID_PREGUNTA': 'PREG-0003', 'TEXTO': 'OBSERVACIONES DEL CIERRE DEL PROCESO.', 'TIPO': 'TEXTO', 'ACTIVA': TRUE, 'OBLIGATORIA': FALSE, 'ORDEN': 3, 'FILTROS_CONTEXTO': {'COD_SETOR': ['SETOR-01'], 'COD_RECURSO': ['REC-01'], 'COD_ATIV': ['ATIV-01'], 'TURNO': ['1'], 'TIPO_TRABAJO': ['PRODUCCION']}, 'OPCIONES_RESPUESTA': []}]-0001\", 'TEXTO': '¿FUERON RETIRADOS TODOS LOS SCRAPS...?', 'TIPO': 'SELECCION_MULTIPLE', 'ACTIVA': TRUE, 'OBLIGATORIA': TRUE, 'ORDEN': 1, 'FILTROS_CONTEXTO': {'COD_SETOR': ['IMP_HUEGO'], 'COD_RECURSO': ['UTECO'], 'TURNO': ['3']}, 'OPCIONES_RESPUESTA': [{'ID_OPCION': 'OPC-001', 'VALOR': 'SI', 'ACCION_CORRECTIVA': ''}]}]-0001",
+        "texto": "¿Fueron sacados todos los scarps....?",
+        "tipo": "seleccion_multiple",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 2,
+        "filtros_contexto": {
+            "cod_setor": [
+                "IMP_HUEGO"
+            ],
+            "cod_recurso": [
+                "UTECO"
+            ],
+            "turno": [
+                "3"
+            ]
+        },
+        "opciones_respuesta": [
+            {
+                "id_opcion": "OPC-001",
+                "valor": "Solo la mitad de plasticos",
+                "accion_correctiva": "sacar lo restante"
+            },
+            {
+                "id_opcion": "OPC-002",
+                "valor": "solo el carton",
+                "accion_correctiva": "sacar lo restante"
+            },
+            {
+                "id_opcion": "OPC-003",
+                "valor": "todo",
+                "accion_correctiva": ""
+            }
+        ]
     }
 ]

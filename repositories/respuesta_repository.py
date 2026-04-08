@@ -38,6 +38,24 @@ class RespuestaRepository(BaseRepository):
         self.update_by_id(respuesta.id_respuesta, respuesta.to_dict())
         return respuesta
 
+    def delete_by_formulario(self, id_formulario: str) -> int:
+        id_formulario_normalizado = str(id_formulario).strip()
+        if not id_formulario_normalizado:
+            return 0
+
+        respuestas_a_eliminar = [
+            respuesta.id_respuesta
+            for respuesta in self.list_all()
+            if respuesta.id_formulario == id_formulario_normalizado
+        ]
+
+        eliminadas = 0
+        for id_respuesta in respuestas_a_eliminar:
+            if self.delete_by_id(id_respuesta):
+                eliminadas += 1
+
+        return eliminadas
+
     def get_respuestas_por_formulario(self, id_formulario: str) -> list[Respuesta]:
         id_formulario = id_formulario.strip()
 

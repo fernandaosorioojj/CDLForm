@@ -4,10 +4,9 @@ from enum import Enum
 
 
 class FormularioEstado(str, Enum):
-    PENDIENTE = "pendiente"
-    EN_PROCESO = "en_proceso"
+    EN_PROGRESO = "en_progreso"
     COMPLETADO = "completado"
-    ANULADO = "anulado"
+    CANCELADO = "cancelado"
 
 
 class DisparadorEstado(str, Enum):

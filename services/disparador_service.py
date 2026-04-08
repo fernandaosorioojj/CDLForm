@@ -39,8 +39,8 @@ class DisparadorService:
 
         estado_actual = self._normalizar_texto(formulario_actual.get("estado"))
 
-        if estado_actual == "en_apertura":
-            self.formulario_service.marcar_formulario_pendiente_operario(id_formulario)
+        if estado_actual in {"en_apertura", "pendiente_operario"}:
+            self.formulario_service.marcar_formulario_en_progreso(id_formulario)
 
     def listar_formularios_pendientes_operario(self) -> list[dict]:
         return self.formulario_service.listar_formularios_pendientes_operario()

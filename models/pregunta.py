@@ -97,10 +97,14 @@ class Pregunta:
 
         object.__setattr__(self, "opciones_respuesta", opciones_normalizadas)
 
-        if self.tipo in {TipoPregunta.SI_NO, TipoPregunta.SELECCION_UNICA}:
+        if self.tipo in {
+            TipoPregunta.SI_NO,
+            TipoPregunta.SELECCION_UNICA,
+            TipoPregunta.SELECCION_MULTIPLE,
+        }:
             if not self.opciones_respuesta:
                 raise ValueError(
-                    "la pregunta debe tener opciones_respuesta para tipo si_no o seleccion_unica"
+                    "la pregunta debe tener opciones_respuesta para tipo si_no, seleccion_unica o seleccion_multiple"
                 )
 
         if self.tipo in {TipoPregunta.TEXTO, TipoPregunta.NUMERO}:
