@@ -16,8 +16,10 @@ from PyQt5.QtWidgets import (
     QFrame,
 )
 
+from models.formulario import Formulario
 from services.catalogo_contexto_service import CatalogoContextoService
 from services.reporte_service import ReporteService
+from ui.detalle_formulario import DetalleFormularioView
 
 
 class ReportesView(QWidget):
@@ -26,6 +28,9 @@ class ReportesView(QWidget):
 
         self.reporte_service = ReporteService()
         self.catalogo_contexto_service = CatalogoContextoService()
+
+        self.formularios: list[Formulario] = []
+        self.formularios_filtrados: list[Formulario] = []
 
         self.setWindowTitle("Reportes")
         self.resize(1500, 820)
@@ -42,7 +47,9 @@ class ReportesView(QWidget):
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
-        subtitulo = QLabel("Consulta, filtra y revisa la información registrada en los formularios.")
+        subtitulo = QLabel(
+            "Consulta los formularios registrados y abre el detalle para revisar respuestas."
+        )
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
@@ -73,9 +80,6 @@ class ReportesView(QWidget):
         self.input_operario = QLineEdit()
         self.input_operario.setPlaceholderText("Buscar operario...")
 
-        self.input_texto_pregunta = QLineEdit()
-        self.input_texto_pregunta.setPlaceholderText("Buscar texto de pregunta...")
-
         self.combo_cod_setor = QComboBox()
         self._cargar_combo_con_todos(
             self.combo_cod_setor,
@@ -104,34 +108,21 @@ class ReportesView(QWidget):
             "Turno: Todos",
         )
 
-        self.combo_tipo_trabajo = QComboBox()
-        self._cargar_combo_con_todos(
-            self.combo_tipo_trabajo,
-            self.catalogo_contexto_service.listar_tipos_trabajo(),
-            "TipoTrabajo: Todos",
-        )
-
         self.combo_estado_formulario = QComboBox()
         self.combo_estado_formulario.addItem("Estado: Todos", "")
-        self.combo_estado_formulario.addItem("Pendiente", "pendiente")
+        self.combo_estado_formulario.addItem("En apertura", "en_apertura")
+        self.combo_estado_formulario.addItem("Pendiente operario", "pendiente_operario")
         self.combo_estado_formulario.addItem("Completado", "completado")
-
-        self.combo_con_accion_correctiva = QComboBox()
-        self.combo_con_accion_correctiva.addItem("Acción correctiva: Todas", "")
-        self.combo_con_accion_correctiva.addItem("Con acción correctiva", "SI")
-        self.combo_con_accion_correctiva.addItem("Sin acción correctiva", "NO")
+        self.combo_estado_formulario.addItem("Cancelado", "cancelado")
 
         filtros_fila_1.addWidget(self.input_identificador)
         filtros_fila_1.addWidget(self.input_operario)
         filtros_fila_1.addWidget(self.combo_cod_setor)
         filtros_fila_1.addWidget(self.combo_cod_recurso)
-        filtros_fila_1.addWidget(self.combo_cod_ativ)
 
+        filtros_fila_2.addWidget(self.combo_cod_ativ)
         filtros_fila_2.addWidget(self.combo_turno)
-        filtros_fila_2.addWidget(self.combo_tipo_trabajo)
         filtros_fila_2.addWidget(self.combo_estado_formulario)
-        filtros_fila_2.addWidget(self.input_texto_pregunta)
-        filtros_fila_2.addWidget(self.combo_con_accion_correctiva)
 
         layout_filtros.addLayout(filtros_fila_1)
         layout_filtros.addLayout(filtros_fila_2)
@@ -139,11 +130,19 @@ class ReportesView(QWidget):
         botones = QHBoxLayout()
         botones.setSpacing(10)
 
+        self.btn_recargar = QPushButton("Recargar")
+        self.btn_recargar.clicked.connect(self.cargar_reporte)
+
+        self.btn_ver_detalle = QPushButton("Ver detalle")
+        self.btn_ver_detalle.clicked.connect(self.abrir_detalle)
+
         self.btn_limpiar = QPushButton("Limpiar filtros")
         self.btn_limpiar.setProperty("variant", "secondary")
         self.btn_limpiar.clicked.connect(self.limpiar_filtros)
 
         botones.addStretch()
+        botones.addWidget(self.btn_recargar)
+        botones.addWidget(self.btn_ver_detalle)
         botones.addWidget(self.btn_limpiar)
 
         layout_filtros.addLayout(botones)
@@ -161,34 +160,33 @@ class ReportesView(QWidget):
         layout_tabla.addWidget(label_resultados)
 
         self.tabla_reportes = QTableWidget()
-        self.tabla_reportes.setColumnCount(14)
+        self.tabla_reportes.setColumnCount(9)
         self.tabla_reportes.setHorizontalHeaderLabels(
             [
+                "ID Formulario",
                 "Identificador",
                 "Operario",
                 "CodSetor",
                 "CodRecurso",
                 "CodAtiv",
                 "Turno",
-                "TipoTrabajo",
                 "Estado",
-                "Pregunta",
-                "Tipo Pregunta",
-                "Respuesta Texto",
-                "Respuesta Número",
-                "Id Opción",
-                "Acción Correctiva",
+                "Fecha",
             ]
         )
         self.tabla_reportes.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla_reportes.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla_reportes.setSelectionMode(QTableWidget.SingleSelection)
         self.tabla_reportes.verticalHeader().setVisible(False)
-        self.tabla_reportes.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tabla_reportes.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeToContents
+        )
+        self.tabla_reportes.horizontalHeader().setStretchLastSection(True)
+        self.tabla_reportes.doubleClicked.connect(self.abrir_detalle)
 
         layout_tabla.addWidget(self.tabla_reportes)
 
-        self.label_total = QLabel("Total registros: 0")
+        self.label_total = QLabel("Total formularios: 0")
         self.label_total.setAlignment(Qt.AlignRight)
         self.label_total.setProperty("role", "subtitle")
         layout_tabla.addWidget(self.label_total)
@@ -200,15 +198,11 @@ class ReportesView(QWidget):
     def _conectar_filtros(self) -> None:
         self.input_identificador.textChanged.connect(self.cargar_reporte)
         self.input_operario.textChanged.connect(self.cargar_reporte)
-        self.input_texto_pregunta.textChanged.connect(self.cargar_reporte)
-
         self.combo_cod_setor.currentIndexChanged.connect(self.cargar_reporte)
         self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_reporte)
         self.combo_cod_ativ.currentIndexChanged.connect(self.cargar_reporte)
         self.combo_turno.currentIndexChanged.connect(self.cargar_reporte)
-        self.combo_tipo_trabajo.currentIndexChanged.connect(self.cargar_reporte)
         self.combo_estado_formulario.currentIndexChanged.connect(self.cargar_reporte)
-        self.combo_con_accion_correctiva.currentIndexChanged.connect(self.cargar_reporte)
 
     def _cargar_combo_con_todos(
         self,
@@ -223,106 +217,160 @@ class ReportesView(QWidget):
             if valor_limpio:
                 combo.addItem(valor_limpio, valor_limpio)
 
-    def cargar_reporte(self) -> None:
+    def cargar_reporte(self, *_args) -> None:
         try:
-            filtros = self._obtener_filtros()
-            filas = self.reporte_service.generar_reporte(filtros)
-
-            self.tabla_reportes.setRowCount(0)
-
-            for fila in filas:
-                row = self.tabla_reportes.rowCount()
-                self.tabla_reportes.insertRow(row)
-
-                self._set_item(row, 0, fila.get("identificador", ""))
-                self._set_item(row, 1, fila.get("operario", ""))
-                self._set_item(row, 2, fila.get("cod_setor", ""))
-                self._set_item(row, 3, fila.get("cod_recurso", ""))
-                self._set_item(row, 4, fila.get("cod_ativ", ""))
-                self._set_item(row, 5, fila.get("turno", ""))
-                self._set_item(row, 6, fila.get("tipo_trabajo", ""))
-                self._set_item(row, 7, fila.get("estado_formulario", ""))
-                self._set_item(row, 8, fila.get("texto_pregunta", ""))
-                self._set_item(row, 9, fila.get("tipo_pregunta", ""))
-                self._set_item(row, 10, self._resolver_respuesta_texto(fila))
-                self._set_item(row, 11, self._resolver_respuesta_numero(fila))
-                self._set_item(row, 12, fila.get("id_opcion", ""))
-                self._set_item(row, 13, fila.get("accion_correctiva_aplicada", ""))
-
-            self.label_total.setText(f"Total registros: {len(filas)}")
-
+            self.formularios = self.reporte_service.listar_formularios()
+            self.formularios_filtrados = self._filtrar_formularios(self.formularios)
+            self._ordenar_formularios(self.formularios_filtrados)
+            self._cargar_tabla(self.formularios_filtrados)
+            self.label_total.setText(
+                f"Total formularios: {len(self.formularios_filtrados)}"
+            )
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
     def limpiar_filtros(self) -> None:
         self.input_identificador.clear()
         self.input_operario.clear()
-        self.input_texto_pregunta.clear()
 
         self.combo_cod_setor.setCurrentIndex(0)
         self.combo_cod_recurso.setCurrentIndex(0)
         self.combo_cod_ativ.setCurrentIndex(0)
         self.combo_turno.setCurrentIndex(0)
-        self.combo_tipo_trabajo.setCurrentIndex(0)
         self.combo_estado_formulario.setCurrentIndex(0)
-        self.combo_con_accion_correctiva.setCurrentIndex(0)
 
-    def _obtener_filtros(self) -> dict:
-        filtros: dict[str, str] = {}
+        self.cargar_reporte()
 
-        if self.input_identificador.text().strip():
-            filtros["identificador"] = self.input_identificador.text().strip()
+    def _filtrar_formularios(
+        self,
+        formularios: list[Formulario],
+    ) -> list[Formulario]:
+        identificador = self.input_identificador.text().strip().lower()
+        operario = self.input_operario.text().strip().lower()
 
-        if self.input_operario.text().strip():
-            filtros["operario"] = self.input_operario.text().strip()
+        cod_setor = str(self.combo_cod_setor.currentData() or "").strip().lower()
+        cod_recurso = str(self.combo_cod_recurso.currentData() or "").strip().lower()
+        cod_ativ = str(self.combo_cod_ativ.currentData() or "").strip().lower()
+        turno = str(self.combo_turno.currentData() or "").strip().lower()
+        estado = str(self.combo_estado_formulario.currentData() or "").strip().lower()
 
-        valor_cod_setor = self.combo_cod_setor.currentData()
-        if valor_cod_setor:
-            filtros["cod_setor"] = valor_cod_setor
+        filtrados: list[Formulario] = []
 
-        valor_cod_recurso = self.combo_cod_recurso.currentData()
-        if valor_cod_recurso:
-            filtros["cod_recurso"] = valor_cod_recurso
+        for formulario in formularios:
+            valor_identificador = (formulario.identificador or "").strip().lower()
+            valor_operario = (formulario.operario or "").strip().lower()
+            valor_cod_setor = self._obtener_cod_setor(formulario).lower()
+            valor_cod_recurso = self._obtener_cod_recurso(formulario).lower()
+            valor_cod_ativ = str(formulario.cod_ativ or "").strip().lower()
+            valor_turno = str(formulario.turno or "").strip().lower()
+            valor_estado = (formulario.estado or "").strip().lower()
 
-        valor_cod_ativ = self.combo_cod_ativ.currentData()
-        if valor_cod_ativ:
-            filtros["cod_ativ"] = valor_cod_ativ
+            if identificador and identificador not in valor_identificador:
+                continue
 
-        valor_turno = self.combo_turno.currentData()
-        if valor_turno:
-            filtros["turno"] = valor_turno
+            if operario and operario not in valor_operario:
+                continue
 
-        valor_tipo_trabajo = self.combo_tipo_trabajo.currentData()
-        if valor_tipo_trabajo:
-            filtros["tipo_trabajo"] = valor_tipo_trabajo
+            if cod_setor and cod_setor != valor_cod_setor:
+                continue
 
-        valor_estado = self.combo_estado_formulario.currentData()
-        if valor_estado:
-            filtros["estado_formulario"] = valor_estado
+            if cod_recurso and cod_recurso != valor_cod_recurso:
+                continue
 
-        if self.input_texto_pregunta.text().strip():
-            filtros["texto_pregunta"] = self.input_texto_pregunta.text().strip()
+            if cod_ativ and cod_ativ != valor_cod_ativ:
+                continue
 
-        valor_accion = self.combo_con_accion_correctiva.currentData()
-        if valor_accion:
-            filtros["con_accion_correctiva"] = valor_accion
+            if turno and turno != valor_turno:
+                continue
 
-        return filtros
+            if estado and estado != valor_estado:
+                continue
 
-    def _resolver_respuesta_texto(self, fila: dict) -> str:
-        valor = fila.get("respuesta_texto")
-        if valor is None:
+            filtrados.append(formulario)
+
+        return filtrados
+
+    def _ordenar_formularios(self, formularios: list[Formulario]) -> None:
+        formularios.sort(
+            key=lambda formulario: (
+                formulario.fecha_formulario or "",
+                formulario.id_formulario or "",
+            ),
+            reverse=True,
+        )
+
+    def _cargar_tabla(self, formularios: list[Formulario]) -> None:
+        self.tabla_reportes.setRowCount(0)
+
+        for formulario in formularios:
+            row = self.tabla_reportes.rowCount()
+            self.tabla_reportes.insertRow(row)
+
+            self._set_item(row, 0, formulario.id_formulario, formulario.id_formulario)
+            self._set_item(row, 1, formulario.identificador)
+            self._set_item(row, 2, formulario.operario)
+            self._set_item(row, 3, self._obtener_cod_setor(formulario))
+            self._set_item(row, 4, self._obtener_cod_recurso(formulario))
+            self._set_item(row, 5, formulario.cod_ativ)
+            self._set_item(row, 6, formulario.turno)
+            self._set_item(row, 7, formulario.estado)
+            self._set_item(row, 8, formulario.fecha_formulario)
+
+    def _obtener_cod_setor(self, formulario: Formulario) -> str:
+        return str(formulario.cod_setor or formulario.area or "").strip()
+
+    def _obtener_cod_recurso(self, formulario: Formulario) -> str:
+        return str(formulario.cod_recurso or formulario.maquina or "").strip()
+
+    def _obtener_id_formulario_seleccionado(self) -> str:
+        fila = self.tabla_reportes.currentRow()
+        if fila < 0:
             return ""
-        return str(valor)
 
-    def _resolver_respuesta_numero(self, fila: dict) -> str:
-        valor = fila.get("respuesta_numero")
-        if valor is None:
+        item = self.tabla_reportes.item(fila, 0)
+        if item is None:
             return ""
-        return str(valor)
 
-    def _set_item(self, row: int, column: int, value) -> None:
+        return str(item.data(Qt.UserRole) or item.text()).strip()
+
+    def abrir_detalle(self, *_args) -> None:
+        id_formulario = self._obtener_id_formulario_seleccionado()
+        if not id_formulario:
+            QMessageBox.information(
+                self,
+                "Reportes",
+                "Selecciona un formulario para ver el detalle.",
+            )
+            return
+
+        formulario = self.reporte_service.obtener_formulario(id_formulario)
+        if not formulario:
+            QMessageBox.warning(
+                self,
+                "Reportes",
+                "No se encontró el formulario seleccionado.",
+            )
+            return
+
+        dialogo = DetalleFormularioView(
+            formulario=formulario,
+            reporte_service=self.reporte_service,
+            parent=self,
+        )
+        dialogo.exec_()
+
+    def _set_item(
+        self,
+        row: int,
+        column: int,
+        value,
+        user_data=None,
+    ) -> None:
         texto = "" if value is None else str(value)
         item = QTableWidgetItem(texto)
         item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        if user_data is not None:
+            item.setData(Qt.UserRole, user_data)
+
         self.tabla_reportes.setItem(row, column, item)

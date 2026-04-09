@@ -27,14 +27,22 @@ contexto = {
     "id_formulario": "FORM-0001",
     "identificador": "FLE37858",
     "num_ordem": "FLE37858",
+    "id_apontamento": "TEST-0001",
+    "fecha_formulario": "2026-04-09",
     "cod_setor": "SETOR-01",
     "cod_recurso": "REC-01",
     "cod_ativ": "ATIV-01",
     "turno": "1",
     "tipo_trabajo": "Produccion",
+    "estado": "en_apertura",
+    "descripcion_op": "OP de prueba",
+    "descripcion_proceso": "Proceso de prueba",
 }
 
-ventana = FormularioOperarioView(operario=operario, contexto=contexto)
+ventana = FormularioOperarioView(
+    operario=operario["nombre"],
+    contexto=contexto,
+)
 ventana.show()
 
 app.exec_()

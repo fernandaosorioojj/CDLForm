@@ -19,7 +19,7 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-08T13:06:19"
+        "fecha_actualizacion": "2026-04-09T17:35:01"
     },
     {
         "id_formulario": "FORM-0002",
@@ -36,12 +36,12 @@
         "operario": "13059605",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "en_apertura",
+        "estado": "pendiente_operario",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T16:54:47"
+        "fecha_actualizacion": "2026-04-09T08:54:23"
     },
     {
         "id_formulario": "FORM-0003",

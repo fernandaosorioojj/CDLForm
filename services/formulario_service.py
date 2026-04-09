@@ -3,6 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from models.formulario import (
+    ESTADO_CANCELADO,
+    ESTADO_COMPLETADO,
+    ESTADO_EN_APERTURA,
+    ESTADO_PENDIENTE_OPERARIO,
+    Formulario,
+)
 from repositories.formulario_repository import FormularioRepository
 
 
@@ -66,7 +73,7 @@ class FormularioService:
         maximo = 0
 
         for formulario in formularios:
-            valor = str(formulario.get("id_formulario", "")).strip()
+            valor = formulario.id_formulario
             if not valor.startswith("FORM-"):
                 continue
 
@@ -93,13 +100,13 @@ class FormularioService:
         except ValueError:
             return datetime.now().date().isoformat()
 
-    def listar_formularios(self) -> list[dict]:
+    def listar_formularios(self) -> list[Formulario]:
         return self.formulario_repository.listar_formularios()
 
-    def listar_formularios_por_estado(self, estado: str) -> list[dict]:
+    def listar_formularios_por_estado(self, estado: str) -> list[Formulario]:
         return self.formulario_repository.listar_por_estado(estado)
 
-    def listar_formularios_por_estados(self, estados: list[str]) -> list[dict]:
+    def listar_formularios_por_estados(self, estados: list[str]) -> list[Formulario]:
         estados_normalizados = {
             self._normalizar_texto(estado)
             for estado in estados
@@ -112,44 +119,46 @@ class FormularioService:
         return [
             formulario
             for formulario in self.listar_formularios()
-            if self._normalizar_texto(formulario.get("estado")) in estados_normalizados
+            if formulario.estado in estados_normalizados
         ]
 
-    def listar_formularios_pendientes_operario(self) -> list[dict]:
+    def listar_formularios_pendientes_operario(self) -> list[Formulario]:
         pendientes = self.listar_formularios_por_estados(
             [
-                "en_progreso",
-                "pendiente_operario",
-                "en_apertura",
+                ESTADO_EN_APERTURA,
+                ESTADO_PENDIENTE_OPERARIO,
             ]
         )
 
         return sorted(
             pendientes,
             key=lambda formulario: (
-                self._normalizar_texto(formulario.get("fecha_creacion")),
-                self._normalizar_texto(formulario.get("id_formulario")),
+                formulario.fecha_creacion,
+                formulario.id_formulario,
             ),
         )
 
-    def obtener_siguiente_formulario_pendiente_operario(self) -> dict | None:
+    def obtener_siguiente_formulario_pendiente_operario(self) -> Formulario | None:
         pendientes = self.listar_formularios_pendientes_operario()
         if not pendientes:
             return None
         return pendientes[0]
 
-    def obtener_formulario_por_id(self, id_formulario: str) -> dict | None:
+    def obtener_formulario_por_id(self, id_formulario: str) -> Formulario | None:
         return self.formulario_repository.obtener_por_id(id_formulario)
 
     def obtener_formulario_por_id_apontamento(
         self,
         id_apontamento: Any,
-    ) -> dict | None:
+    ) -> Formulario | None:
         id_normalizado = self._normalizar_id_apontamento(id_apontamento)
         return self.formulario_repository.obtener_por_id_apontamento(id_normalizado)
 
     def existe_formulario_para_apontamento(self, id_apontamento: Any) -> bool:
         return self.obtener_formulario_por_id_apontamento(id_apontamento) is not None
+
+    def guardar_formulario(self, formulario: Formulario) -> Formulario:
+        return self.formulario_repository.guardar(formulario)
 
     def crear_formulario_pendiente_desde_registro_apontamento(
         self,
@@ -190,42 +199,40 @@ class FormularioService:
         fecha_formulario = self._obtener_fecha_formulario(hora_fim)
         ahora = datetime.now().isoformat(timespec="seconds")
 
-        formulario = {
-            "id_formulario": self._generar_id_formulario(),
-            "identificador": identificador,
-            "id_apontamento": id_apontamento,
-            "fecha_formulario": fecha_formulario,
-            "area": cod_setor,
-            "maquina": cod_recurso,
-            "cod_recurso": cod_recurso,
-            "cod_setor": cod_setor,
-            "cod_ativ": self._serializar_valor(
+        formulario = Formulario(
+            id_formulario=self._generar_id_formulario(),
+            identificador=identificador,
+            id_apontamento=id_apontamento,
+            fecha_formulario=fecha_formulario,
+            area=cod_setor,
+            maquina=cod_recurso,
+            cod_recurso=cod_recurso,
+            cod_setor=cod_setor,
+            cod_ativ=self._serializar_valor(
                 registro.get("cod_ativ") or registro.get("CodAtiv")
             ),
-            "turno": self._serializar_valor(
+            turno=self._serializar_valor(
                 registro.get("turno") or registro.get("Turno")
             ),
-            "hora_fim": hora_fim,
-            "operario": self._normalizar_texto(
+            hora_fim=hora_fim,
+            operario=self._normalizar_texto(
                 registro.get("operador") or registro.get("operario")
             ),
-            "estacion": self._normalizar_texto(registro.get("estacion")),
-            "evento_origen": "apontamento_sql",
-            "estado": "en_progreso",
-            "descripcion_op": self._normalizar_texto(
+            estacion=self._normalizar_texto(registro.get("estacion")),
+            evento_origen="apontamento_sql",
+            estado=ESTADO_EN_APERTURA,
+            descripcion_op=self._normalizar_texto(
                 registro.get("descripcion_op") or registro.get("DescricaoOP")
             ),
-            "descripcion_proceso": self._normalizar_texto(
+            descripcion_proceso=self._normalizar_texto(
                 registro.get("descripcion_proceso")
                 or registro.get("descricao_processo")
                 or registro.get("DescricaoProcesso")
             ),
-            "observacion_general": self._normalizar_texto(
-                registro.get("obs")
-            ),
-            "fecha_creacion": ahora,
-            "fecha_actualizacion": ahora,
-        }
+            observacion_general=self._normalizar_texto(registro.get("obs")),
+            fecha_creacion=ahora,
+            fecha_actualizacion=ahora,
+        )
 
         guardado = self.formulario_repository.add_formulario(formulario)
 
@@ -239,60 +246,40 @@ class FormularioService:
         id_formulario: str,
         estado: str,
         observacion_general: str | None = None,
-    ) -> dict:
+    ) -> Formulario:
         formulario = self.obtener_formulario_por_id(id_formulario)
         if not formulario:
             raise ValueError(f"No existe el formulario {id_formulario}.")
 
-        cambios = {
-            "estado": self._normalizar_texto(estado),
-            "fecha_actualizacion": datetime.now().isoformat(timespec="seconds"),
-        }
+        formulario.estado = self._normalizar_texto(estado)
+        formulario.fecha_actualizacion = datetime.now().isoformat(timespec="seconds")
 
         if observacion_general is not None:
-            cambios["observacion_general"] = self._normalizar_texto(
+            formulario.observacion_general = self._normalizar_texto(
                 observacion_general
             )
 
-        actualizado = self.formulario_repository.actualizar_formulario(
-            id_formulario,
-            cambios,
-        )
-
-        if not actualizado:
-            raise ValueError(f"No se pudo actualizar el formulario {id_formulario}.")
-
-        return actualizado
+        return self.formulario_repository.guardar(formulario)
 
     def actualizar_campos_formulario(
         self,
         id_formulario: str,
         cambios: dict[str, Any],
-    ) -> dict:
+    ) -> Formulario:
         formulario = self.obtener_formulario_por_id(id_formulario)
         if not formulario:
             raise ValueError(f"No existe el formulario {id_formulario}.")
 
-        cambios_normalizados = dict(cambios)
-        cambios_normalizados["fecha_actualizacion"] = datetime.now().isoformat(
-            timespec="seconds"
-        )
+        formulario.actualizar(cambios)
+        formulario.fecha_actualizacion = datetime.now().isoformat(timespec="seconds")
 
-        actualizado = self.formulario_repository.actualizar_formulario(
-            id_formulario,
-            cambios_normalizados,
-        )
-
-        if not actualizado:
-            raise ValueError(f"No se pudo actualizar el formulario {id_formulario}.")
-
-        return actualizado
+        return self.formulario_repository.guardar(formulario)
 
     def asignar_operario(
         self,
         id_formulario: str,
         operario: str,
-    ) -> dict:
+    ) -> Formulario:
         operario_normalizado = self._normalizar_texto(operario)
         if not operario_normalizado:
             raise ValueError("El operario no puede venir vacío.")
@@ -304,25 +291,26 @@ class FormularioService:
             },
         )
 
-    def marcar_formulario_en_progreso(
-        self,
-        id_formulario: str,
-        observacion_general: str | None = None,
-    ) -> dict:
+    def marcar_formulario_en_apertura(self, id_formulario: str) -> Formulario:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
-            estado="en_progreso",
-            observacion_general=observacion_general,
+            estado=ESTADO_EN_APERTURA,
         )
 
-    def marcar_formulario_enviado(
+    def marcar_formulario_pendiente_operario(self, id_formulario: str) -> Formulario:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado=ESTADO_PENDIENTE_OPERARIO,
+        )
+
+    def marcar_formulario_completado(
         self,
         id_formulario: str,
         observacion_general: str | None = None,
-    ) -> dict:
+    ) -> Formulario:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
-            estado="enviado",
+            estado=ESTADO_COMPLETADO,
             observacion_general=observacion_general,
         )
 
@@ -330,25 +318,31 @@ class FormularioService:
         self,
         id_formulario: str,
         observacion_general: str | None = None,
-    ) -> dict:
+    ) -> Formulario:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
-            estado="cancelado",
+            estado=ESTADO_CANCELADO,
             observacion_general=observacion_general,
         )
 
-    def marcar_formulario_en_apertura(self, id_formulario: str) -> dict:
-        return self.marcar_formulario_en_progreso(id_formulario)
-
-    def marcar_formulario_pendiente_operario(self, id_formulario: str) -> dict:
-        return self.marcar_formulario_en_progreso(id_formulario)
-
-    def marcar_formulario_completado(
+    def marcar_formulario_en_progreso(
         self,
         id_formulario: str,
         observacion_general: str | None = None,
-    ) -> dict:
-        return self.marcar_formulario_enviado(
+    ) -> Formulario:
+        return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
+            estado=ESTADO_PENDIENTE_OPERARIO,
+            observacion_general=observacion_general,
+        )
+
+    def marcar_formulario_enviado(
+        self,
+        id_formulario: str,
+        observacion_general: str | None = None,
+    ) -> Formulario:
+        return self.actualizar_estado_formulario(
+            id_formulario=id_formulario,
+            estado=ESTADO_COMPLETADO,
             observacion_general=observacion_general,
         )
