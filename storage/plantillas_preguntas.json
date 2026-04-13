@@ -1,0 +1,142 @@
+[
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V001",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 1,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T09:28:58",
+        "fecha_desactivacion": "2026-04-13T10:49:45",
+        "items": [
+            {
+                "id_pregunta": "PREG-0001",
+                "orden": 1
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V002",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 2,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T10:49:45",
+        "fecha_desactivacion": "2026-04-13T10:50:26",
+        "items": [
+            {
+                "id_pregunta": "PREG-0001",
+                "orden": 1
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V003",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 3,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T10:50:26",
+        "fecha_desactivacion": "2026-04-13T10:50:30",
+        "items": [
+            {
+                "id_pregunta": "PREG-0001",
+                "orden": 1
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V004",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 4,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T10:50:30",
+        "fecha_desactivacion": "2026-04-13T10:53:06",
+        "items": [
+            {
+                "id_pregunta": "PREG-0001",
+                "orden": 1
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V005",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 5,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T10:53:06",
+        "fecha_desactivacion": "2026-04-13T10:57:49",
+        "items": [
+            {
+                "id_pregunta": "PREG-0001",
+                "orden": 1
+            },
+            {
+                "id_pregunta": "PREG-0004",
+                "orden": 2
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V006",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 6,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T10:57:49",
+        "fecha_desactivacion": "2026-04-13T11:06:20",
+        "items": [
+            {
+                "id_pregunta": "PREG-0004",
+                "orden": 2
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V007",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 7,
+        "activa": false,
+        "fecha_creacion": "2026-04-13T11:06:20",
+        "fecha_desactivacion": "2026-04-13T15:21:20",
+        "items": [
+            {
+                "id_pregunta": "PREG-0006",
+                "orden": 1
+            },
+            {
+                "id_pregunta": "PREG-0004",
+                "orden": 2
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_HUEGO-UTECO-V008",
+        "clave_plantilla": "TPL-IMP_HUEGO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_HUEGO",
+        "version": 8,
+        "activa": true,
+        "fecha_creacion": "2026-04-13T15:21:20",
+        "fecha_desactivacion": "",
+        "items": [
+            {
+                "id_pregunta": "PREG-0006",
+                "orden": 1
+            },
+            {
+                "id_pregunta": "PREG-0004",
+                "orden": 2
+            }
+        ]
+    }
+]

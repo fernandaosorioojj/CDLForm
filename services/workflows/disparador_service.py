@@ -1,9 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Any
 
 from launcher.app_launcher import AppLauncher
-from services.formulario_service import FormularioService
+from services.forms.formulario_service import FormularioService
 
 
 class DisparadorService:

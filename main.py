@@ -1,36 +1,19 @@
 from __future__ import annotations
-from pathlib import Path
 
-import sys
 import argparse
+import inspect
+import sys
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from ui.login import LoginView
 from ui.seleccion_operario import SeleccionOperarioView
-
+from utils.style_loader import load_qss_files
 
 
 def cargar_estilos(app: QApplication) -> None:
-    ruta_estilos = Path("assets/styles.qss")
+    app.setStyleSheet(load_qss_files("base.qss"))
 
-    if not ruta_estilos.exists():
-        print(f"No se encontró la hoja de estilos: {ruta_estilos}")
-        return
-
-    app.setStyleSheet(ruta_estilos.read_text(encoding="utf-8"))
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    cargar_estilos(app)
-
-    ventana = LoginView()
-    ventana.show()
-
-    sys.exit(app.exec_())
-    
 
 def parse_args():
     parser = argparse.ArgumentParser(description="CDLform")
@@ -39,12 +22,12 @@ def parse_args():
         "--modo",
         choices=["normal", "auto"],
         default="normal",
-        help="Modo de ejecución de la aplicación",
+        help="Modo de ejecucion de la aplicacion",
     )
 
     parser.add_argument("--op", default=None, help="OP asociada al formulario")
-    parser.add_argument("--area", default=None, help="Área asociada al formulario")
-    parser.add_argument("--maquina", default=None, help="Máquina asociada al formulario")
+    parser.add_argument("--area", default=None, help="Area asociada al formulario")
+    parser.add_argument("--maquina", default=None, help="Maquina asociada al formulario")
     parser.add_argument(
         "--evento-origen",
         dest="evento_origen",
@@ -59,20 +42,41 @@ def validar_argumentos_modo_auto(args) -> list[str]:
     errores = []
 
     if not args.op or not str(args.op).strip():
-        errores.append("Falta el parámetro --op")
+        errores.append("Falta el parametro --op")
 
     if not args.area or not str(args.area).strip():
-        errores.append("Falta el parámetro --area")
+        errores.append("Falta el parametro --area")
 
     if not args.maquina or not str(args.maquina).strip():
-        errores.append("Falta el parámetro --maquina")
+        errores.append("Falta el parametro --maquina")
 
     return errores
 
 
-def main():
+def crear_seleccion_operario_modo_auto(args) -> SeleccionOperarioView:
+    kwargs_disponibles = {
+        "op": args.op.strip() if args.op else None,
+        "area": args.area.strip() if args.area else None,
+        "maquina": args.maquina.strip() if args.maquina else None,
+        "evento_origen": (
+            args.evento_origen.strip()
+            if args.evento_origen and str(args.evento_origen).strip()
+            else None
+        ),
+    }
+    signature = inspect.signature(SeleccionOperarioView.__init__)
+    kwargs_aceptados = {
+        nombre: valor
+        for nombre, valor in kwargs_disponibles.items()
+        if nombre in signature.parameters
+    }
+    return SeleccionOperarioView(**kwargs_aceptados)
+
+
+def main() -> None:
     args = parse_args()
     app = QApplication(sys.argv)
+    cargar_estilos(app)
 
     if args.modo == "normal":
         ventana = LoginView()
@@ -85,24 +89,17 @@ def main():
         if errores:
             QMessageBox.critical(
                 None,
-                "Error de ejecución",
-                "No se puede iniciar la aplicación en modo automático.\n\n"
+                "Error de ejecucion",
+                "No se puede iniciar la aplicacion en modo automatico.\n\n"
                 + "\n".join(errores),
             )
             sys.exit(1)
 
-        ventana = SeleccionOperarioView(
-            op=args.op.strip(),
-            area=args.area.strip(),
-            maquina=args.maquina.strip(),
-            evento_origen=args.evento_origen.strip()
-            if args.evento_origen and str(args.evento_origen).strip()
-            else None,
-        )
+        ventana = crear_seleccion_operario_modo_auto(args)
         ventana.show()
         sys.exit(app.exec_())
 
-    QMessageBox.critical(None, "Error", "Modo de ejecución no válido.")
+    QMessageBox.critical(None, "Error", "Modo de ejecucion no valido.")
     sys.exit(1)
 
 

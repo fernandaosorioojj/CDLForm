@@ -1,0 +1,11 @@
+QWidget#loginView {
+    background-color: $bg_app;
+}
+
+QWidget#loginView QFrame[card="true"] {
+    min-width: 360px;
+}
+
+QWidget#loginView QLineEdit {
+    min-height: 20px;
+}

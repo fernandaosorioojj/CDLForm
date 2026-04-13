@@ -1,6 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from services.apontamento_procesado_service import ApontamentoProcesadoService
+from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
 
 
 apontamento_procesado_service = ApontamentoProcesadoService()

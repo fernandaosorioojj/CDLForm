@@ -1,11 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from services.apontamento_query_service import ApontamentoQueryService
-from services.formulario_service import FormularioService
+from services.jobtrack.apontamento_query_service import ApontamentoQueryService
+from services.forms.formulario_service import FormularioService
 from utils.json_manager import JsonManager
 
 
@@ -46,7 +46,7 @@ class ApontamentoProcesadoService:
     @staticmethod
     def _normalizar_id_apontamento(valor: Any) -> str:
         if valor is None:
-            raise ValueError("El IdApontamento no puede venir vacío.")
+            raise ValueError("El IdApontamento no puede venir vacÃ­o.")
 
         if isinstance(valor, int):
             return str(valor)
@@ -58,7 +58,7 @@ class ApontamentoProcesadoService:
 
         texto = str(valor).strip()
         if not texto:
-            raise ValueError("El IdApontamento no puede venir vacío.")
+            raise ValueError("El IdApontamento no puede venir vacÃ­o.")
 
         try:
             numero = float(texto)
@@ -183,7 +183,6 @@ class ApontamentoProcesadoService:
             "num_ordem": self._normalizar_texto(apontamento.get("NumOrdem")),
             "cod_recurso": self._normalizar_texto(apontamento.get("CodRecurso")),
             "cod_setor": self._normalizar_texto(apontamento.get("CodSetor")),
-            "cod_ativ": self._serializar_valor(apontamento.get("CodAtiv")),
             "turno": self._serializar_valor(apontamento.get("Turno")),
             "hora_fim": self._serializar_valor(apontamento.get("HoraFim")),
             "operador": self._normalizar_texto(apontamento.get("Operador")),

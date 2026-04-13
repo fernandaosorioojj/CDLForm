@@ -12,7 +12,6 @@ class EventoOP:
 
     cod_recurso: str | None = None
     operador: str | None = None
-    cod_ativ: str | None = None
     cod_setor: str | None = None
     turno: str | None = None
 
@@ -55,7 +54,6 @@ class EventoOP:
 
         self.cod_recurso = self._normalizar_opcional(self.cod_recurso)
         self.operador = self._normalizar_opcional(self.operador)
-        self.cod_ativ = self._normalizar_opcional(self.cod_ativ)
         self.cod_setor = self._normalizar_opcional(self.cod_setor)
         self.turno = self._normalizar_opcional(self.turno)
 
@@ -105,7 +103,6 @@ class EventoOP:
             num_ordem=data["num_ordem"],
             cod_recurso=data.get("cod_recurso"),
             operador=data.get("operador"),
-            cod_ativ=data.get("cod_ativ"),
             cod_setor=data.get("cod_setor"),
             turno=data.get("turno"),
             dt_producao=data.get("dt_producao"),

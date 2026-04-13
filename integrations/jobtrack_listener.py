@@ -1,10 +1,10 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from core.enums import OrigenEvento
 from core.exceptions import ValidationError
 from core.validators import require_non_empty_string
 from models.evento_op import EventoOP
-from services.evento_op_service import EventoOPService
+from services.workflows.evento_op_service import EventoOPService
 
 
 class JobTrackListener:

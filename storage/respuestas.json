@@ -457,5 +457,136 @@
         "respuesta_numero": null,
         "id_opcion": "OPC-002",
         "accion_correctiva_aplicada": "sacar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0052",
+        "id_formulario": "FORM-0002",
+        "id_pregunta": "PREG-0001",
+        "respuesta_texto": "Si",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-001",
+        "accion_correctiva_aplicada": null
+    },
+    {
+        "id_respuesta": "RESP-0053",
+        "id_formulario": "FORM-0002",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "no todo lo de solvente",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-001",
+        "accion_correctiva_aplicada": "retirar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0054",
+        "id_formulario": "FORM-0002",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "no todo lo de tinta",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-003",
+        "accion_correctiva_aplicada": "retirar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0055",
+        "id_formulario": "FORM-0003",
+        "id_pregunta": "PREG-0001",
+        "respuesta_texto": "No",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-002",
+        "accion_correctiva_aplicada": "Deben ser retirados todos los restos una vez procesada la op"
+    },
+    {
+        "id_respuesta": "RESP-0056",
+        "id_formulario": "FORM-0003",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "todo lo de solvente",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-002",
+        "accion_correctiva_aplicada": null
+    },
+    {
+        "id_respuesta": "RESP-0057",
+        "id_formulario": "FORM-0003",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "no todo lo de tinta",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-003",
+        "accion_correctiva_aplicada": "retirar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0058",
+        "id_formulario": "FORM-0004",
+        "id_pregunta": "PREG-0001",
+        "respuesta_texto": "No",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-002",
+        "accion_correctiva_aplicada": "Deben ser retirados todos los restos una vez procesada la op"
+    },
+    {
+        "id_respuesta": "RESP-0059",
+        "id_formulario": "FORM-0004",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "no todo lo de solvente",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-001",
+        "accion_correctiva_aplicada": "retirar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0060",
+        "id_formulario": "FORM-0004",
+        "id_pregunta": "PREG-0002",
+        "respuesta_texto": "no todo lo de tinta",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-003",
+        "accion_correctiva_aplicada": "retirar lo restante"
+    },
+    {
+        "id_respuesta": "RESP-0061",
+        "id_formulario": "FORM-0005",
+        "id_pregunta": "PREG-0006",
+        "respuesta_texto": "Si",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-001",
+        "accion_correctiva_aplicada": null,
+        "fecha_creacion": "2026-04-13T17:27:52"
+    },
+    {
+        "id_respuesta": "RESP-0062",
+        "id_formulario": "FORM-0005",
+        "id_pregunta": "PREG-0004",
+        "respuesta_texto": "no todo lo de solvente",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-001",
+        "accion_correctiva_aplicada": "retirar lo restante",
+        "fecha_creacion": "2026-04-13T17:27:52"
+    },
+    {
+        "id_respuesta": "RESP-0063",
+        "id_formulario": "FORM-0005",
+        "id_pregunta": "PREG-0004",
+        "respuesta_texto": "todo lo de tinta",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-004",
+        "accion_correctiva_aplicada": null,
+        "fecha_creacion": "2026-04-13T17:27:52"
+    },
+    {
+        "id_respuesta": "RESP-0064",
+        "id_formulario": "FORM-0006",
+        "id_pregunta": "PREG-0006",
+        "respuesta_texto": "No",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-002",
+        "accion_correctiva_aplicada": "Deben ser retirados todos los restos una vez procesada la op",
+        "fecha_creacion": "2026-04-13T17:30:27"
+    },
+    {
+        "id_respuesta": "RESP-0065",
+        "id_formulario": "FORM-0006",
+        "id_pregunta": "PREG-0004",
+        "respuesta_texto": "todo de todo",
+        "respuesta_numero": null,
+        "id_opcion": "OPC-005",
+        "accion_correctiva_aplicada": null,
+        "fecha_creacion": "2026-04-13T17:30:27"
     }
 ]

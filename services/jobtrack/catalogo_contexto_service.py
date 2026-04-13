@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
@@ -19,7 +19,7 @@ class CatalogoContextoService:
 
     def _obtener_apontamento_query_service(self):
         if self.apontamento_query_service is None:
-            from services.apontamento_query_service import ApontamentoQueryService
+            from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 
             self.apontamento_query_service = ApontamentoQueryService(
                 catalogo_contexto_service=self
@@ -101,23 +101,6 @@ class CatalogoContextoService:
     def listar_cod_setor(self) -> list[str]:
         return self.listar_cod_setores()
 
-    def listar_cod_ativ(self) -> list[str]:
-        valores_sql = self._obtener_catalogo_desde_sql(
-            "listar_cod_ativ_disponibles"
-        )
-        if valores_sql:
-            return valores_sql
-
-        data = self._leer_json("cod_ativ.json", [])
-
-        if isinstance(data, list):
-            return self._normalizar_lista(data)
-
-        if isinstance(data, dict):
-            return self._normalizar_lista(list(data.values()))
-
-        return []
-
     def listar_turnos(self) -> list[str]:
         valores_sql = self._obtener_catalogo_desde_sql(
             "listar_turnos_disponibles"
@@ -150,7 +133,7 @@ class CatalogoContextoService:
         estacion_normalizada = str(estacion).strip()
 
         if not estacion_normalizada:
-            raise ValueError("La estación no puede venir vacía.")
+            raise ValueError("La estaciÃ³n no puede venir vacÃ­a.")
 
         data = self._leer_json("estaciones_recursos.json", {})
 
@@ -163,7 +146,7 @@ class CatalogoContextoService:
 
         if codigos is None:
             raise ValueError(
-                f"No existe homologación de estación a CodRecurso para: "
+                f"No existe homologaciÃ³n de estaciÃ³n a CodRecurso para: "
                 f"{estacion_normalizada}"
             )
 
@@ -172,14 +155,14 @@ class CatalogoContextoService:
 
         if not isinstance(codigos, list):
             raise ValueError(
-                f"La homologación de la estación {estacion_normalizada} debe ser una lista."
+                f"La homologaciÃ³n de la estaciÃ³n {estacion_normalizada} debe ser una lista."
             )
 
         codigos_normalizados = self._normalizar_lista(codigos)
 
         if not codigos_normalizados:
             raise ValueError(
-                f"La estación {estacion_normalizada} no tiene CodRecurso homologado."
+                f"La estaciÃ³n {estacion_normalizada} no tiene CodRecurso homologado."
             )
 
         return codigos_normalizados

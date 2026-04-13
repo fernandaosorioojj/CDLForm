@@ -13,6 +13,7 @@ class Respuesta:
     respuesta_numero: Optional[int] = None
     id_opcion: Optional[str] = None
     accion_correctiva_aplicada: Optional[str] = None
+    fecha_creacion: str = ""
 
     def __post_init__(self) -> None:
         self.id_respuesta = str(self.id_respuesta).strip()
@@ -29,6 +30,7 @@ class Respuesta:
             self.accion_correctiva_aplicada = str(
                 self.accion_correctiva_aplicada
             ).strip()
+        self.fecha_creacion = str(self.fecha_creacion or "").strip()
 
         if not self.id_respuesta:
             raise ValueError("id_respuesta es obligatorio.")
@@ -48,6 +50,7 @@ class Respuesta:
             "respuesta_numero": self.respuesta_numero,
             "id_opcion": self.id_opcion,
             "accion_correctiva_aplicada": self.accion_correctiva_aplicada,
+            "fecha_creacion": self.fecha_creacion,
         }
 
     @classmethod
@@ -63,4 +66,5 @@ class Respuesta:
             respuesta_numero=data.get("respuesta_numero"),
             id_opcion=data.get("id_opcion"),
             accion_correctiva_aplicada=data.get("accion_correctiva_aplicada"),
+            fecha_creacion=data.get("fecha_creacion", ""),
         )

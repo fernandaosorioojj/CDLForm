@@ -11,14 +11,19 @@ from models.formulario import (
     Formulario,
 )
 from repositories.formulario_repository import FormularioRepository
+from services.forms.plantilla_preguntas_service import PlantillaPreguntasService
 
 
 class FormularioService:
     def __init__(
         self,
         formulario_repository: FormularioRepository | None = None,
+        plantilla_preguntas_service: PlantillaPreguntasService | None = None,
     ) -> None:
         self.formulario_repository = formulario_repository or FormularioRepository()
+        self.plantilla_preguntas_service = (
+            plantilla_preguntas_service or PlantillaPreguntasService()
+        )
 
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
@@ -198,6 +203,15 @@ class FormularioService:
         )
         fecha_formulario = self._obtener_fecha_formulario(hora_fim)
         ahora = datetime.now().isoformat(timespec="seconds")
+        plantilla_preguntas = self.plantilla_preguntas_service.obtener_activa(
+            cod_recurso=cod_recurso,
+            cod_setor=cod_setor,
+        )
+        if not plantilla_preguntas:
+            raise ValueError(
+                "No existe una plantilla activa de preguntas para "
+                f"CodSetor {cod_setor or '-'} y CodRecurso {cod_recurso}."
+            )
 
         formulario = Formulario(
             id_formulario=self._generar_id_formulario(),
@@ -208,9 +222,6 @@ class FormularioService:
             maquina=cod_recurso,
             cod_recurso=cod_recurso,
             cod_setor=cod_setor,
-            cod_ativ=self._serializar_valor(
-                registro.get("cod_ativ") or registro.get("CodAtiv")
-            ),
             turno=self._serializar_valor(
                 registro.get("turno") or registro.get("Turno")
             ),
@@ -232,6 +243,8 @@ class FormularioService:
             observacion_general=self._normalizar_texto(registro.get("obs")),
             fecha_creacion=ahora,
             fecha_actualizacion=ahora,
+            id_plantilla_preguntas=plantilla_preguntas.id_plantilla,
+            version_plantilla_preguntas=plantilla_preguntas.version,
         )
 
         guardado = self.formulario_repository.add_formulario(formulario)
@@ -274,6 +287,36 @@ class FormularioService:
         formulario.fecha_actualizacion = datetime.now().isoformat(timespec="seconds")
 
         return self.formulario_repository.guardar(formulario)
+
+    def asignar_plantilla_activa_si_falta(
+        self,
+        id_formulario: str,
+    ) -> Formulario:
+        formulario = self.obtener_formulario_por_id(id_formulario)
+        if not formulario:
+            raise ValueError(f"No existe el formulario {id_formulario}.")
+
+        if formulario.id_plantilla_preguntas:
+            return formulario
+
+        plantilla_preguntas = self.plantilla_preguntas_service.obtener_activa(
+            cod_recurso=formulario.cod_recurso or formulario.maquina,
+            cod_setor=formulario.cod_setor or formulario.area,
+        )
+        if not plantilla_preguntas:
+            raise ValueError(
+                "No existe una plantilla activa de preguntas para "
+                f"CodSetor {formulario.cod_setor or formulario.area or '-'} y "
+                f"CodRecurso {formulario.cod_recurso or formulario.maquina or '-'}."
+            )
+
+        return self.actualizar_campos_formulario(
+            id_formulario=id_formulario,
+            cambios={
+                "id_plantilla_preguntas": plantilla_preguntas.id_plantilla,
+                "version_plantilla_preguntas": plantilla_preguntas.version,
+            },
+        )
 
     def asignar_operario(
         self,

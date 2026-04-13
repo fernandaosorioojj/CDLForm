@@ -1,0 +1,11 @@
+QWidget#seleccionOperarioView {
+    background-color: $bg_app;
+}
+
+QWidget#seleccionOperarioView QLabel {
+    color: $text_primary;
+}
+
+QWidget#seleccionOperarioView QComboBox {
+    min-height: 20px;
+}

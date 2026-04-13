@@ -51,7 +51,6 @@ class Formulario:
     maquina: str = ""
     cod_recurso: str = ""
     cod_setor: str = ""
-    cod_ativ: Any = None
     turno: Any = None
     hora_fim: Any = None
     operario: str = ""
@@ -63,6 +62,8 @@ class Formulario:
     observacion_general: str = ""
     fecha_creacion: str = ""
     fecha_actualizacion: str = ""
+    id_plantilla_preguntas: str = ""
+    version_plantilla_preguntas: int = 0
 
     def __post_init__(self) -> None:
         self.id_formulario = _normalizar_texto(self.id_formulario)
@@ -82,8 +83,8 @@ class Formulario:
         self.observacion_general = _normalizar_texto(self.observacion_general)
         self.fecha_creacion = _normalizar_texto(self.fecha_creacion)
         self.fecha_actualizacion = _normalizar_texto(self.fecha_actualizacion)
+        self.id_plantilla_preguntas = _normalizar_texto(self.id_plantilla_preguntas)
 
-        self.cod_ativ = _serializar_valor(self.cod_ativ)
         self.turno = _serializar_valor(self.turno)
         self.hora_fim = _serializar_valor(self.hora_fim)
 
@@ -98,7 +99,6 @@ class Formulario:
             maquina=data.get("maquina", ""),
             cod_recurso=data.get("cod_recurso", ""),
             cod_setor=data.get("cod_setor", ""),
-            cod_ativ=data.get("cod_ativ"),
             turno=data.get("turno"),
             hora_fim=data.get("hora_fim"),
             operario=data.get("operario", ""),
@@ -110,6 +110,10 @@ class Formulario:
             observacion_general=data.get("observacion_general", ""),
             fecha_creacion=data.get("fecha_creacion", ""),
             fecha_actualizacion=data.get("fecha_actualizacion", ""),
+            id_plantilla_preguntas=data.get("id_plantilla_preguntas", ""),
+            version_plantilla_preguntas=int(
+                data.get("version_plantilla_preguntas", 0) or 0
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -122,7 +126,6 @@ class Formulario:
             "maquina": self.maquina,
             "cod_recurso": self.cod_recurso,
             "cod_setor": self.cod_setor,
-            "cod_ativ": _serializar_valor(self.cod_ativ),
             "turno": _serializar_valor(self.turno),
             "hora_fim": _serializar_valor(self.hora_fim),
             "operario": self.operario,
@@ -134,6 +137,8 @@ class Formulario:
             "observacion_general": self.observacion_general,
             "fecha_creacion": self.fecha_creacion,
             "fecha_actualizacion": self.fecha_actualizacion,
+            "id_plantilla_preguntas": self.id_plantilla_preguntas,
+            "version_plantilla_preguntas": self.version_plantilla_preguntas,
         }
 
     def actualizar(self, cambios: dict[str, Any]) -> None:

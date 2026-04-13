@@ -1,48 +1,55 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QMessageBox,
-    QFrame,
+    QPushButton,
+    QVBoxLayout,
 )
 
+from presenters.login_presenter import LoginPresenter
+from services.security.auth_service import AuthService
 from ui.dashboard_gestion import DashboardGestionView
+from widgets.base_window import BaseWindow
+from widgets.card_frame import CardFrame
 
 
-class LoginView(QWidget):
-    def __init__(self):
+class LoginView(BaseWindow):
+    qss_files = ("base.qss", "login.qss")
+
+    def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle("CDLform - Gestión")
-        self.resize(500, 320)
-
+        self.auth_service = AuthService()
+        self.presenter = LoginPresenter(self.auth_service)
         self.dashboard_gestion = None
 
+        self.setObjectName("loginView")
+        self.setWindowTitle("CDLform - Gestion")
+        self.resize(500, 320)
+
         self._init_ui()
+        self.apply_styles()
 
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setAlignment(Qt.AlignCenter)
         layout_principal.setContentsMargins(32, 32, 32, 32)
 
-        contenedor = QFrame()
+        contenedor = CardFrame()
         contenedor.setMaximumWidth(380)
-        contenedor.setProperty("card", "true")
 
         layout = QVBoxLayout(contenedor)
         layout.setSpacing(12)
         layout.setContentsMargins(24, 24, 24, 24)
 
-        titulo = QLabel("Ingreso Gestión")
+        titulo = QLabel("Ingreso Gestion")
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
-        subtitulo = QLabel("Accede al panel de administración del sistema.")
+        subtitulo = QLabel("Accede al panel de administracion del sistema.")
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
@@ -51,7 +58,7 @@ class LoginView(QWidget):
         self.input_usuario.setPlaceholderText("Usuario")
 
         self.input_password = QLineEdit()
-        self.input_password.setPlaceholderText("Contraseña")
+        self.input_password.setPlaceholderText("Contrasena")
         self.input_password.setEchoMode(QLineEdit.Password)
 
         self.btn_ingresar = QPushButton("Ingresar")
@@ -71,18 +78,35 @@ class LoginView(QWidget):
         usuario = self.input_usuario.text().strip()
         password = self.input_password.text().strip()
 
-        if not usuario or not password:
-            QMessageBox.warning(self, "Validación", "Debes ingresar usuario y contraseña.")
+        valido, mensaje = self.presenter.validar_credenciales_ingresadas(
+            usuario,
+            password,
+        )
+        if not valido:
+            QMessageBox.warning(
+                self,
+                "Validacion",
+                mensaje,
+            )
             return
 
-        if usuario == "admin" and password == "1234":
-            self.dashboard_gestion = DashboardGestionView()
-            self.dashboard_gestion.show()
-            self.close()
+        try:
+            if self.presenter.iniciar_sesion(usuario, password):
+                self.dashboard_gestion = DashboardGestionView()
+                self.dashboard_gestion.show()
+                self.close()
+                return
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                "Error de configuracion",
+                f"No fue posible validar el acceso administrativo.\n\n{exc}",
+            )
             return
 
         QMessageBox.warning(
             self,
             "Acceso denegado",
-            "Usuario o contraseña incorrectos.\n\nCredenciales temporales:\nUsuario: admin\nContraseña: 1234",
+            "Usuario o contrasena incorrectos.",
         )
+

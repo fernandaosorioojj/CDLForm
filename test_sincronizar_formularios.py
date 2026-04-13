@@ -1,6 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from services.apontamento_procesado_service import ApontamentoProcesadoService
+from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
 
 
 apontamento_procesado_service = ApontamentoProcesadoService()
@@ -14,7 +14,7 @@ resultado = apontamento_procesado_service.sincronizar_y_crear_formularios_estaci
 
 contexto = resultado["contexto"]
 
-print(f"Estación local: {contexto['estacion']}")
+print(f"EstaciÃ³n local: {contexto['estacion']}")
 print(f"CodRecursos homologados: {contexto['cod_recursos']}")
 print(f"Total consultados: {resultado['total_consultados']}")
 print(f"Total pendientes nuevos: {resultado['total_pendientes_nuevos']}")

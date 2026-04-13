@@ -1,0 +1,7 @@
+QWidget#dashboardGestionView {
+    background-color: $bg_app;
+}
+
+QWidget#dashboardGestionView QFrame[card="true"] {
+    padding: 16px;
+}

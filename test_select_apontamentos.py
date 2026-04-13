@@ -1,6 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from services.apontamento_procesado_service import ApontamentoProcesadoService
+from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
 
 
 apontamento_procesado_service = ApontamentoProcesadoService()
@@ -14,7 +14,7 @@ resultado = apontamento_procesado_service.listar_apontamientos_pendientes_estaci
 contexto = resultado["contexto"]
 pendientes = resultado["apontamientos_pendientes"]
 
-print(f"Estación local: {contexto['estacion']}")
+print(f"EstaciÃ³n local: {contexto['estacion']}")
 print(f"CodRecursos homologados: {contexto['cod_recursos']}")
 print(f"Total consultados: {resultado['total_consultados']}")
 print(f"Total pendientes: {resultado['total_pendientes']}")
@@ -23,7 +23,7 @@ print(
     f"{resultado['total_omitidos_ya_procesados']}"
 )
 print(
-    "Total omitidos por NumOrdem vacío: "
+    "Total omitidos por NumOrdem vacÃ­o: "
     f"{resultado['total_omitidos_sin_num_ordem']}"
 )
 print()

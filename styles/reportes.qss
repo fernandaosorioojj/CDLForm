@@ -1,0 +1,8 @@
+QWidget#reportesView {
+    background-color: $bg_app;
+}
+
+QWidget#reportesView QFrame[card="true"] {
+    padding: 12px;
+}
+

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Optional
 
 from core.exceptions import NotFoundError, ValidationError
@@ -54,6 +55,7 @@ class RespuestaService:
                 if isinstance(accion_correctiva_aplicada, str)
                 else accion_correctiva_aplicada
             ),
+            fecha_creacion=datetime.now().isoformat(timespec="seconds"),
         )
 
         self.respuesta_repository.add_respuesta(respuesta)

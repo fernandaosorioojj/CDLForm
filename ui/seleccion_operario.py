@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import inspect
 from typing import Any
@@ -10,20 +10,25 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QVBoxLayout,
-    QWidget,
 )
 
-from services.formulario_service import FormularioService
-from services.operario_service import OperarioService
-from services.pregunta_service import PreguntaService
-from services.respuesta_service import RespuestaService
+from models.formulario import Formulario
+from presenters.seleccion_operario_presenter import SeleccionOperarioPresenter
+from services.forms.formulario_service import FormularioService
+from services.forms.operario_service import OperarioService
+from services.forms.pregunta_service import PreguntaService
+from services.forms.respuesta_service import RespuestaService
 from ui.formulario_operario import FormularioOperarioView
+from widgets.base_window import BaseWindow
+from widgets.card_frame import CardFrame
 
 
-class SeleccionOperarioView(QWidget):
+class SeleccionOperarioView(BaseWindow):
+    qss_files = ("base.qss", "seleccion_operario.qss")
+
     def __init__(
         self,
-        formulario: dict[str, Any] | None = None,
+        formulario: Formulario | None = None,
         id_formulario: str | None = None,
         formulario_service: FormularioService | None = None,
         operario_service: OperarioService | None = None,
@@ -37,72 +42,61 @@ class SeleccionOperarioView(QWidget):
         self.operario_service = operario_service or OperarioService()
         self.pregunta_service = pregunta_service or PreguntaService()
         self.respuesta_service = respuesta_service or RespuestaService()
+        self.presenter = SeleccionOperarioPresenter(
+            formulario_service=self.formulario_service,
+            operario_service=self.operario_service,
+        )
         self.on_close = on_close
 
-        self.formulario = self._resolver_formulario(formulario, id_formulario)
+        self.formulario = self.presenter.resolver_formulario(formulario, id_formulario)
         self.formulario_operario_view = None
 
-        self.setWindowTitle("Selección de operario")
-        self.resize(520, 220)
+        self.setObjectName("seleccionOperarioView")
+        self.setWindowTitle("Seleccion de operario")
+        self.resize(520, 260)
 
-        self.lbl_info = QLabel(self._build_info_text())
-        self.combo_operarios = QComboBox()
-        self.btn_continuar = QPushButton("Continuar")
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.lbl_info)
-        layout.addWidget(self.combo_operarios)
-        layout.addWidget(self.btn_continuar)
-        self.setLayout(layout)
-
-        self.btn_continuar.clicked.connect(self.continuar)
-
+        self._init_ui()
+        self.apply_styles()
         self.cargar_operarios()
 
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
-        if valor is None:
-            return ""
-        return str(valor).strip()
+        return SeleccionOperarioPresenter.normalizar_texto(valor)
 
-    def _resolver_formulario(
-        self,
-        formulario: dict[str, Any] | None,
-        id_formulario: str | None,
-    ) -> dict[str, Any]:
-        if formulario is not None:
-            return formulario
+    def _init_ui(self) -> None:
+        layout_principal = QVBoxLayout(self)
+        layout_principal.setContentsMargins(28, 28, 28, 28)
 
-        if id_formulario:
-            encontrado = self.formulario_service.obtener_formulario_por_id(id_formulario)
-            if encontrado:
-                return encontrado
+        contenedor = CardFrame()
+        layout = QVBoxLayout(contenedor)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 24, 24, 24)
 
-        raise ValueError("No se pudo resolver el formulario para la selección de operario.")
+        titulo = QLabel("Seleccion de operario")
+        titulo.setProperty("role", "title")
+        layout.addWidget(titulo)
+
+        self.lbl_info = QLabel(self._build_info_text())
+        self.lbl_info.setWordWrap(True)
+        layout.addWidget(self.lbl_info)
+
+        self.combo_operarios = QComboBox()
+        layout.addWidget(self.combo_operarios)
+
+        self.btn_continuar = QPushButton("Continuar")
+        self.btn_continuar.clicked.connect(self.continuar)
+        layout.addWidget(self.btn_continuar)
+
+        layout_principal.addWidget(contenedor)
 
     def _build_info_text(self) -> str:
-        identificador = self._normalizar_texto(
-            self.formulario.get("identificador")
-        )
-        maquina = self._normalizar_texto(
-            self.formulario.get("maquina") or self.formulario.get("cod_recurso")
-        )
-        area = self._normalizar_texto(
-            self.formulario.get("area") or self.formulario.get("cod_setor")
-        )
-
-        return (
-            f"Formulario: {self._normalizar_texto(self.formulario.get('id_formulario'))}\n"
-            f"Identificador: {identificador}\n"
-            f"Máquina: {maquina}\n"
-            f"Área: {area}"
-        )
+        return self.presenter.construir_info_formulario(self.formulario)
 
     def cargar_operarios(self) -> None:
         self.combo_operarios.clear()
 
         try:
-            operarios = self.operario_service.listar_operarios_para_formulario(
+            operarios = self.presenter.listar_operarios_para_formulario(
                 formulario=self.formulario,
                 solo_activos=True,
             )
@@ -115,12 +109,7 @@ class SeleccionOperarioView(QWidget):
             return
 
         for operario in operarios:
-            nombre = self._normalizar_texto(
-                operario.get("nombre")
-                or operario.get("nombre_operario")
-                or operario.get("operario")
-                or operario.get("id_operario")
-            )
+            nombre = self.presenter.obtener_nombre_operario(operario)
 
             if not nombre:
                 continue
@@ -141,7 +130,7 @@ class SeleccionOperarioView(QWidget):
     def _instanciar_formulario_operario_view(self, operario: str) -> Any:
         kwargs_disponibles = {
             "formulario": self.formulario,
-            "id_formulario": self.formulario.get("id_formulario"),
+            "id_formulario": self.formulario.id_formulario,
             "formulario_service": self.formulario_service,
             "pregunta_service": self.pregunta_service,
             "respuesta_service": self.respuesta_service,
@@ -167,7 +156,9 @@ class SeleccionOperarioView(QWidget):
         intentos = [
             lambda: FormularioOperarioView(self.formulario, operario),
             lambda: FormularioOperarioView(self.formulario),
-            lambda: FormularioOperarioView(self.formulario.get("id_formulario")),
+            lambda: FormularioOperarioView(
+                contexto={"id_formulario": self.formulario.id_formulario}
+            ),
             lambda: FormularioOperarioView(),
         ]
 
@@ -187,19 +178,12 @@ class SeleccionOperarioView(QWidget):
         if operario is None:
             operario = self.combo_operarios.currentText()
 
-        operario = self._normalizar_texto(operario)
-
-        if not operario:
-            QMessageBox.warning(
-                self,
-                "Operario",
-                "Debe seleccionar un operario.",
-            )
+        try:
+            operario = self.presenter.validar_operario_seleccionado(operario)
+            self.formulario = self.presenter.asignar_operario(self.formulario, operario)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Operario", str(exc))
             return
-
-        id_formulario = self._normalizar_texto(self.formulario.get("id_formulario"))
-        self.formulario_service.asignar_operario(id_formulario, operario)
-        self.formulario = self.formulario_service.obtener_formulario_por_id(id_formulario)
 
         self.formulario_operario_view = self._instanciar_formulario_operario_view(
             operario=operario,
@@ -214,3 +198,4 @@ class SeleccionOperarioView(QWidget):
             self.formulario_operario_view.show()
 
         self.hide()
+

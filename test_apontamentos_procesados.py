@@ -1,6 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from services.apontamento_procesado_service import ApontamentoProcesadoService
+from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
 
 
 apontamento_procesado_service = ApontamentoProcesadoService()
@@ -14,7 +14,7 @@ resultado = apontamento_procesado_service.listar_apontamentos_pendientes_estacio
 contexto = resultado["contexto"]
 pendientes = resultado["apontamientos_pendientes"]
 
-print(f"Estación local: {contexto['estacion']}")
+print(f"EstaciÃ³n local: {contexto['estacion']}")
 print(f"Total pendientes antes de registrar: {len(pendientes)}")
 print()
 

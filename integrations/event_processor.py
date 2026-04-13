@@ -1,9 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Any
 
-from services.apontamento_procesado_service import ApontamentoProcesadoService
-from services.disparador_service import DisparadorService
+from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
+from services.workflows.disparador_service import DisparadorService
 
 
 class EventProcessor:

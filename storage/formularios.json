@@ -8,7 +8,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T03:54:00",
         "operario": "Operario Prueba",
@@ -19,7 +18,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-09T17:35:01"
+        "fecha_actualizacion": "2026-04-10T09:56:53",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0002",
@@ -30,18 +31,19 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T03:42:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "pendiente_operario",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
-        "observacion_general": "",
+        "observacion_general": "Se aplicaron las acciones correctivas.",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-09T08:54:23"
+        "fecha_actualizacion": "2026-04-10T10:41:23",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0003",
@@ -52,18 +54,19 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T02:22:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "en_apertura",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T16:54:59"
+        "fecha_actualizacion": "2026-04-10T11:15:44",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0004",
@@ -74,18 +77,19 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T02:14:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "en_apertura",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T17:14:46"
+        "fecha_actualizacion": "2026-04-10T12:31:40",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0005",
@@ -96,18 +100,19 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T01:30:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "pendiente_operario",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-08T13:01:28"
+        "fecha_actualizacion": "2026-04-13T17:27:52",
+        "id_plantilla_preguntas": "TPL-IMP_HUEGO-UTECO-V008",
+        "version_plantilla_preguntas": 8
     },
     {
         "id_formulario": "FORM-0006",
@@ -118,18 +123,19 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T01:23:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
-        "estado": "pendiente_operario",
+        "estado": "completado",
         "descripcion_op": "",
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:22:11"
+        "fecha_actualizacion": "2026-04-13T17:30:27",
+        "id_plantilla_preguntas": "TPL-IMP_HUEGO-UTECO-V008",
+        "version_plantilla_preguntas": 8
     },
     {
         "id_formulario": "FORM-0007",
@@ -140,10 +146,9 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-12T01:12:00",
-        "operario": "13059605",
+        "operario": "Operario Prueba",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
         "estado": "pendiente_operario",
@@ -151,7 +156,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:22:11"
+        "fecha_actualizacion": "2026-04-13T17:31:06",
+        "id_plantilla_preguntas": "TPL-IMP_HUEGO-UTECO-V008",
+        "version_plantilla_preguntas": 8
     },
     {
         "id_formulario": "FORM-0008",
@@ -162,7 +169,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T23:48:00",
         "operario": "13059605",
@@ -173,7 +179,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:22:11"
+        "fecha_actualizacion": "2026-04-07T15:22:11",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0009",
@@ -184,7 +192,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T22:56:00",
         "operario": "13059605",
@@ -195,7 +202,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-07T15:22:11"
+        "fecha_actualizacion": "2026-04-07T15:22:11",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0010",
@@ -206,7 +215,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T22:00:00",
         "operario": "13059605",
@@ -217,7 +225,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0011",
@@ -228,7 +238,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T21:53:00",
         "operario": "13059605",
@@ -239,7 +248,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0012",
@@ -250,7 +261,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T18:56:00",
         "operario": "PMUNOZ",
@@ -261,7 +271,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0013",
@@ -272,7 +284,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T16:37:00",
         "operario": "PMUNOZ",
@@ -283,7 +294,9 @@
         "descripcion_proceso": "",
         "observacion_general": "mmpp  golpeada",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0014",
@@ -294,7 +307,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T16:29:00",
         "operario": "PMUNOZ",
@@ -305,7 +317,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0015",
@@ -316,7 +330,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T15:53:00",
         "operario": "PMUNOZ",
@@ -327,7 +340,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0016",
@@ -338,7 +353,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 2,
         "hora_fim": "2026-02-11T15:05:00",
         "operario": "PMUNOZ",
@@ -349,7 +363,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0017",
@@ -360,7 +376,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T14:30:00",
         "operario": "PMUNOZ",
@@ -371,7 +386,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0018",
@@ -382,7 +399,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T13:30:00",
         "operario": "PMUNOZ",
@@ -393,7 +409,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0019",
@@ -404,7 +422,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T13:14:00",
         "operario": "PMUNOZ",
@@ -415,7 +432,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0020",
@@ -426,7 +445,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T12:50:00",
         "operario": "PMUNOZ",
@@ -437,7 +455,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0021",
@@ -448,7 +468,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T11:47:00",
         "operario": "PMUNOZ",
@@ -459,7 +478,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0022",
@@ -470,7 +491,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T11:45:00",
         "operario": "PMUNOZ",
@@ -481,7 +501,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0023",
@@ -492,7 +514,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T11:13:00",
         "operario": "PMUNOZ",
@@ -503,7 +524,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0024",
@@ -514,7 +537,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T11:10:00",
         "operario": "PMUNOZ",
@@ -525,7 +547,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0025",
@@ -536,7 +560,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T10:47:00",
         "operario": "PMUNOZ",
@@ -547,7 +570,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:12",
-        "fecha_actualizacion": "2026-04-07T15:22:12"
+        "fecha_actualizacion": "2026-04-07T15:22:12",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0026",
@@ -558,7 +583,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T10:44:00",
         "operario": "PMUNOZ",
@@ -569,7 +593,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0027",
@@ -580,7 +606,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T10:28:00",
         "operario": "PMUNOZ",
@@ -591,7 +616,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0028",
@@ -602,7 +629,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T10:20:00",
         "operario": "PMUNOZ",
@@ -613,7 +639,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0029",
@@ -624,7 +652,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T09:44:00",
         "operario": "PMUNOZ",
@@ -635,7 +662,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0030",
@@ -646,7 +675,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T09:42:00",
         "operario": "PMUNOZ",
@@ -657,7 +685,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0031",
@@ -668,7 +698,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T09:36:00",
         "operario": "PMUNOZ",
@@ -679,7 +708,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0032",
@@ -690,7 +721,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T09:26:00",
         "operario": "PMUNOZ",
@@ -701,7 +731,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0033",
@@ -712,7 +744,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 1,
         "hora_fim": "2026-02-11T09:13:00",
         "operario": "PMUNOZ",
@@ -723,7 +754,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0034",
@@ -734,7 +767,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T06:57:00",
         "operario": "13059605",
@@ -745,7 +777,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0035",
@@ -756,7 +790,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T06:46:00",
         "operario": "13059605",
@@ -767,7 +800,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0036",
@@ -778,7 +813,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T06:14:00",
         "operario": "13059605",
@@ -789,7 +823,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0037",
@@ -800,7 +836,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T06:12:00",
         "operario": "13059605",
@@ -811,7 +846,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0038",
@@ -822,7 +859,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T06:09:00",
         "operario": "13059605",
@@ -833,7 +869,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0039",
@@ -844,7 +882,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T05:36:00",
         "operario": "13059605",
@@ -855,7 +892,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0040",
@@ -866,7 +905,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T05:32:00",
         "operario": "13059605",
@@ -877,7 +915,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:13",
-        "fecha_actualizacion": "2026-04-07T15:22:13"
+        "fecha_actualizacion": "2026-04-07T15:22:13",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0041",
@@ -888,7 +928,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T05:26:00",
         "operario": "13059605",
@@ -899,7 +938,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0042",
@@ -910,7 +951,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T04:52:00",
         "operario": "13059605",
@@ -921,7 +961,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0043",
@@ -932,7 +974,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T04:48:00",
         "operario": "13059605",
@@ -943,7 +984,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0044",
@@ -954,7 +997,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T04:36:00",
         "operario": "13059605",
@@ -965,7 +1007,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0045",
@@ -976,7 +1020,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T04:30:00",
         "operario": "13059605",
@@ -987,7 +1030,9 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     },
     {
         "id_formulario": "FORM-0046",
@@ -998,7 +1043,6 @@
         "maquina": "UTECO",
         "cod_recurso": "UTECO",
         "cod_setor": "IMP_HUEGO",
-        "cod_ativ": null,
         "turno": 3,
         "hora_fim": "2026-02-11T04:14:00",
         "operario": "13059605",
@@ -1009,6 +1053,8 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:14",
-        "fecha_actualizacion": "2026-04-07T15:22:14"
+        "fecha_actualizacion": "2026-04-07T15:22:14",
+        "id_plantilla_preguntas": "",
+        "version_plantilla_preguntas": 0
     }
 ]

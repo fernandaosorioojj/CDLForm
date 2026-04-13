@@ -1,0 +1,86 @@
+QWidget#adminPreguntasView {
+    background-color: $bg_app;
+}
+
+QWidget#adminPreguntasView QFrame[card="true"] {
+    padding: 12px;
+}
+
+QWidget#adminPreguntasView QLabel[role="title"] {
+    color: $text_heading;
+}
+
+QWidget#adminPreguntasView QScrollArea {
+    background-color: transparent;
+}
+
+QWidget#adminPreguntasView QFrame#bloqueBasicoPregunta,
+QWidget#adminPreguntasView QFrame#bloqueContextoPregunta,
+QWidget#adminPreguntasView QFrame#panelOpcionesPregunta {
+    background-color: #f7fbf8;
+    border: 1px solid $border;
+    border-radius: ${radius_lg}px;
+}
+
+QWidget#adminPreguntasView QFrame[compactCard="true"] {
+    background-color: $bg_card;
+    border: 1px solid $border;
+    border-radius: ${radius_md}px;
+    padding: 8px;
+}
+
+QWidget#adminPreguntasView QFrame[compactCard="true"] QLabel[role="section"] {
+    color: $text_heading;
+    font-size: ${font_size_base}px;
+    padding: 2px 0 6px 0;
+}
+
+QWidget#adminPreguntasView QListWidget {
+    background-color: $bg_input;
+    border: 1px solid $border_input;
+    border-radius: ${radius_sm}px;
+}
+
+QWidget#adminPreguntasView QListWidget::item {
+    border-bottom: 1px solid $border;
+    padding: 10px 8px;
+}
+
+QWidget#adminPreguntasView QListWidget::item:hover {
+    background-color: $bg_button_secondary_hover;
+    color: $text_on_button;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta {
+    background-color: transparent;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"] {
+    background-color: $bg_button_secondary;
+    border: 1px solid $bg_button_secondary;
+    border-radius: ${radius_sm}px;
+    color: $text_on_button;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"]:hover {
+    background-color: $bg_button_secondary_hover;
+    border-color: $bg_button_secondary_hover;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"]::indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"]::indicator:unchecked {
+    background-color: $bg_card;
+    border: 1px solid $border_input;
+}
+
+QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"]::indicator:checked {
+    background-color: $bg_button;
+    border: 1px solid $bg_button;
+}

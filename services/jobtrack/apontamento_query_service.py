@@ -1,12 +1,12 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Any, Sequence
 
 import pyodbc
 
 from config.sql_server_config import build_connection_string
-from services.catalogo_contexto_service import CatalogoContextoService
-from services.jobtrack_config_service import JobtrackConfigService
+from services.jobtrack.catalogo_contexto_service import CatalogoContextoService
+from services.jobtrack.jobtrack_config_service import JobtrackConfigService
 
 
 class ApontamentoQueryService:
@@ -37,7 +37,7 @@ class ApontamentoQueryService:
 
         if not unicos:
             raise ValueError(
-                "Debe indicar al menos un CodRecurso válido para consultar apuntamientos."
+                "Debe indicar al menos un CodRecurso vÃ¡lido para consultar apuntamientos."
             )
 
         return unicos
@@ -47,7 +47,7 @@ class ApontamentoQueryService:
         limit_normalizado = int(limit)
 
         if limit_normalizado <= 0:
-            raise ValueError("El límite debe ser mayor que cero.")
+            raise ValueError("El lÃ­mite debe ser mayor que cero.")
 
         return limit_normalizado
 
@@ -121,7 +121,6 @@ class ApontamentoQueryService:
             [NumOrdem],
             [CodRecurso],
             [CodSetor],
-            [CodAtiv],
             [Turno],
             [HoraFim],
             [Operador],
@@ -212,14 +211,3 @@ class ApontamentoQueryService:
             limit=limit,
         )
 
-    def listar_cod_ativ_disponibles(
-        self,
-        patron: str | None = None,
-        limit: int = 100,
-    ) -> list[str]:
-        return self._listar_valores_distintos(
-            nombre_columna="CodAtiv",
-            alias_columna="CodAtiv",
-            patron=patron,
-            limit=limit,
-        )

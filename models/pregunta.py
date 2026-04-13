@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from core.enums import TipoPregunta
 from core.validators import require_bool, require_non_empty_string
@@ -15,6 +16,12 @@ class Pregunta:
     activa: bool = True
     obligatoria: bool = True
     orden: int = 1
+    version: int = 1
+    clave_pregunta: str = ""
+    fecha_creacion: str = ""
+    fecha_actualizacion: str = ""
+    fecha_desactivacion: str = ""
+    reemplazada_por: str = ""
 
     filtros_contexto: dict[str, list[str]] = field(default_factory=dict)
     opciones_respuesta: list[OpcionPregunta] = field(default_factory=list)
@@ -41,6 +48,37 @@ class Pregunta:
             raise TypeError("orden debe ser un entero")
         if self.orden <= 0:
             raise ValueError("orden debe ser mayor que 0")
+
+        if not isinstance(self.version, int):
+            raise TypeError("version debe ser un entero")
+        if self.version <= 0:
+            raise ValueError("version debe ser mayor que 0")
+
+        object.__setattr__(
+            self,
+            "clave_pregunta",
+            self.clave_pregunta.strip() if self.clave_pregunta else self.id_pregunta,
+        )
+        object.__setattr__(
+            self,
+            "fecha_creacion",
+            self.fecha_creacion.strip() if self.fecha_creacion else "",
+        )
+        object.__setattr__(
+            self,
+            "fecha_actualizacion",
+            self.fecha_actualizacion.strip() if self.fecha_actualizacion else "",
+        )
+        object.__setattr__(
+            self,
+            "fecha_desactivacion",
+            self.fecha_desactivacion.strip() if self.fecha_desactivacion else "",
+        )
+        object.__setattr__(
+            self,
+            "reemplazada_por",
+            self.reemplazada_por.strip() if self.reemplazada_por else "",
+        )
 
         filtros_normalizados: dict[str, list[str]] = {}
 
@@ -121,8 +159,6 @@ class Pregunta:
             "cod_setor": "cod_setor",
             "codrecurso": "cod_recurso",
             "cod_recurso": "cod_recurso",
-            "codativ": "cod_ativ",
-            "cod_ativ": "cod_ativ",
             "tipotrabajo": "tipo_trabajo",
             "tipo_trabajo": "tipo_trabajo",
             "turno": "turno",
@@ -138,12 +174,18 @@ class Pregunta:
             "activa": self.activa,
             "obligatoria": self.obligatoria,
             "orden": self.orden,
+            "version": self.version,
+            "clave_pregunta": self.clave_pregunta,
+            "fecha_creacion": self.fecha_creacion,
+            "fecha_actualizacion": self.fecha_actualizacion,
+            "fecha_desactivacion": self.fecha_desactivacion,
+            "reemplazada_por": self.reemplazada_por,
             "filtros_contexto": self.filtros_contexto,
             "opciones_respuesta": [op.to_dict() for op in self.opciones_respuesta],
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Pregunta":
+    def from_dict(cls, data: dict[str, Any]) -> "Pregunta":
         return cls(
             id_pregunta=data["id_pregunta"],
             texto=data["texto"],
@@ -151,6 +193,12 @@ class Pregunta:
             activa=data.get("activa", True),
             obligatoria=data.get("obligatoria", True),
             orden=data.get("orden", 1),
+            version=data.get("version", 1),
+            clave_pregunta=data.get("clave_pregunta", data["id_pregunta"]),
+            fecha_creacion=data.get("fecha_creacion", ""),
+            fecha_actualizacion=data.get("fecha_actualizacion", ""),
+            fecha_desactivacion=data.get("fecha_desactivacion", ""),
+            reemplazada_por=data.get("reemplazada_por", ""),
             filtros_contexto=data.get("filtros_contexto", {}),
             opciones_respuesta=data.get("opciones_respuesta", []),
         )

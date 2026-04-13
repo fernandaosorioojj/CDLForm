@@ -21,22 +21,29 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from services.catalogo_contexto_service import CatalogoContextoService
-from services.pregunta_service import PreguntaService
+from presenters.admin_preguntas_presenter import AdminPreguntasPresenter
+from services.jobtrack.catalogo_contexto_service import CatalogoContextoService
+from services.forms.pregunta_service import PreguntaService
+from styles.common import apply_view_style
 
 
 class AdminPreguntasView(QWidget):
+    qss_files = ("base.qss", "admin_preguntas.qss")
+
     def __init__(self) -> None:
         super().__init__()
 
         self.catalogo_contexto_service = CatalogoContextoService()
         self.pregunta_service = PreguntaService()
+        self.presenter = AdminPreguntasPresenter(self.pregunta_service)
         self.id_pregunta_en_edicion: str | None = None
 
         self.setWindowTitle("Administración de Preguntas")
+        self.setObjectName("adminPreguntasView")
         self.resize(1380, 820)
 
         self._init_ui()
+        apply_view_style(self, *self.qss_files)
         self.cargar_preguntas()
 
     def _init_ui(self) -> None:
@@ -107,6 +114,7 @@ class AdminPreguntasView(QWidget):
 
         bloque_basico = QFrame()
         bloque_basico.setProperty("card", "true")
+        bloque_basico.setObjectName("bloqueBasicoPregunta")
 
         layout_basico = QFormLayout(bloque_basico)
         layout_basico.setContentsMargins(14, 14, 14, 14)
@@ -132,15 +140,18 @@ class AdminPreguntasView(QWidget):
 
         self.check_obligatoria = QCheckBox("Obligatoria")
         self.check_obligatoria.setChecked(True)
+        self.check_obligatoria.setProperty("chip", "true")
 
         self.check_activa = QCheckBox("Activa")
         self.check_activa.setChecked(True)
+        self.check_activa.setProperty("chip", "true")
 
         checks_layout.addWidget(self.check_obligatoria)
         checks_layout.addWidget(self.check_activa)
         checks_layout.addStretch()
 
         checks_widget = QWidget()
+        checks_widget.setObjectName("estadoPregunta")
         checks_widget.setLayout(checks_layout)
 
         layout_basico.addRow("Texto:", self.input_texto)
@@ -150,6 +161,7 @@ class AdminPreguntasView(QWidget):
 
         bloque_contexto = QFrame()
         bloque_contexto.setProperty("card", "true")
+        bloque_contexto.setObjectName("bloqueContextoPregunta")
 
         layout_contexto = QVBoxLayout(bloque_contexto)
         layout_contexto.setContentsMargins(14, 14, 14, 14)
@@ -185,6 +197,7 @@ class AdminPreguntasView(QWidget):
 
         self.panel_opciones = QFrame()
         self.panel_opciones.setProperty("card", "true")
+        self.panel_opciones.setObjectName("panelOpcionesPregunta")
 
         layout_opciones = QVBoxLayout(self.panel_opciones)
         layout_opciones.setContentsMargins(14, 14, 14, 14)
@@ -253,22 +266,17 @@ class AdminPreguntasView(QWidget):
         self.btn_guardar.setProperty("variant", "success")
         self.btn_guardar.clicked.connect(self.guardar_pregunta)
 
-        self.btn_nuevo = QPushButton("Nuevo")
+        self.btn_nuevo = QPushButton("Limpiar")
         self.btn_nuevo.setProperty("variant", "secondary")
         self.btn_nuevo.clicked.connect(self.limpiar_formulario)
 
-        self.btn_desactivar = QPushButton("Desactivar")
-        self.btn_desactivar.setProperty("variant", "secondary")
-        self.btn_desactivar.clicked.connect(self.desactivar_pregunta)
-
-        self.btn_eliminar = QPushButton("Eliminar")
+        self.btn_eliminar = QPushButton("Enviar a historial")
         self.btn_eliminar.setProperty("variant", "danger")
         self.btn_eliminar.clicked.connect(self.eliminar_pregunta)
 
         botones_layout.addStretch()
         botones_layout.addWidget(self.btn_guardar)
         botones_layout.addWidget(self.btn_nuevo)
-        botones_layout.addWidget(self.btn_desactivar)
         botones_layout.addWidget(self.btn_eliminar)
 
         layout_derecho_externo.addLayout(botones_layout)
@@ -293,6 +301,7 @@ class AdminPreguntasView(QWidget):
     def _crear_bloque_lista(self, titulo: str, lista: QListWidget) -> QWidget:
         contenedor = QFrame()
         contenedor.setProperty("card", "true")
+        contenedor.setProperty("compactCard", "true")
 
         layout = QVBoxLayout(contenedor)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -307,21 +316,10 @@ class AdminPreguntasView(QWidget):
 
     def cargar_preguntas(self) -> None:
         self.lista_preguntas.clear()
-        preguntas = self.pregunta_service.listar_preguntas(solo_activas=False)
+        preguntas = self.presenter.listar_preguntas()
 
         for pregunta in preguntas:
-            texto = pregunta.get("texto", "")
-            tipo = pregunta.get("tipo", "")
-            orden = pregunta.get("orden", 0)
-            activa = "Activa" if pregunta.get("activa", True) else "Inactiva"
-
-            filtros = pregunta.get("filtros_contexto", {})
-            resumen_filtros = self._resumen_filtros_contexto(filtros)
-
-            item_texto = f"[{orden}] {texto} - ({tipo}) - {activa}"
-            if resumen_filtros:
-                item_texto += f" | {resumen_filtros}"
-
+            item_texto = self.presenter.construir_item_lista_pregunta(pregunta)
             item = QListWidgetItem(item_texto)
             item.setData(Qt.UserRole, pregunta)
             self.lista_preguntas.addItem(item)
@@ -333,21 +331,12 @@ class AdminPreguntasView(QWidget):
             item = self.lista_preguntas.item(i)
             pregunta = item.data(Qt.UserRole) or {}
 
-            texto = str(pregunta.get("texto", "")).strip().lower()
-            tipo = str(pregunta.get("tipo", "")).strip().lower()
-            estado = "activa" if pregunta.get("activa", True) else "inactiva"
-
-            filtros = pregunta.get("filtros_contexto", {})
-            valores_filtros: list[str] = []
-            for valores in filtros.values():
-                if isinstance(valores, list):
-                    valores_filtros.extend(str(valor).strip().lower() for valor in valores)
-
-            universo_busqueda = " ".join(
-                [texto, tipo, estado, " ".join(valores_filtros), item.text().lower()]
+            coincide = self.presenter.coincide_filtro_busqueda(
+                pregunta,
+                item.text(),
+                texto_busqueda,
             )
-
-            item.setHidden(texto_busqueda not in universo_busqueda)
+            item.setHidden(not coincide)
 
     def cargar_pregunta_seleccionada(self, item: QListWidgetItem) -> None:
         pregunta = item.data(Qt.UserRole)
@@ -372,58 +361,24 @@ class AdminPreguntasView(QWidget):
 
     def guardar_pregunta(self) -> None:
         try:
-            texto = self.input_texto.text().strip()
-            tipo = self.combo_tipo.currentText().strip()
-            orden = self.spin_orden.value()
-            obligatoria = self.check_obligatoria.isChecked()
-            activa = self.check_activa.isChecked()
-
-            filtros_contexto = self._construir_filtros_contexto()
-            opciones_respuesta = self._construir_opciones_respuesta()
-
-            if not texto:
-                raise ValueError("El texto de la pregunta es obligatorio.")
-
-            if self.id_pregunta_en_edicion:
-                self.pregunta_service.actualizar_pregunta(
-                    id_pregunta=self.id_pregunta_en_edicion,
-                    texto=texto,
-                    tipo=tipo,
-                    obligatoria=obligatoria,
-                    activa=activa,
-                    orden=orden,
-                    filtros_contexto=filtros_contexto,
-                    opciones_respuesta=opciones_respuesta,
-                )
-                QMessageBox.information(self, "Éxito", "Pregunta actualizada correctamente.")
-            else:
-                self.pregunta_service.crear_pregunta(
-                    texto=texto,
-                    tipo=tipo,
-                    obligatoria=obligatoria,
-                    activa=activa,
-                    orden=orden,
-                    filtros_contexto=filtros_contexto,
-                    opciones_respuesta=opciones_respuesta,
-                )
-                QMessageBox.information(self, "Éxito", "Pregunta creada correctamente.")
+            payload = self.presenter.construir_payload_pregunta(
+                texto=self.input_texto.text().strip(),
+                tipo=self.combo_tipo.currentText().strip(),
+                obligatoria=self.check_obligatoria.isChecked(),
+                activa=self.check_activa.isChecked(),
+                orden=self.spin_orden.value(),
+                filtros_contexto=self._construir_filtros_contexto(),
+                opciones_respuesta=self._construir_opciones_respuesta(),
+            )
+            mensaje = self.presenter.guardar_pregunta(
+                self.id_pregunta_en_edicion,
+                payload,
+            )
+            QMessageBox.information(self, "Éxito", mensaje)
 
             self.limpiar_formulario()
             self.cargar_preguntas()
 
-        except Exception as exc:
-            QMessageBox.critical(self, "Error", str(exc))
-
-    def desactivar_pregunta(self) -> None:
-        if not self.id_pregunta_en_edicion:
-            QMessageBox.warning(self, "Atención", "Selecciona una pregunta primero.")
-            return
-
-        try:
-            self.pregunta_service.desactivar_pregunta(self.id_pregunta_en_edicion)
-            QMessageBox.information(self, "Éxito", "Pregunta desactivada correctamente.")
-            self.limpiar_formulario()
-            self.cargar_preguntas()
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
@@ -435,7 +390,7 @@ class AdminPreguntasView(QWidget):
         confirmacion = QMessageBox.question(
             self,
             "Confirmar eliminación",
-            "¿Seguro que deseas eliminar esta pregunta?",
+            "¿Seguro que deseas desactivar esta pregunta y conservarla en el historial?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -444,8 +399,8 @@ class AdminPreguntasView(QWidget):
             return
 
         try:
-            self.pregunta_service.eliminar_pregunta(self.id_pregunta_en_edicion)
-            QMessageBox.information(self, "Éxito", "Pregunta eliminada correctamente.")
+            mensaje = self.presenter.eliminar_pregunta(self.id_pregunta_en_edicion)
+            QMessageBox.information(self, "Éxito", mensaje)
             self.limpiar_formulario()
             self.cargar_preguntas()
         except Exception as exc:
@@ -471,27 +426,24 @@ class AdminPreguntasView(QWidget):
     def agregar_opcion(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
 
-        if tipo not in {"seleccion_unica", "seleccion_multiple"}:
+        if not self.presenter.requiere_opciones(tipo):
             return
 
         valor = self.input_opcion_valor.text().strip()
         accion_correctiva = self.input_opcion_accion.text().strip()
 
-        if not valor:
-            QMessageBox.warning(self, "Atención", "Debes ingresar un valor para la opción.")
-            return
+        try:
+            if self._existe_valor_opcion(valor):
+                raise ValueError("Ya existe una opción con ese valor.")
 
-        if self._existe_valor_opcion(valor):
-            QMessageBox.warning(self, "Atención", "Ya existe una opción con ese valor.")
+            opcion = self.presenter.construir_opcion_temporal(
+                valor,
+                accion_correctiva,
+            )
+            self._agregar_item_opcion(opcion)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Atención", str(exc))
             return
-
-        self._agregar_item_opcion(
-            {
-                "id_opcion": "",
-                "valor": valor,
-                "accion_correctiva": accion_correctiva,
-            }
-        )
 
         self.input_opcion_valor.clear()
         self.input_opcion_accion.clear()
@@ -512,14 +464,12 @@ class AdminPreguntasView(QWidget):
 
     def _actualizar_estado_opciones(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
-        requiere_opciones = tipo in {"seleccion_unica", "seleccion_multiple"}
+        requiere_opciones = self.presenter.requiere_opciones(tipo)
 
         self.panel_opciones.setVisible(requiere_opciones)
 
         if not requiere_opciones:
-            self.label_info_opciones.setText(
-                "Este tipo de pregunta no requiere opciones configurables."
-            )
+            self.label_info_opciones.setText(self.presenter.mensaje_opciones(tipo))
             self.input_opcion_valor.clear()
             self.input_opcion_accion.clear()
             self.lista_opciones.clear()
@@ -530,16 +480,7 @@ class AdminPreguntasView(QWidget):
             self.btn_limpiar_opciones.setEnabled(False)
             return
 
-        if tipo == "seleccion_multiple":
-            self.label_info_opciones.setText(
-                "Agrega opciones para selección múltiple. "
-                "El operario podrá marcar más de una y cada una puede tener su propia acción correctiva."
-            )
-        else:
-            self.label_info_opciones.setText(
-                "Agrega opciones para selección única. "
-                "Cada opción puede tener una acción correctiva opcional."
-            )
+        self.label_info_opciones.setText(self.presenter.mensaje_opciones(tipo))
 
         self.input_opcion_valor.setEnabled(True)
         self.input_opcion_accion.setEnabled(True)
@@ -548,53 +489,20 @@ class AdminPreguntasView(QWidget):
         self.btn_limpiar_opciones.setEnabled(True)
 
     def _construir_filtros_contexto(self) -> dict[str, list[str]]:
-        filtros: dict[str, list[str]] = {}
-
         cod_setor = self._obtener_valores_seleccionados(self.lista_cod_setor)
         cod_recurso = self._obtener_valores_seleccionados(self.lista_cod_recurso)
         turno = self._obtener_valores_seleccionados(self.lista_turno)
-
-        if cod_setor:
-            filtros["cod_setor"] = cod_setor
-        if cod_recurso:
-            filtros["cod_recurso"] = cod_recurso
-        if turno:
-            filtros["turno"] = turno
-
-        return filtros
+        return self.presenter.construir_filtros_contexto(
+            cod_setor,
+            cod_recurso,
+            turno,
+        )
 
     def _construir_opciones_respuesta(self) -> list[dict]:
-        tipo = self.combo_tipo.currentText().strip().lower()
-
-        if tipo not in {"seleccion_unica", "seleccion_multiple"}:
-            return []
-
-        opciones: list[dict] = []
-
-        for indice in range(self.lista_opciones.count()):
-            item = self.lista_opciones.item(indice)
-            data = item.data(Qt.UserRole) or {}
-
-            valor = str(data.get("valor", "")).strip()
-            accion_correctiva = str(data.get("accion_correctiva", "")).strip()
-
-            if not valor:
-                raise ValueError("Cada opción debe tener un valor válido.")
-
-            opciones.append(
-                {
-                    "id_opcion": f"OPC-{indice + 1:03d}",
-                    "valor": valor,
-                    "accion_correctiva": accion_correctiva,
-                }
-            )
-
-        if not opciones:
-            raise ValueError(
-                "Debes ingresar opciones de respuesta para preguntas de selección."
-            )
-
-        return opciones
+        return self.presenter.construir_opciones_respuesta(
+            self.combo_tipo.currentText().strip().lower(),
+            self._obtener_opciones_actuales(),
+        )
 
     def _obtener_valores_seleccionados(self, lista: QListWidget) -> list[str]:
         valores: list[str] = []
@@ -655,36 +563,11 @@ class AdminPreguntasView(QWidget):
         return opciones
 
     def _existe_valor_opcion(self, valor: str) -> bool:
-        valor_normalizado = valor.strip().upper()
-
-        for opcion in self._obtener_opciones_actuales():
-            actual = str(opcion.get("valor", "")).strip().upper()
-            if actual == valor_normalizado:
-                return True
-
-        return False
+        return self.presenter.existe_valor_opcion(
+            valor,
+            self._obtener_opciones_actuales(),
+        )
 
     def _resumen_filtros_contexto(self, filtros: dict) -> str:
-        if not isinstance(filtros, dict) or not filtros:
-            return ""
+        return self.presenter.resumen_filtros_contexto(filtros)
 
-        partes: list[str] = []
-
-        etiquetas = {
-            "cod_setor": "Setor",
-            "cod_recurso": "Recurso",
-            "turno": "Turno",
-        }
-
-        for clave, etiqueta in etiquetas.items():
-            valores = filtros.get(clave, [])
-            if not valores:
-                continue
-
-            texto_valores = ", ".join(
-                str(valor).strip() for valor in valores if str(valor).strip()
-            )
-            if texto_valores:
-                partes.append(f"{etiqueta}: {texto_valores}")
-
-        return " | ".join(partes)

@@ -1,11 +1,12 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Any
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QDialog,
-    QFormLayout,
+    QFrame,
+    QGridLayout,
     QLabel,
     QTableWidget,
     QTableWidgetItem,
@@ -13,11 +14,14 @@ from PyQt5.QtWidgets import (
 )
 
 from models.formulario import Formulario
-from services.pregunta_service import PreguntaService
-from services.reporte_service import ReporteService
+from services.forms.pregunta_service import PreguntaService
+from services.reporting.reporte_service import ReporteService
+from styles.common import apply_view_style
 
 
 class DetalleFormularioView(QDialog):
+    qss_files = ("base.qss", "dialogs.qss", "detalle_formulario.qss")
+
     def __init__(
         self,
         formulario: Formulario,
@@ -32,9 +36,11 @@ class DetalleFormularioView(QDialog):
         self.pregunta_service = pregunta_service or PreguntaService()
 
         self.setWindowTitle(f"Detalle Formulario - {self.formulario.id_formulario}")
+        self.setObjectName("detalleFormularioView")
         self.resize(960, 640)
 
         self._configurar_ui()
+        apply_view_style(self, *self.qss_files)
         self._cargar_respuestas()
 
     def _configurar_ui(self) -> None:
@@ -42,37 +48,73 @@ class DetalleFormularioView(QDialog):
 
         titulo = QLabel(f"Detalle del formulario {self.formulario.id_formulario}")
         titulo.setAlignment(Qt.AlignCenter)
-        titulo.setStyleSheet("font-size: 18px; font-weight: bold;")
+        titulo.setProperty("role", "title")
         layout.addWidget(titulo)
 
-        info = QFormLayout()
-        info.addRow("ID Formulario:", QLabel(self.formulario.id_formulario))
-        info.addRow("OP:", QLabel(self.formulario.identificador))
-        info.addRow("IdApontamento:", QLabel(self.formulario.id_apontamento))
-        info.addRow("Fecha:", QLabel(self.formulario.fecha_formulario))
-        info.addRow("Operario:", QLabel(self.formulario.operario or "-"))
-        info.addRow("Área:", QLabel(self.formulario.area or "-"))
-        info.addRow("Máquina:", QLabel(self.formulario.maquina or "-"))
-        info.addRow("Estado:", QLabel(self.formulario.estado or "-"))
-        info.addRow("Descripción OP:", QLabel(self.formulario.descripcion_op or "-"))
-        info.addRow(
-            "Descripción proceso:",
-            QLabel(self.formulario.descripcion_proceso or "-"),
+        caja_info = QFrame()
+        caja_info.setProperty("card", "true")
+        info = QGridLayout(caja_info)
+        info.setContentsMargins(18, 14, 18, 14)
+        info.setHorizontalSpacing(12)
+        info.setVerticalSpacing(8)
+        metadata_plantilla = self.reporte_service.obtener_metadata_plantilla_formulario(
+            self.formulario
         )
-        info.addRow(
-            "Observación general:",
-            QLabel(self.formulario.observacion_general or "-"),
+        self._agregar_campo_info(info, 0, 0, "ID Formulario", self.formulario.id_formulario)
+        self._agregar_campo_info(info, 0, 2, "OP", self.formulario.identificador)
+        self._agregar_campo_info(info, 1, 0, "IdApontamento", self.formulario.id_apontamento)
+        self._agregar_campo_info(info, 1, 2, "Fecha", self.formulario.fecha_formulario)
+        self._agregar_campo_info(info, 2, 0, "Operario", self.formulario.operario or "-")
+        self._agregar_campo_info(info, 2, 2, "Estado", self.formulario.estado or "-")
+        self._agregar_campo_info(info, 3, 0, "Área", self.formulario.area or "-")
+        self._agregar_campo_info(info, 3, 2, "Máquina", self.formulario.maquina or "-")
+        self._agregar_campo_info(
+            info,
+            4,
+            0,
+            "Plantilla",
+            str(metadata_plantilla.get("clave_plantilla") or "-"),
         )
-        layout.addLayout(info)
+        self._agregar_campo_info(
+            info,
+            4,
+            2,
+            "Versión",
+            self.reporte_service.resolver_version_plantilla_formulario(
+                self.formulario
+            ),
+        )
+        self._agregar_campo_info(
+            info,
+            5,
+            0,
+            "Estado plantilla",
+                "Activa actualmente"
+                if metadata_plantilla.get("activa")
+                else "Histórica",
+        )
+        self._agregar_campo_info(
+            info,
+            5,
+            2,
+            "Observación",
+            self.formulario.observacion_general or "-",
+        )
+        layout.addWidget(caja_info)
 
         self.tabla_respuestas = QTableWidget()
-        self.tabla_respuestas.setColumnCount(4)
+        self.tabla_respuestas.setColumnCount(9)
         self.tabla_respuestas.setHorizontalHeaderLabels(
             [
                 "ID Pregunta",
                 "Pregunta",
+                "Versión",
+                "Estado actual",
                 "Respuesta",
                 "Opción",
+                "Texto opción",
+                "Opciones disponibles",
+                "Acción correctiva",
             ]
         )
         self.tabla_respuestas.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -80,6 +122,22 @@ class DetalleFormularioView(QDialog):
         self.tabla_respuestas.horizontalHeader().setStretchLastSection(True)
 
         layout.addWidget(self.tabla_respuestas)
+
+    @staticmethod
+    def _agregar_campo_info(
+        layout: QGridLayout,
+        fila: int,
+        columna: int,
+        etiqueta: str,
+        valor: Any,
+    ) -> None:
+        label = QLabel(f"{etiqueta}:")
+        label.setProperty("role", "field-label")
+        value_label = QLabel(str(valor))
+        value_label.setProperty("role", "field-value")
+        value_label.setWordWrap(True)
+        layout.addWidget(label, fila, columna)
+        layout.addWidget(value_label, fila, columna + 1)
 
     def _valor_respuesta(self, respuesta: Any, clave: str, default: Any = None) -> Any:
         if isinstance(respuesta, dict):
@@ -153,21 +211,61 @@ class DetalleFormularioView(QDialog):
         return "-"
 
     def _cargar_respuestas(self) -> None:
-        respuestas = self.reporte_service.obtener_respuestas_de_formulario(
-            self.formulario.id_formulario
+        respuestas = self.reporte_service.obtener_detalle_auditoria_formulario(
+            self.formulario
         )
 
         self.tabla_respuestas.setRowCount(len(respuestas))
 
         for fila, respuesta in enumerate(respuestas):
-            id_pregunta = str(self._valor_respuesta(respuesta, "id_pregunta", "")).strip()
-            texto_pregunta = self._resolver_texto_pregunta(id_pregunta)
-            texto_respuesta = self._formatear_respuesta(respuesta)
-            id_opcion = str(self._valor_respuesta(respuesta, "id_opcion", "") or "").strip()
+            estado_actual = (
+                "Activa" if self._valor_respuesta(respuesta, "pregunta_activa") else "Historial"
+            )
 
-            self.tabla_respuestas.setItem(fila, 0, QTableWidgetItem(id_pregunta or "-"))
-            self.tabla_respuestas.setItem(fila, 1, QTableWidgetItem(texto_pregunta or "-"))
-            self.tabla_respuestas.setItem(fila, 2, QTableWidgetItem(texto_respuesta or "-"))
-            self.tabla_respuestas.setItem(fila, 3, QTableWidgetItem(id_opcion or "-"))
+            self.tabla_respuestas.setItem(
+                fila,
+                0,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "id_pregunta", "-"))),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                1,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "pregunta", "-"))),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                2,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "version_pregunta", "-"))),
+            )
+            self.tabla_respuestas.setItem(fila, 3, QTableWidgetItem(estado_actual))
+            self.tabla_respuestas.setItem(
+                fila,
+                4,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "respuesta", "-"))),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                5,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "id_opcion", "-") or "-")),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                6,
+                QTableWidgetItem(str(self._valor_respuesta(respuesta, "opcion", "-") or "-")),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                7,
+                QTableWidgetItem(
+                    str(self._valor_respuesta(respuesta, "opciones_disponibles", "-") or "-")
+                ),
+            )
+            self.tabla_respuestas.setItem(
+                fila,
+                8,
+                QTableWidgetItem(
+                    str(self._valor_respuesta(respuesta, "accion_correctiva", "-") or "-")
+                ),
+            )
 
         self.tabla_respuestas.resizeColumnsToContents()

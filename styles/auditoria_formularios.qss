@@ -1,0 +1,8 @@
+QWidget#auditoriaFormulariosView {
+    background-color: $bg_app;
+}
+
+QWidget#auditoriaFormulariosView QFrame[card="true"] {
+    padding: 12px;
+}
+

@@ -1,13 +1,13 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import inspect
 from typing import Any, Callable
 
 from PyQt5.QtWidgets import QApplication
 
-from services.formulario_service import FormularioService
-from services.pregunta_service import PreguntaService
-from services.respuesta_service import RespuestaService
+from services.forms.formulario_service import FormularioService
+from services.forms.pregunta_service import PreguntaService
+from services.forms.respuesta_service import RespuestaService
 from ui.seleccion_operario import SeleccionOperarioView
 
 
@@ -40,7 +40,7 @@ class AppLauncher:
             view.show()
             return
 
-        raise ValueError("La vista no tiene métodos show ni showMaximized.")
+        raise ValueError("La vista no tiene mÃ©todos show ni showMaximized.")
 
     def _instanciar_seleccion_operario_view(
         self,
