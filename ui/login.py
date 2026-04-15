@@ -49,7 +49,7 @@ class LoginView(BaseWindow):
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
-        subtitulo = QLabel("Accede al panel de administracion del sistema.")
+        subtitulo = QLabel("Accede al panel de Gestion.")
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
@@ -100,7 +100,7 @@ class LoginView(BaseWindow):
             QMessageBox.critical(
                 self,
                 "Error de configuracion",
-                f"No fue posible validar el acceso administrativo.\n\n{exc}",
+                f"No fue posible validar el acceso de Gestion.\n\n{exc}",
             )
             return
 

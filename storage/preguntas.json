@@ -368,5 +368,42 @@
                 "clave_opcion": "OPC-005"
             }
         ]
+    },
+    {
+        "id_pregunta": "PREG-0008",
+        "texto": "kbkj",
+        "tipo": "seleccion_unica",
+        "activa": true,
+        "obligatoria": true,
+        "orden": 1,
+        "version": 1,
+        "clave_pregunta": "PREG-0008",
+        "fecha_creacion": "2026-04-15T16:10:58",
+        "fecha_actualizacion": "2026-04-15T16:10:58",
+        "fecha_desactivacion": "",
+        "reemplazada_por": "",
+        "filtros_contexto": {
+            "cod_setor": [
+                "IMP_FLEXO"
+            ]
+        },
+        "opciones_respuesta": [
+            {
+                "id_opcion": "OPC-001",
+                "valor": "si",
+                "accion_correctiva": "ijjk",
+                "activa": true,
+                "version": 1,
+                "clave_opcion": "OPC-001"
+            },
+            {
+                "id_opcion": "OPC-002",
+                "valor": "no",
+                "accion_correctiva": "jhvjv",
+                "activa": true,
+                "version": 1,
+                "clave_opcion": "OPC-002"
+            }
+        ]
     }
 ]

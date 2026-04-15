@@ -84,6 +84,9 @@ class Formulario:
         self.fecha_creacion = _normalizar_texto(self.fecha_creacion)
         self.fecha_actualizacion = _normalizar_texto(self.fecha_actualizacion)
         self.id_plantilla_preguntas = _normalizar_texto(self.id_plantilla_preguntas)
+        self.version_plantilla_preguntas = int(
+            self.version_plantilla_preguntas or 0
+        )
 
         self.turno = _serializar_valor(self.turno)
         self.hora_fim = _serializar_valor(self.hora_fim)

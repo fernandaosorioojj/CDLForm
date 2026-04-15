@@ -127,10 +127,8 @@ class FormularioOperarioPresenter:
         formulario_persistido = self.formulario_service.obtener_formulario_por_id(
             formulario.id_formulario
         )
-        if formulario_persistido and not formulario_persistido.id_plantilla_preguntas:
-            formulario = self.formulario_service.asignar_plantilla_activa_si_falta(
-                formulario.id_formulario
-            )
+        if formulario_persistido:
+            formulario = formulario_persistido
 
         if operario_seleccionado:
             formulario = self.formulario_service.asignar_operario(

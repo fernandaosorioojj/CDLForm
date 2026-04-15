@@ -66,8 +66,8 @@ class DetalleFormularioView(QDialog):
         self._agregar_campo_info(info, 1, 2, "Fecha", self.formulario.fecha_formulario)
         self._agregar_campo_info(info, 2, 0, "Operario", self.formulario.operario or "-")
         self._agregar_campo_info(info, 2, 2, "Estado", self.formulario.estado or "-")
-        self._agregar_campo_info(info, 3, 0, "Área", self.formulario.area or "-")
-        self._agregar_campo_info(info, 3, 2, "Máquina", self.formulario.maquina or "-")
+        self._agregar_campo_info(info, 3, 0, "Area", self.formulario.area or "-")
+        self._agregar_campo_info(info, 3, 2, "Maquina", self.formulario.maquina or "-")
         self._agregar_campo_info(
             info,
             4,
@@ -79,7 +79,7 @@ class DetalleFormularioView(QDialog):
             info,
             4,
             2,
-            "Versión",
+            "Version",
             self.reporte_service.resolver_version_plantilla_formulario(
                 self.formulario
             ),
@@ -89,15 +89,13 @@ class DetalleFormularioView(QDialog):
             5,
             0,
             "Estado plantilla",
-                "Activa actualmente"
-                if metadata_plantilla.get("activa")
-                else "Histórica",
+            self._resolver_estado_plantilla(metadata_plantilla),
         )
         self._agregar_campo_info(
             info,
             5,
             2,
-            "Observación",
+            "Observacion",
             self.formulario.observacion_general or "-",
         )
         layout.addWidget(caja_info)
@@ -108,13 +106,13 @@ class DetalleFormularioView(QDialog):
             [
                 "ID Pregunta",
                 "Pregunta",
-                "Versión",
+                "Version",
                 "Estado actual",
                 "Respuesta",
                 "Opción",
                 "Texto opción",
                 "Opciones disponibles",
-                "Acción correctiva",
+                "Accion correctiva",
             ]
         )
         self.tabla_respuestas.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -143,6 +141,15 @@ class DetalleFormularioView(QDialog):
         if isinstance(respuesta, dict):
             return respuesta.get(clave, default)
         return getattr(respuesta, clave, default)
+
+    def _resolver_estado_plantilla(self, metadata_plantilla: dict[str, Any]) -> str:
+        if not self.formulario.id_plantilla_preguntas:
+            return "Sin plantilla"
+
+        if not metadata_plantilla:
+            return "No encontrada"
+
+        return "Activa actualmente" if metadata_plantilla.get("activa") else "Historica"
 
     def _resolver_texto_pregunta(self, id_pregunta: str) -> str:
         id_pregunta = str(id_pregunta).strip()

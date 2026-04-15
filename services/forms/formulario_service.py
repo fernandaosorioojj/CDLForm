@@ -105,6 +105,36 @@ class FormularioService:
         except ValueError:
             return datetime.now().date().isoformat()
 
+    @staticmethod
+    def _validar_formulario_nuevo_con_plantilla(formulario: Formulario) -> None:
+        if not formulario.id_formulario:
+            raise ValueError("No se puede crear un formulario sin id_formulario.")
+
+        if not formulario.identificador:
+            raise ValueError("No se puede crear un formulario sin identificador u OP.")
+
+        if not formulario.id_apontamento:
+            raise ValueError("No se puede crear un formulario sin IdApontamento.")
+
+        if not formulario.fecha_formulario:
+            raise ValueError("No se puede crear un formulario sin fecha_formulario.")
+
+        if not (formulario.cod_setor or formulario.area):
+            raise ValueError("No se puede crear un formulario sin CodSetor.")
+
+        if not (formulario.cod_recurso or formulario.maquina):
+            raise ValueError("No se puede crear un formulario sin CodRecurso.")
+
+        if not formulario.id_plantilla_preguntas:
+            raise ValueError(
+                "No se puede crear un formulario sin id_plantilla_preguntas."
+            )
+
+        if int(formulario.version_plantilla_preguntas or 0) <= 0:
+            raise ValueError(
+                "No se puede crear un formulario sin version_plantilla_preguntas."
+            )
+
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_repository.listar_formularios()
 
@@ -163,6 +193,8 @@ class FormularioService:
         return self.obtener_formulario_por_id_apontamento(id_apontamento) is not None
 
     def guardar_formulario(self, formulario: Formulario) -> Formulario:
+        if not self.formulario_repository.obtener_por_id(formulario.id_formulario):
+            self._validar_formulario_nuevo_con_plantilla(formulario)
         return self.formulario_repository.guardar(formulario)
 
     def crear_formulario_pendiente_desde_registro_apontamento(
@@ -197,6 +229,8 @@ class FormularioService:
         cod_setor = self._normalizar_texto(
             registro.get("cod_setor") or registro.get("area")
         )
+        if not cod_setor:
+            raise ValueError("No se puede crear formulario sin CodSetor.")
 
         hora_fim = self._serializar_valor(
             registro.get("hora_fim") or registro.get("HoraFim")
@@ -247,6 +281,7 @@ class FormularioService:
             version_plantilla_preguntas=plantilla_preguntas.version,
         )
 
+        self._validar_formulario_nuevo_con_plantilla(formulario)
         guardado = self.formulario_repository.add_formulario(formulario)
 
         return {

@@ -175,7 +175,7 @@ class ReportesView(QWidget):
                 "CodSetor",
                 "CodRecurso",
                 "Turno",
-                "Version usada",
+                "Version plantilla",
                 "Estado",
                 "Fecha",
             ]

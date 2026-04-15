@@ -1,4 +1,4 @@
 {
-  "usuario": "admin",
+  "usuario": "gestion",
   "password_hash": "pbkdf2_sha256$260000$SALT_HEX$HASH_HEX"
 }

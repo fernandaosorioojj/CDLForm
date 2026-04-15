@@ -58,8 +58,8 @@ class DetallePlantillaPreguntasView(QDialog):
         info.setHorizontalSpacing(12)
         info.setVerticalSpacing(8)
 
-        self._agregar_campo_info(info, 0, 0, "ID técnico", self.plantilla.id_plantilla)
-        self._agregar_campo_info(info, 0, 2, "Versión", self.plantilla.version)
+        self._agregar_campo_info(info, 0, 0, "ID tecnico", self.plantilla.id_plantilla)
+        self._agregar_campo_info(info, 0, 2, "Version", self.plantilla.version)
         self._agregar_campo_info(info, 1, 0, "CodSetor", self.plantilla.cod_setor)
         self._agregar_campo_info(info, 1, 2, "CodRecurso", self.plantilla.cod_recurso)
         self._agregar_campo_info(
@@ -67,21 +67,21 @@ class DetallePlantillaPreguntasView(QDialog):
             2,
             0,
             "Estado",
-            "Activa" if self.plantilla.activa else "Histórica",
+            "Activa" if self.plantilla.activa else "Historica",
         )
         self._agregar_campo_info(info, 2, 2, "Preguntas", len(self.plantilla.items))
         self._agregar_campo_info(
             info,
             3,
             0,
-            "Creación",
+            "Creacion",
             self.plantilla.fecha_creacion or "-",
         )
         self._agregar_campo_info(
             info,
             3,
             2,
-            "Desactivación",
+            "Desactivacion",
             self.plantilla.fecha_desactivacion or "-",
         )
 
