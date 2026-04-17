@@ -14,13 +14,21 @@ QLabel[role="title"] {
     color: $text_on_app;
     font-size: ${font_size_title}px;
     font-weight: 700;
-    padding: 4px 0 8px 0;
+    padding: 2px 0 6px 0;
 }
 
 QLabel[role="subtitle"] {
     color: $text_on_app_accent;
     font-size: ${font_size_base}px;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+QLabel[role="eyebrow"] {
+    color: $focus;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0;
+    text-transform: uppercase;
 }
 
 QLabel[role="section"] {
@@ -39,7 +47,27 @@ QFrame[card="true"] {
     background-color: $bg_card;
     border: 1px solid $border;
     border-radius: ${radius_lg}px;
-    padding: 10px;
+    padding: 12px;
+}
+
+QFrame[visualPanel="true"] {
+    background-color: $bg_button;
+    border: 1px solid $bg_button;
+    border-radius: ${radius_lg}px;
+    padding: 14px;
+}
+
+QFrame[visualPanel="true"] QLabel {
+    color: $text_on_button;
+}
+
+QFrame[visualPanel="true"] QLabel[role="subtitle"] {
+    color: #d8f1e6;
+}
+
+QLabel[assetImage="true"] {
+    background-color: transparent;
+    border: none;
 }
 
 QFrame[card="true"] QLabel {
@@ -53,6 +81,23 @@ QFrame[card="true"] QLabel[role="section"] {
 
 QFrame[card="true"] QLabel[role="subtitle"] {
     color: $text_secondary;
+}
+
+QFrame[card="true"] QFrame[visualPanel="true"] QLabel,
+QFrame[visualPanel="true"] QLabel {
+    color: $text_on_button;
+}
+
+QFrame[card="true"] QFrame[visualPanel="true"] QLabel[role="title"],
+QFrame[card="true"] QFrame[visualPanel="true"] QLabel[role="section"],
+QFrame[visualPanel="true"] QLabel[role="title"],
+QFrame[visualPanel="true"] QLabel[role="section"] {
+    color: $text_on_button;
+}
+
+QFrame[card="true"] QFrame[visualPanel="true"] QLabel[role="subtitle"],
+QFrame[visualPanel="true"] QLabel[role="subtitle"] {
+    color: #d8f1e6;
 }
 
 QFrame[card="true"] QLabel[role="field-label"] {
@@ -73,7 +118,7 @@ QSpinBox {
     background-color: $bg_input;
     border: 1px solid $border_input;
     border-radius: ${radius_sm}px;
-    padding: 9px 12px;
+    padding: 10px 12px;
     color: $text_primary;
     selection-background-color: $bg_button_secondary_hover;
 }
@@ -130,7 +175,7 @@ QPushButton {
     color: $text_on_button;
     border: 1px solid $bg_button;
     border-radius: ${radius_sm}px;
-    padding: 10px 20px;
+    padding: 11px 20px;
     font-weight: 600;
     min-height: 20px;
 }
@@ -153,7 +198,7 @@ QPushButton:disabled {
 
 QPushButton[variant="secondary"] {
     background-color: $bg_button_secondary;
-    color: $text_on_button;
+    color: $text_heading;
     border: 1px solid $bg_button_secondary;
 }
 
@@ -199,7 +244,7 @@ QListWidget {
 
 QHeaderView::section {
     background-color: $bg_button_secondary;
-    color: $text_on_button;
+    color: $text_heading;
     border: none;
     border-bottom: 1px solid $border;
     padding: 8px;

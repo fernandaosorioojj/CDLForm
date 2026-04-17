@@ -6,6 +6,15 @@ QWidget#loginView QFrame[card="true"] {
     min-width: 360px;
 }
 
+QWidget#loginView QFrame#loginShell {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#loginView QFrame#loginVisual {
+    min-width: 300px;
+}
+
 QWidget#loginView QLineEdit {
     min-height: 20px;
 }

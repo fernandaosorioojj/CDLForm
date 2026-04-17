@@ -3,13 +3,19 @@
 import inspect
 from typing import Any
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import (
-    QComboBox,
+    QAbstractItemView,
+    QFrame,
+    QGridLayout,
     QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from models.formulario import Formulario
@@ -50,6 +56,7 @@ class SeleccionOperarioView(BaseWindow):
 
         self.formulario = self.presenter.resolver_formulario(formulario, id_formulario)
         self.formulario_operario_view = None
+        self.operarios_disponibles: list[str] = []
 
         self.setObjectName("seleccionOperarioView")
         self.setWindowTitle("Seleccion de operario")
@@ -65,35 +72,99 @@ class SeleccionOperarioView(BaseWindow):
 
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
-        layout_principal.setContentsMargins(28, 28, 28, 28)
+        layout_principal.setContentsMargins(32, 28, 32, 28)
+        layout_principal.setSpacing(16)
+
+        titulo = QLabel("Seleccion de Operario")
+        titulo.setAlignment(Qt.AlignCenter)
+        titulo.setProperty("role", "title")
+
+        subtitulo = QLabel("Busca y selecciona un operador registrado para continuar.")
+        subtitulo.setAlignment(Qt.AlignCenter)
+        subtitulo.setWordWrap(True)
+        subtitulo.setProperty("role", "subtitle")
+
+        layout_principal.addWidget(titulo)
+        layout_principal.addWidget(subtitulo)
+
+        panel_info = CardFrame()
+        panel_info.setObjectName("infoFormularioSeleccion")
+        panel_info.setMaximumWidth(860)
+
+        info_layout = QGridLayout(panel_info)
+        info_layout.setContentsMargins(18, 14, 18, 14)
+        info_layout.setHorizontalSpacing(14)
+        info_layout.setVerticalSpacing(8)
+
+        self._agregar_campo_info(info_layout, 0, 0, "Formulario", self.formulario.id_formulario)
+        self._agregar_campo_info(info_layout, 0, 2, "Identificador", self.formulario.identificador)
+        self._agregar_campo_info(info_layout, 1, 0, "Maquina", self.formulario.maquina or self.formulario.cod_recurso)
+        self._agregar_campo_info(info_layout, 1, 2, "Area", self.formulario.area or self.formulario.cod_setor)
+
+        layout_principal.addWidget(panel_info, 0, Qt.AlignHCenter)
 
         contenedor = CardFrame()
-        layout = QVBoxLayout(contenedor)
-        layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
+        contenedor.setObjectName("selectorOperario")
+        contenedor.setMaximumWidth(860)
 
-        titulo = QLabel("Seleccion de operario")
-        titulo.setProperty("role", "title")
-        layout.addWidget(titulo)
+        contenido_layout = QVBoxLayout(contenedor)
+        contenido_layout.setContentsMargins(18, 18, 18, 18)
+        contenido_layout.setSpacing(12)
 
-        self.lbl_info = QLabel(self._build_info_text())
-        self.lbl_info.setWordWrap(True)
-        layout.addWidget(self.lbl_info)
+        self.lbl_error_operarios = QLabel("")
+        self.lbl_error_operarios.setWordWrap(True)
+        self.lbl_error_operarios.setProperty("role", "inline-warning")
+        self.lbl_error_operarios.hide()
+        contenido_layout.addWidget(self.lbl_error_operarios)
 
-        self.combo_operarios = QComboBox()
-        layout.addWidget(self.combo_operarios)
+        self.input_busqueda_operario = QLineEdit()
+        self.input_busqueda_operario.setPlaceholderText(
+            "Filtrar por nombre o numero..."
+        )
+        self.input_busqueda_operario.textChanged.connect(self._filtrar_operarios)
+        contenido_layout.addWidget(self.input_busqueda_operario)
+
+        self.lista_operarios = QListWidget()
+        self.lista_operarios.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.lista_operarios.itemSelectionChanged.connect(
+            self._actualizar_estado_continuar
+        )
+        contenido_layout.addWidget(
+            self._crear_bloque_lista("Operadores registrados", self.lista_operarios)
+        )
 
         self.btn_continuar = QPushButton("Continuar")
         self.btn_continuar.clicked.connect(self.continuar)
-        layout.addWidget(self.btn_continuar)
+        contenido_layout.addWidget(self.btn_continuar)
 
-        layout_principal.addWidget(contenedor)
+        layout_principal.addWidget(contenedor, 0, Qt.AlignHCenter)
+        layout_principal.addStretch()
+
+    @staticmethod
+    def _agregar_campo_info(
+        layout: QGridLayout,
+        fila: int,
+        columna: int,
+        etiqueta: str,
+        valor: Any,
+    ) -> None:
+        label = QLabel(f"{etiqueta}:")
+        label.setProperty("role", "field-label")
+        value_label = QLabel(str(valor or "-"))
+        value_label.setProperty("role", "field-value")
+        value_label.setWordWrap(True)
+        layout.addWidget(label, fila, columna)
+        layout.addWidget(value_label, fila, columna + 1)
 
     def _build_info_text(self) -> str:
         return self.presenter.construir_info_formulario(self.formulario)
 
     def cargar_operarios(self) -> None:
-        self.combo_operarios.clear()
+        self.lista_operarios.clear()
+        self.operarios_disponibles.clear()
+        self.lbl_error_operarios.clear()
+        self.lbl_error_operarios.hide()
+        self.btn_continuar.setEnabled(False)
 
         try:
             operarios = self.presenter.listar_operarios_para_formulario(
@@ -101,11 +172,11 @@ class SeleccionOperarioView(BaseWindow):
                 solo_activos=True,
             )
         except Exception as exc:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"No se pudieron cargar los operarios.\n{exc}",
+            self.lbl_error_operarios.setText(
+                "No se pudieron cargar los operadores desde Apontamentos. "
+                f"Revise la conexion SQL.\n{exc}"
             )
+            self.lbl_error_operarios.show()
             return
 
         for operario in operarios:
@@ -114,18 +185,79 @@ class SeleccionOperarioView(BaseWindow):
             if not nombre:
                 continue
 
-            self.combo_operarios.addItem(nombre, nombre)
+            if nombre not in self.operarios_disponibles:
+                self.operarios_disponibles.append(nombre)
 
-        if self.combo_operarios.count() == 0:
-            QMessageBox.warning(
-                self,
-                "Operarios",
-                "No se encontraron operarios para este formulario.",
+        self._filtrar_operarios("")
+
+        if self.lista_operarios.count() == 0:
+            self.lbl_error_operarios.setText(
+                "No se encontraron operadores registrados en Apontamentos."
             )
+            self.lbl_error_operarios.show()
             return
 
-        if self.combo_operarios.count() == 1:
+        if self.lista_operarios.count() == 1:
+            self.lista_operarios.setCurrentRow(0)
             QTimer.singleShot(0, self.continuar)
+
+    def _crear_bloque_lista(self, titulo: str, lista: QListWidget) -> QWidget:
+        contenedor = QFrame()
+        contenedor.setProperty("card", "true")
+        contenedor.setProperty("compactCard", "true")
+
+        layout = QVBoxLayout(contenedor)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(6)
+
+        label = QLabel(titulo)
+        label.setProperty("role", "section")
+
+        layout.addWidget(label)
+        layout.addWidget(lista)
+        return contenedor
+
+    def _filtrar_operarios(self, texto: str) -> None:
+        texto_normalizado = self._normalizar_texto(texto).lower()
+        seleccion_actual = self._obtener_operario_seleccionado()
+
+        filtrados = [
+            operario
+            for operario in self.operarios_disponibles
+            if not texto_normalizado or texto_normalizado in operario.lower()
+        ]
+
+        self.lista_operarios.blockSignals(True)
+        self.lista_operarios.clear()
+        for operario in filtrados:
+            item = QListWidgetItem(operario)
+            item.setData(Qt.UserRole, operario)
+            self.lista_operarios.addItem(item)
+
+        if seleccion_actual in filtrados:
+            self.lista_operarios.setCurrentRow(filtrados.index(seleccion_actual))
+
+        self.lista_operarios.blockSignals(False)
+        self._actualizar_estado_continuar()
+
+    def _obtener_operario_seleccionado(self) -> str:
+        items = self.lista_operarios.selectedItems()
+        if not items:
+            return ""
+        return self._normalizar_texto(items[0].data(Qt.UserRole) or items[0].text())
+
+    def _actualizar_estado_continuar(self) -> None:
+        self.btn_continuar.setEnabled(bool(self._obtener_operario_seleccionado()))
+
+    def _normalizar_operario_listado(self, valor: str) -> str:
+        return self._normalizar_texto(valor).casefold()
+
+    def _operario_existe_en_listado(self, operario: str) -> bool:
+        operario_normalizado = self._normalizar_operario_listado(operario)
+        return any(
+            self._normalizar_operario_listado(disponible) == operario_normalizado
+            for disponible in self.operarios_disponibles
+        )
 
     def _instanciar_formulario_operario_view(self, operario: str) -> Any:
         kwargs_disponibles = {
@@ -174,12 +306,14 @@ class SeleccionOperarioView(BaseWindow):
         )
 
     def continuar(self) -> None:
-        operario = self.combo_operarios.currentData()
-        if operario is None:
-            operario = self.combo_operarios.currentText()
+        operario = self._obtener_operario_seleccionado()
 
         try:
             operario = self.presenter.validar_operario_seleccionado(operario)
+            if not self._operario_existe_en_listado(operario):
+                raise ValueError(
+                    "Debe seleccionar un operario existente del listado."
+                )
             self.formulario = self.presenter.asignar_operario(self.formulario, operario)
         except ValueError as exc:
             QMessageBox.warning(self, "Operario", str(exc))

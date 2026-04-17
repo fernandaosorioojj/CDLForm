@@ -148,7 +148,7 @@
         "cod_setor": "IMP_HUEGO",
         "turno": 3,
         "hora_fim": "2026-02-12T01:12:00",
-        "operario": "Operario Prueba",
+        "operario": "10115603",
         "estacion": "ESTACION-76",
         "evento_origen": "apontamento_sql",
         "estado": "pendiente_operario",
@@ -156,7 +156,7 @@
         "descripcion_proceso": "",
         "observacion_general": "",
         "fecha_creacion": "2026-04-07T15:22:11",
-        "fecha_actualizacion": "2026-04-13T17:31:06",
+        "fecha_actualizacion": "2026-04-17T10:09:48",
         "id_plantilla_preguntas": "TPL-IMP_HUEGO-UTECO-V008",
         "version_plantilla_preguntas": 8
     },

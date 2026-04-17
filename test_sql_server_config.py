@@ -39,6 +39,7 @@ class SqlServerConfigTest(unittest.TestCase):
                         "username": "USUARIO",
                         "password": "CLAVE",
                         "driver": "ODBC Driver 18 for SQL Server",
+                        "encrypt": "no",
                         "trust_server_certificate": "yes",
                     }
                 ),
@@ -52,6 +53,7 @@ class SqlServerConfigTest(unittest.TestCase):
         self.assertIn("DATABASE=BASE;", connection_string)
         self.assertIn("UID=USUARIO;", connection_string)
         self.assertIn("PWD=CLAVE;", connection_string)
+        self.assertIn("Encrypt=no;", connection_string)
 
     def test_variables_entorno_tienen_prioridad_sobre_archivo(self) -> None:
         with _temporary_workspace_dir() as tmp_dir:

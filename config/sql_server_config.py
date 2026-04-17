@@ -9,6 +9,7 @@ from typing import Any
 LOCAL_CONFIG_PATH = Path(__file__).with_name("sql_server.local.json")
 DEFAULT_DRIVER = "ODBC Driver 18 for SQL Server"
 DEFAULT_TRUST_SERVER_CERTIFICATE = "yes"
+DEFAULT_ENCRYPT = "no"
 
 
 def _normalizar_texto(valor: Any) -> str:
@@ -65,6 +66,7 @@ def build_connection_string() -> str:
         "trust_server_certificate",
         default=DEFAULT_TRUST_SERVER_CERTIFICATE,
     )
+    db_encrypt = _obtener_config("encrypt", default=DEFAULT_ENCRYPT)
 
     return (
         f"DRIVER={{{db_driver}}};"
@@ -72,5 +74,6 @@ def build_connection_string() -> str:
         f"DATABASE={db_database};"
         f"UID={db_username};"
         f"PWD={db_password};"
+        f"Encrypt={db_encrypt};"
         f"TrustServerCertificate={db_trust_server_certificate};"
     )

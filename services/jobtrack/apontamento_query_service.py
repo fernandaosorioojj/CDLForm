@@ -10,6 +10,16 @@ from services.jobtrack.jobtrack_config_service import JobtrackConfigService
 
 
 class ApontamentoQueryService:
+    COLUMNAS_SUPERVISOR_CANDIDATAS = (
+        "Supervisor",
+        "CodSupervisor",
+        "NombreSupervisor",
+        "NomeSupervisor",
+        "SupervisorNome",
+        "Lider",
+        "Encargado",
+    )
+
     def __init__(
         self,
         catalogo_contexto_service: CatalogoContextoService | None = None,
@@ -58,6 +68,17 @@ class ApontamentoQueryService:
     ) -> list[dict[str, Any]]:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
+
+    @staticmethod
+    def _normalizar_id_apontamentos(
+        id_apontamentos: Sequence[Any],
+    ) -> list[str]:
+        normalizados: list[str] = []
+        for valor in id_apontamentos:
+            texto = str(valor or "").strip()
+            if texto and texto not in normalizados:
+                normalizados.append(texto)
+        return normalizados
 
     def _listar_valores_distintos(
         self,
@@ -141,6 +162,145 @@ class ApontamentoQueryService:
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
             return self._rows_to_dicts(cursor, rows)
+
+    def listar_operadores_por_contexto(
+        self,
+        cod_setor: str,
+        cod_recurso: str,
+        patron: str | None = None,
+        limit: int = 500,
+    ) -> list[str]:
+        cod_setor_normalizado = str(cod_setor or "").strip()
+        cod_recurso_normalizado = str(cod_recurso or "").strip()
+        limit_normalizado = self._normalizar_limit(limit)
+
+        if not cod_setor_normalizado:
+            raise ValueError("Debe indicar un CodSetor para consultar operadores.")
+
+        if not cod_recurso_normalizado:
+            raise ValueError("Debe indicar un CodRecurso para consultar operadores.")
+
+        expresion_operador = "LTRIM(RTRIM(CAST([Operador] AS VARCHAR(160))))"
+
+        sql = f"""
+        SELECT DISTINCT TOP ({limit_normalizado})
+            {expresion_operador} AS Operador
+        FROM [dbo].[Apontamentos]
+        WHERE [Operador] IS NOT NULL
+          AND {expresion_operador} <> ''
+          AND LTRIM(RTRIM(CAST([CodSetor] AS VARCHAR(100)))) = ?
+          AND LTRIM(RTRIM(CAST([CodRecurso] AS VARCHAR(100)))) = ?
+        """
+
+        params: list[Any] = [cod_setor_normalizado, cod_recurso_normalizado]
+
+        if patron and patron.strip():
+            sql += f"\n  AND {expresion_operador} LIKE ?"
+            params.append(f"%{patron.strip()}%")
+
+        sql += "\nORDER BY Operador"
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+
+        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
+
+    def listar_operadores_registrados(
+        self,
+        patron: str | None = None,
+        limit: int | None = None,
+    ) -> list[str]:
+        expresion_operador = "LTRIM(RTRIM(CAST([Operador] AS VARCHAR(160))))"
+        top_clause = ""
+        if limit is not None:
+            top_clause = f"TOP ({self._normalizar_limit(limit)}) "
+
+        sql = f"""
+        SELECT DISTINCT {top_clause}
+            {expresion_operador} AS Operador
+        FROM [dbo].[Apontamentos]
+        WHERE [Operador] IS NOT NULL
+          AND {expresion_operador} <> ''
+        """
+
+        params: list[Any] = []
+
+        if patron and patron.strip():
+            sql += f"\n  AND {expresion_operador} LIKE ?"
+            params.append(f"%{patron.strip()}%")
+
+        sql += "\nORDER BY Operador"
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+
+        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
+
+    def _resolver_columna_supervisor(self, cursor: pyodbc.Cursor) -> str | None:
+        placeholders = self.catalogo_contexto_service.construir_placeholders_in(
+            len(self.COLUMNAS_SUPERVISOR_CANDIDATAS)
+        )
+        sql = f"""
+        SELECT [COLUMN_NAME]
+        FROM [INFORMATION_SCHEMA].[COLUMNS]
+        WHERE [TABLE_SCHEMA] = 'dbo'
+          AND [TABLE_NAME] = 'Apontamentos'
+          AND [COLUMN_NAME] IN ({placeholders})
+        """
+        cursor.execute(sql, tuple(self.COLUMNAS_SUPERVISOR_CANDIDATAS))
+        disponibles = {str(row[0]).strip() for row in cursor.fetchall()}
+
+        for columna in self.COLUMNAS_SUPERVISOR_CANDIDATAS:
+            if columna in disponibles:
+                return columna
+
+        return None
+
+    def listar_supervisores_por_id_apontamentos(
+        self,
+        id_apontamentos: Sequence[Any],
+    ) -> dict[str, str]:
+        ids = self._normalizar_id_apontamentos(id_apontamentos)
+        if not ids:
+            return {}
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            columna_supervisor = self._resolver_columna_supervisor(cursor)
+            if not columna_supervisor:
+                return {}
+
+            placeholders = self.catalogo_contexto_service.construir_placeholders_in(
+                len(ids)
+            )
+            expresion_id = "LTRIM(RTRIM(CAST([IdApontamento] AS VARCHAR(100))))"
+            expresion_supervisor = (
+                f"LTRIM(RTRIM(CAST([{columna_supervisor}] AS VARCHAR(160))))"
+            )
+            sql = f"""
+            SELECT
+                {expresion_id} AS IdApontamento,
+                {expresion_supervisor} AS Supervisor
+            FROM [dbo].[Apontamentos]
+            WHERE {expresion_id} IN ({placeholders})
+              AND [{columna_supervisor}] IS NOT NULL
+              AND {expresion_supervisor} <> ''
+            """
+            cursor.execute(sql, tuple(ids))
+            rows = cursor.fetchall()
+
+        supervisores: dict[str, str] = {}
+        for row in rows:
+            id_apontamento = str(row[0] or "").strip()
+            supervisor = str(row[1] or "").strip()
+            if id_apontamento and supervisor:
+                supervisores[id_apontamento] = supervisor
+
+        return supervisores
 
     def listar_apontamentos_por_estacion(
         self,

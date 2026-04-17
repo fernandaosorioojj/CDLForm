@@ -7,6 +7,7 @@ from services.forms.formulario_service import FormularioService
 from services.forms.pregunta_service import PreguntaService
 from services.forms.plantilla_preguntas_service import PlantillaPreguntasService
 from services.forms.respuesta_service import RespuestaService
+from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 
 
 class ReporteService:
@@ -16,12 +17,16 @@ class ReporteService:
         respuesta_service: RespuestaService | None = None,
         pregunta_service: PreguntaService | None = None,
         plantilla_preguntas_service: PlantillaPreguntasService | None = None,
+        apontamento_query_service: ApontamentoQueryService | None = None,
     ) -> None:
         self.formulario_service = formulario_service or FormularioService()
         self.respuesta_service = respuesta_service or RespuestaService()
         self.pregunta_service = pregunta_service or PreguntaService()
         self.plantilla_preguntas_service = (
             plantilla_preguntas_service or PlantillaPreguntasService()
+        )
+        self.apontamento_query_service = (
+            apontamento_query_service or ApontamentoQueryService()
         )
 
     @staticmethod
@@ -164,6 +169,80 @@ class ReporteService:
             ),
             "estado": formulario.estado,
         }
+
+    def listar_acciones_correctivas(
+        self,
+        incluir_supervisor_sql: bool = False,
+    ) -> list[dict[str, Any]]:
+        filas: list[dict[str, Any]] = []
+        formularios = self.listar_formularios()
+        supervisores_por_apontamento = {}
+        if incluir_supervisor_sql:
+            supervisores_por_apontamento = self._obtener_supervisores_formularios(
+                formularios
+            )
+
+        for formulario in formularios:
+            detalle = self.obtener_detalle_auditoria_formulario(formulario)
+            id_apontamento = str(formulario.id_apontamento or "").strip()
+
+            for respuesta in detalle:
+                accion_correctiva = str(
+                    respuesta.get("accion_correctiva") or ""
+                ).strip()
+                if not accion_correctiva:
+                    continue
+
+                filas.append(
+                    {
+                        "id_formulario": formulario.id_formulario,
+                        "identificador": formulario.identificador,
+                        "id_apontamento": formulario.id_apontamento,
+                        "operario": formulario.operario,
+                        "supervisor": supervisores_por_apontamento.get(
+                            id_apontamento,
+                            "",
+                        ),
+                        "cod_setor": formulario.cod_setor or formulario.area,
+                        "cod_recurso": formulario.cod_recurso or formulario.maquina,
+                        "turno": formulario.turno,
+                        "estado": formulario.estado,
+                        "fecha_formulario": formulario.fecha_formulario,
+                        "id_pregunta": respuesta.get("id_pregunta", ""),
+                        "pregunta": respuesta.get("pregunta", ""),
+                        "respuesta": respuesta.get("respuesta", ""),
+                        "id_opcion": respuesta.get("id_opcion", ""),
+                        "opcion": respuesta.get("opcion", ""),
+                        "accion_correctiva": accion_correctiva,
+                    }
+                )
+
+        return sorted(
+            filas,
+            key=lambda fila: (
+                str(fila.get("fecha_formulario") or ""),
+                str(fila.get("id_formulario") or ""),
+                str(fila.get("id_pregunta") or ""),
+            ),
+            reverse=True,
+        )
+
+    def _obtener_supervisores_formularios(
+        self,
+        formularios: list[Formulario],
+    ) -> dict[str, str]:
+        ids_apontamento = [
+            formulario.id_apontamento
+            for formulario in formularios
+            if str(formulario.id_apontamento or "").strip()
+        ]
+
+        try:
+            return self.apontamento_query_service.listar_supervisores_por_id_apontamentos(
+                ids_apontamento
+            )
+        except Exception:
+            return {}
 
     def generar_reporte(
         self,

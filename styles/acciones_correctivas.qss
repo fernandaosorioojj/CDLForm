@@ -1,0 +1,15 @@
+QWidget#accionesCorrectivasView {
+    background-color: $bg_app;
+}
+
+QWidget#accionesCorrectivasView QFrame[card="true"] {
+    padding: 12px;
+}
+
+QWidget#accionesCorrectivasView QLabel[role="title"] {
+    color: $text_heading;
+}
+
+QWidget#accionesCorrectivasView QTableWidget::item {
+    min-height: 28px;
+}

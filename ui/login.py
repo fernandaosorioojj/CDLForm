@@ -2,6 +2,8 @@
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -14,6 +16,7 @@ from services.security.auth_service import AuthService
 from ui.dashboard_gestion import DashboardGestionView
 from widgets.base_window import BaseWindow
 from widgets.card_frame import CardFrame
+from widgets.asset_image import AssetImage
 
 
 class LoginView(BaseWindow):
@@ -28,7 +31,7 @@ class LoginView(BaseWindow):
 
         self.setObjectName("loginView")
         self.setWindowTitle("CDLform - Gestion")
-        self.resize(500, 320)
+        self.resize(820, 440)
 
         self._init_ui()
         self.apply_styles()
@@ -37,6 +40,39 @@ class LoginView(BaseWindow):
         layout_principal = QVBoxLayout(self)
         layout_principal.setAlignment(Qt.AlignCenter)
         layout_principal.setContentsMargins(32, 32, 32, 32)
+
+        shell = QFrame()
+        shell.setObjectName("loginShell")
+        shell_layout = QHBoxLayout(shell)
+        shell_layout.setSpacing(18)
+        shell_layout.setContentsMargins(0, 0, 0, 0)
+
+        visual = QFrame()
+        visual.setObjectName("loginVisual")
+        visual.setProperty("visualPanel", "true")
+        visual_layout = QVBoxLayout(visual)
+        visual_layout.setSpacing(12)
+        visual_layout.setContentsMargins(24, 24, 24, 24)
+
+        logo = AssetImage("cdl-logo.svg", width=96, height=96)
+        logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        visual_titulo = QLabel("CDLform")
+        visual_titulo.setProperty("role", "title")
+
+        visual_subtitulo = QLabel(
+            "Gestiona formularios, auditorias y reportes desde un flujo mas claro."
+        )
+        visual_subtitulo.setWordWrap(True)
+        visual_subtitulo.setProperty("role", "subtitle")
+
+        ilustracion = AssetImage("workflow-illustration.svg", width=280, height=190)
+
+        visual_layout.addWidget(logo)
+        visual_layout.addWidget(visual_titulo)
+        visual_layout.addWidget(visual_subtitulo)
+        visual_layout.addStretch()
+        visual_layout.addWidget(ilustracion)
 
         contenedor = CardFrame()
         contenedor.setMaximumWidth(380)
@@ -72,7 +108,9 @@ class LoginView(BaseWindow):
         layout.addSpacing(8)
         layout.addWidget(self.btn_ingresar)
 
-        layout_principal.addWidget(contenedor)
+        shell_layout.addWidget(visual, 1)
+        shell_layout.addWidget(contenedor, 1)
+        layout_principal.addWidget(shell)
 
     def iniciar_sesion(self) -> None:
         usuario = self.input_usuario.text().strip()

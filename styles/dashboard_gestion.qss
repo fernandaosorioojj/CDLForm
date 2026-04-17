@@ -5,3 +5,8 @@ QWidget#dashboardGestionView {
 QWidget#dashboardGestionView QFrame[card="true"] {
     padding: 16px;
 }
+
+QWidget#dashboardGestionView QPushButton {
+    text-align: left;
+    padding-left: 18px;
+}

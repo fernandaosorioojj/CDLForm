@@ -138,5 +138,53 @@
                 "orden": 2
             }
         ]
+    },
+    {
+        "id_plantilla": "TPL-EXTRUSION-UTECO-V001",
+        "clave_plantilla": "TPL-EXTRUSION-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "EXTRUSION",
+        "version": 1,
+        "activa": true,
+        "fecha_creacion": "2026-04-17T10:16:09",
+        "fecha_desactivacion": "",
+        "items": [
+            {
+                "id_pregunta": "PREG-0009",
+                "orden": 6
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-FOOD_SERVICE-UTECO-V001",
+        "clave_plantilla": "TPL-FOOD_SERVICE-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "FOOD_SERVICE",
+        "version": 1,
+        "activa": true,
+        "fecha_creacion": "2026-04-17T10:16:09",
+        "fecha_desactivacion": "",
+        "items": [
+            {
+                "id_pregunta": "PREG-0009",
+                "orden": 6
+            }
+        ]
+    },
+    {
+        "id_plantilla": "TPL-IMP_FLEXO-UTECO-V001",
+        "clave_plantilla": "TPL-IMP_FLEXO-UTECO",
+        "cod_recurso": "UTECO",
+        "cod_setor": "IMP_FLEXO",
+        "version": 1,
+        "activa": true,
+        "fecha_creacion": "2026-04-17T10:16:09",
+        "fecha_desactivacion": "",
+        "items": [
+            {
+                "id_pregunta": "PREG-0009",
+                "orden": 6
+            }
+        ]
     }
 ]

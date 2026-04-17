@@ -3,14 +3,19 @@ from __future__ import annotations
 from typing import Any
 
 from repositories.operario_repository import OperarioRepository
+from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 
 
 class OperarioService:
     def __init__(
         self,
         operario_repository: OperarioRepository | None = None,
+        apontamento_query_service: ApontamentoQueryService | None = None,
     ) -> None:
         self.operario_repository = operario_repository or OperarioRepository()
+        self.apontamento_query_service = (
+            apontamento_query_service or ApontamentoQueryService()
+        )
 
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
@@ -118,30 +123,17 @@ class OperarioService:
         formulario: dict[str, Any],
         solo_activos: bool = True,
     ) -> list[dict]:
-        operario_preseleccionado = self.obtener_operario_preseleccionado(formulario)
+        operadores = self.apontamento_query_service.listar_operadores_registrados()
 
-        if operario_preseleccionado:
-            return [
-                {
-                    "id_operario": operario_preseleccionado,
-                    "nombre": operario_preseleccionado,
-                    "activo": True,
-                    "origen": "apontamento",
-                }
-            ]
-
-        cod_recurso = self._normalizar_texto(
-            formulario.get("cod_recurso") or formulario.get("maquina")
-        )
-        cod_setor = self._normalizar_texto(
-            formulario.get("cod_setor") or formulario.get("area")
-        )
-
-        return self.listar_operarios(
-            solo_activos=solo_activos,
-            cod_recurso=cod_recurso,
-            cod_setor=cod_setor,
-        )
+        return [
+            {
+                "id_operario": operador,
+                "nombre": operador,
+                "activo": True,
+                "origen": "apontamentos",
+            }
+            for operador in operadores
+        ]
 
     def listar_nombres_operarios_para_formulario(
         self,
