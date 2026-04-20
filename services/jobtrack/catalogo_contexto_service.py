@@ -1,19 +1,14 @@
 ﻿from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
-
-from utils.json_manager import JsonManager
 
 
 class CatalogoContextoService:
     def __init__(
         self,
-        storage_dir: str | Path = "storage",
         apontamento_query_service=None,
         usar_sql_catalogos: bool = True,
     ) -> None:
-        self.storage_dir = Path(storage_dir)
         self.apontamento_query_service = apontamento_query_service
         self.usar_sql_catalogos = usar_sql_catalogos
 
@@ -26,17 +21,6 @@ class CatalogoContextoService:
             )
 
         return self.apontamento_query_service
-
-    def _leer_json(self, nombre_archivo: str, default: Any) -> Any:
-        file_path = self.storage_dir / nombre_archivo
-        JsonManager.ensure_file_exists(str(file_path), default)
-
-        data = JsonManager.read_json(str(file_path))
-
-        if data is None:
-            return default
-
-        return data
 
     @staticmethod
     def _normalizar_lista(valores: list[Any]) -> list[str]:
@@ -62,71 +46,27 @@ class CatalogoContextoService:
             return []
 
     def listar_cod_recursos(self) -> list[str]:
-        valores_sql = self._obtener_catalogo_desde_sql(
+        return self._obtener_catalogo_desde_sql(
             "listar_cod_recursos_disponibles"
         )
-        if valores_sql:
-            return valores_sql
-
-        data = self._leer_json("cod_recurso.json", [])
-
-        if isinstance(data, list):
-            return self._normalizar_lista(data)
-
-        if isinstance(data, dict):
-            return self._normalizar_lista(list(data.values()))
-
-        return []
 
     def listar_cod_recurso(self) -> list[str]:
         return self.listar_cod_recursos()
 
     def listar_cod_setores(self) -> list[str]:
-        valores_sql = self._obtener_catalogo_desde_sql(
+        return self._obtener_catalogo_desde_sql(
             "listar_cod_setores_disponibles"
         )
-        if valores_sql:
-            return valores_sql
-
-        data = self._leer_json("cod_setor.json", [])
-
-        if isinstance(data, list):
-            return self._normalizar_lista(data)
-
-        if isinstance(data, dict):
-            return self._normalizar_lista(list(data.values()))
-
-        return []
 
     def listar_cod_setor(self) -> list[str]:
         return self.listar_cod_setores()
 
     def listar_turnos(self) -> list[str]:
-        valores_sql = self._obtener_catalogo_desde_sql(
+        return self._obtener_catalogo_desde_sql(
             "listar_turnos_disponibles"
         )
-        if valores_sql:
-            return valores_sql
-
-        data = self._leer_json("turnos.json", [])
-
-        if isinstance(data, list):
-            return self._normalizar_lista(data)
-
-        if isinstance(data, dict):
-            return self._normalizar_lista(list(data.values()))
-
-        return []
 
     def listar_tipos_trabajo(self) -> list[str]:
-        data = self._leer_json("tipos_trabajo.json", [])
-
-        if isinstance(data, list):
-            return self._normalizar_lista(data)
-
-        if isinstance(data, dict):
-            return self._normalizar_lista(list(data.values()))
-
         return []
 
     def obtener_cod_recursos_por_estacion(self, estacion: str) -> list[str]:
@@ -135,37 +75,32 @@ class CatalogoContextoService:
         if not estacion_normalizada:
             raise ValueError("La estaciÃ³n no puede venir vacÃ­a.")
 
-        data = self._leer_json("estaciones_recursos.json", {})
+        recursos_sql = self._obtener_cod_recursos_estacion_desde_sql(
+            estacion_normalizada
+        )
+        if recursos_sql:
+            return recursos_sql
 
-        if not isinstance(data, dict):
-            raise ValueError(
-                "El archivo storage/estaciones_recursos.json debe tener formato objeto JSON."
+        raise ValueError(
+            "No existe homologaciÃ³n SQL de estaciÃ³n a CodRecurso para: "
+            f"{estacion_normalizada}. Revise la tabla "
+            "MetricsBetaProductivo.dbo.jbt_EstacaoXMaquinas."
+        )
+
+    def _obtener_cod_recursos_estacion_desde_sql(
+        self,
+        estacion: str,
+    ) -> list[str]:
+        if not self.usar_sql_catalogos:
+            return []
+
+        try:
+            query_service = self._obtener_apontamento_query_service()
+            return self._normalizar_lista(
+                query_service.listar_cod_recursos_por_cod_estacao(estacion)
             )
-
-        codigos = data.get(estacion_normalizada)
-
-        if codigos is None:
-            raise ValueError(
-                f"No existe homologaciÃ³n de estaciÃ³n a CodRecurso para: "
-                f"{estacion_normalizada}"
-            )
-
-        if isinstance(codigos, str):
-            codigos = [codigos]
-
-        if not isinstance(codigos, list):
-            raise ValueError(
-                f"La homologaciÃ³n de la estaciÃ³n {estacion_normalizada} debe ser una lista."
-            )
-
-        codigos_normalizados = self._normalizar_lista(codigos)
-
-        if not codigos_normalizados:
-            raise ValueError(
-                f"La estaciÃ³n {estacion_normalizada} no tiene CodRecurso homologado."
-            )
-
-        return codigos_normalizados
+        except Exception:
+            return []
 
     def homologar_estacion_a_cod_recursos(self, estacion: str) -> list[str]:
         return self.obtener_cod_recursos_por_estacion(estacion)

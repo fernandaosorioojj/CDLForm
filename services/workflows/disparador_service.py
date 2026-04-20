@@ -63,6 +63,12 @@ class DisparadorService:
                 "formulario": None,
             }
 
+        return self.disparar_formulario_pendiente(formulario)
+
+    def disparar_formulario_pendiente(
+        self,
+        formulario: dict[str, Any],
+    ) -> dict[str, Any]:
         id_formulario = self._normalizar_texto(formulario.get("id_formulario"))
         self._formularios_en_apertura.add(id_formulario)
         self.formulario_service.marcar_formulario_en_apertura(id_formulario)

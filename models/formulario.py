@@ -54,6 +54,7 @@ class Formulario:
     turno: Any = None
     hora_fim: Any = None
     operario: str = ""
+    supervisor_apontamento: str = ""
     estacion: str = ""
     evento_origen: str = ""
     estado: str = ESTADO_EN_APERTURA
@@ -75,6 +76,7 @@ class Formulario:
         self.cod_recurso = _normalizar_texto(self.cod_recurso)
         self.cod_setor = _normalizar_texto(self.cod_setor)
         self.operario = _normalizar_texto(self.operario)
+        self.supervisor_apontamento = _normalizar_texto(self.supervisor_apontamento)
         self.estacion = _normalizar_texto(self.estacion)
         self.evento_origen = _normalizar_texto(self.evento_origen)
         self.estado = _normalizar_estado(self.estado)
@@ -105,6 +107,7 @@ class Formulario:
             turno=data.get("turno"),
             hora_fim=data.get("hora_fim"),
             operario=data.get("operario", ""),
+            supervisor_apontamento=data.get("supervisor_apontamento", ""),
             estacion=data.get("estacion", ""),
             evento_origen=data.get("evento_origen", ""),
             estado=data.get("estado", ESTADO_EN_APERTURA),
@@ -132,6 +135,7 @@ class Formulario:
             "turno": _serializar_valor(self.turno),
             "hora_fim": _serializar_valor(self.hora_fim),
             "operario": self.operario,
+            "supervisor_apontamento": self.supervisor_apontamento,
             "estacion": self.estacion,
             "evento_origen": self.evento_origen,
             "estado": _normalizar_estado(self.estado),

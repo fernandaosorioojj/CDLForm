@@ -1,47 +1,32 @@
 ﻿from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 from services.forms.formulario_service import FormularioService
-from utils.json_manager import JsonManager
+from models.formulario import ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO
 
 
 class ApontamentoProcesadoService:
     def __init__(
         self,
-        storage_file: str | Path = "storage/apontamentos_procesados.json",
         apontamento_query_service: ApontamentoQueryService | None = None,
         formulario_service: FormularioService | None = None,
     ) -> None:
-        self.storage_file = Path(storage_file)
         self.apontamento_query_service = (
             apontamento_query_service or ApontamentoQueryService()
         )
         self.formulario_service = formulario_service or FormularioService()
 
     def _ensure_storage(self) -> None:
-        JsonManager.ensure_file_exists(str(self.storage_file), [])
+        return None
 
     def _leer_registros(self) -> list[dict[str, Any]]:
-        self._ensure_storage()
-        data = JsonManager.read_json(str(self.storage_file))
-
-        if data is None:
-            return []
-
-        if not isinstance(data, list):
-            raise ValueError(
-                "El archivo storage/apontamentos_procesados.json debe contener una lista."
-            )
-
-        return data
+        return []
 
     def _guardar_registros(self, registros: list[dict[str, Any]]) -> None:
-        self._ensure_storage()
-        JsonManager.write_json(str(self.storage_file), registros)
+        return None
 
     @staticmethod
     def _normalizar_id_apontamento(valor: Any) -> str:
@@ -75,6 +60,13 @@ class ApontamentoProcesadoService:
             return ""
         return str(valor).strip()
 
+    def _formulario_puede_abrirse(self, formulario: dict[str, Any] | None) -> bool:
+        if not formulario:
+            return False
+
+        estado = self._normalizar_texto(formulario.get("estado"))
+        return estado in {ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO}
+
     @staticmethod
     def _serializar_valor(valor: Any) -> Any:
         if valor is None:
@@ -97,10 +89,10 @@ class ApontamentoProcesadoService:
     def listar_ids_procesados(self) -> set[str]:
         ids: set[str] = set()
 
-        for registro in self._leer_registros():
+        for formulario in self.formulario_service.listar_formularios():
             try:
                 ids.add(
-                    self._normalizar_id_apontamento(registro.get("id_apontamento"))
+                    self._normalizar_id_apontamento(formulario.id_apontamento)
                 )
             except ValueError:
                 continue
@@ -176,14 +168,39 @@ class ApontamentoProcesadoService:
             ) == id_apontamento:
                 return registro
 
-        contexto = contexto or {}
+        registro = self._construir_registro_apontamento(
+            apontamento=apontamento,
+            contexto=contexto,
+            estado=estado,
+            id_formulario=id_formulario,
+            observacion=observacion,
+        )
 
-        registro = {
+        registros.append(registro)
+        self._guardar_registros(registros)
+        return registro
+
+    def _construir_registro_apontamento(
+        self,
+        apontamento: dict[str, Any],
+        contexto: dict[str, Any] | None = None,
+        estado: str = "pendiente_formulario",
+        id_formulario: str | None = None,
+        observacion: str | None = None,
+    ) -> dict[str, Any]:
+        contexto = contexto or {}
+        id_apontamento = self._normalizar_id_apontamento(
+            apontamento.get("IdApontamento")
+        )
+
+        return {
+            "id_evento_cola": self._normalizar_texto(apontamento.get("IdEvento")),
             "id_apontamento": id_apontamento,
             "num_ordem": self._normalizar_texto(apontamento.get("NumOrdem")),
             "cod_recurso": self._normalizar_texto(apontamento.get("CodRecurso")),
             "cod_setor": self._normalizar_texto(apontamento.get("CodSetor")),
             "turno": self._serializar_valor(apontamento.get("Turno")),
+            "hora_inicio": self._serializar_valor(apontamento.get("HoraInicio")),
             "hora_fim": self._serializar_valor(apontamento.get("HoraFim")),
             "operador": self._normalizar_texto(apontamento.get("Operador")),
             "descripcion_op": self._normalizar_texto(apontamento.get("DescricaoOP")),
@@ -205,10 +222,6 @@ class ApontamentoProcesadoService:
             "fecha_registro": datetime.now().isoformat(timespec="seconds"),
         }
 
-        registros.append(registro)
-        self._guardar_registros(registros)
-        return registro
-
     def registrar_apontamientos_procesados(
         self,
         apontamientos: list[dict[str, Any]],
@@ -226,6 +239,22 @@ class ApontamentoProcesadoService:
             registros_guardados.append(registro)
 
         return registros_guardados
+
+    def _evento_cola_a_apontamento(
+        self,
+        evento: dict[str, Any],
+    ) -> dict[str, Any]:
+        return {
+            "IdEvento": evento.get("id_evento"),
+            "IdApontamento": evento.get("id_apontamento"),
+            "NumOrdem": evento.get("num_ordem"),
+            "CodRecurso": evento.get("cod_recurso"),
+            "CodSetor": evento.get("cod_setor"),
+            "Operador": evento.get("operador"),
+            "Turno": evento.get("turno"),
+            "HoraInicio": evento.get("hora_inicio"),
+            "HoraFim": evento.get("hora_fim"),
+        }
 
     def actualizar_estado_apontamento(
         self,
@@ -334,6 +363,116 @@ class ApontamentoProcesadoService:
             "total_formularios_creados": len(formularios_creados),
             "total_formularios_existentes": len(formularios_existentes),
             "total_errores": len(errores),
+            "formularios_creados": formularios_creados,
+            "formularios_existentes": formularios_existentes,
+            "errores": errores,
+        }
+
+    def sincronizar_y_crear_formularios_desde_cola_sql(
+        self,
+        limit_consulta: int = 50,
+        solo_con_num_ordem: bool = True,
+    ) -> dict[str, Any]:
+        contexto = self.apontamento_query_service.obtener_contexto_estacion_actual()
+        cod_recursos = list(contexto.get("cod_recursos", []))
+        eventos = self.apontamento_query_service.listar_eventos_op_pendientes(
+            cod_recursos=cod_recursos,
+            limit=limit_consulta,
+        )
+
+        registrados: list[dict[str, Any]] = []
+        formularios_creados: list[dict[str, Any]] = []
+        formularios_existentes: list[dict[str, Any]] = []
+        omitidos_ya_procesados: list[dict[str, Any]] = []
+        omitidos_sin_num_ordem: list[dict[str, Any]] = []
+        errores: list[dict[str, Any]] = []
+
+        for evento in eventos:
+            id_evento = evento.get("id_evento")
+            apontamento = self._evento_cola_a_apontamento(evento)
+
+            try:
+                id_apontamento = self._normalizar_id_apontamento(
+                    apontamento.get("IdApontamento")
+                )
+                num_ordem = self._normalizar_texto(apontamento.get("NumOrdem"))
+
+                formulario_existente = (
+                    self.formulario_service.obtener_formulario_por_id_apontamento(
+                        id_apontamento
+                    )
+                )
+
+                if formulario_existente:
+                    if self._formulario_puede_abrirse(formulario_existente):
+                        formularios_existentes.append(formulario_existente)
+                    else:
+                        omitidos_ya_procesados.append(evento)
+
+                    self.apontamento_query_service.marcar_evento_op_pendiente_procesado(
+                        id_evento
+                    )
+                    continue
+
+                if solo_con_num_ordem and not num_ordem:
+                    motivo = "Omitido por la app: evento sin NumOrdem."
+                    omitidos_sin_num_ordem.append(evento)
+                    self.apontamento_query_service.marcar_evento_op_pendiente_omitido(
+                        id_evento=id_evento,
+                        motivo=motivo,
+                    )
+                    continue
+
+                registro = self._construir_registro_apontamento(
+                    apontamento=apontamento,
+                    contexto=contexto,
+                    estado="pendiente_formulario",
+                )
+                registrados.append(registro)
+
+                resultado = (
+                    self.formulario_service.crear_formulario_pendiente_desde_registro_apontamento(
+                        registro
+                    )
+                )
+                formulario = resultado["formulario"]
+
+                if resultado["ya_existia"]:
+                    formularios_existentes.append(formulario)
+                else:
+                    formularios_creados.append(formulario)
+
+                self.apontamento_query_service.marcar_evento_op_pendiente_procesado(
+                    id_evento
+                )
+
+            except Exception as exc:
+                error = {
+                    "id_evento": id_evento,
+                    "id_apontamento": evento.get("id_apontamento"),
+                    "num_ordem": evento.get("num_ordem"),
+                    "error": str(exc),
+                }
+                errores.append(error)
+
+                try:
+                    self.apontamento_query_service.marcar_evento_op_pendiente_error(
+                        id_evento=id_evento,
+                        mensaje_error=str(exc),
+                    )
+                except Exception:
+                    pass
+
+        return {
+            "contexto": contexto,
+            "total_consultados": len(eventos),
+            "total_pendientes_nuevos": len(registrados),
+            "total_registrados_en_cola": len(registrados),
+            "total_formularios_creados": len(formularios_creados),
+            "total_formularios_existentes": len(formularios_existentes),
+            "total_errores_formulario": len(errores),
+            "total_omitidos_ya_procesados": len(omitidos_ya_procesados),
+            "total_omitidos_sin_num_ordem": len(omitidos_sin_num_ordem),
             "formularios_creados": formularios_creados,
             "formularios_existentes": formularios_existentes,
             "errores": errores,

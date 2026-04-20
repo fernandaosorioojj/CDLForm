@@ -2,17 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from repositories.operario_repository import OperarioRepository
 from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 
 
 class OperarioService:
     def __init__(
         self,
-        operario_repository: OperarioRepository | None = None,
         apontamento_query_service: ApontamentoQueryService | None = None,
     ) -> None:
-        self.operario_repository = operario_repository or OperarioRepository()
         self.apontamento_query_service = (
             apontamento_query_service or ApontamentoQueryService()
         )
@@ -40,15 +37,7 @@ class OperarioService:
         return [texto] if texto else []
 
     def _obtener_todos(self) -> list[dict]:
-        if hasattr(self.operario_repository, "listar_operarios"):
-            return self.operario_repository.listar_operarios()
-
-        if hasattr(self.operario_repository, "list_all"):
-            return self.operario_repository.list_all()
-
-        raise AttributeError(
-            "OperarioRepository no tiene ni 'listar_operarios' ni 'list_all'."
-        )
+        return []
 
     def _coincide_contexto(
         self,

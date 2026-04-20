@@ -21,6 +21,7 @@ class AppLauncher:
         self.formulario_service = formulario_service or FormularioService()
         self.pregunta_service = pregunta_service or PreguntaService()
         self.respuesta_service = respuesta_service or RespuestaService()
+        self._ventanas_abiertas: list[Any] = []
 
     @staticmethod
     def _obtener_o_crear_app() -> tuple[QApplication, bool]:
@@ -99,6 +100,12 @@ class AppLauncher:
             formulario=formulario,
             on_close=on_close,
         )
+        self._ventanas_abiertas.append(view)
+
+        if hasattr(view, "destroyed"):
+            view.destroyed.connect(
+                lambda *args, ventana=view: self._liberar_ventana(ventana)
+            )
 
         if on_close is not None and hasattr(view, "destroyed"):
             view.destroyed.connect(lambda *args: on_close(formulario))
@@ -114,3 +121,7 @@ class AppLauncher:
             "exit_code": exit_code,
             "formulario": formulario,
         }
+
+    def _liberar_ventana(self, ventana: Any) -> None:
+        if ventana in self._ventanas_abiertas:
+            self._ventanas_abiertas.remove(ventana)

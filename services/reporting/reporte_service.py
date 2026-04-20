@@ -176,10 +176,22 @@ class ReporteService:
     ) -> list[dict[str, Any]]:
         filas: list[dict[str, Any]] = []
         formularios = self.listar_formularios()
-        supervisores_por_apontamento = {}
+        supervisores_por_apontamento = {
+            str(formulario.id_apontamento or "").strip(): str(
+                formulario.supervisor_apontamento or ""
+            ).strip()
+            for formulario in formularios
+            if str(formulario.id_apontamento or "").strip()
+            and str(formulario.supervisor_apontamento or "").strip()
+        }
         if incluir_supervisor_sql:
-            supervisores_por_apontamento = self._obtener_supervisores_formularios(
-                formularios
+            supervisores_sql = self._obtener_supervisores_formularios(formularios)
+            supervisores_por_apontamento.update(
+                {
+                    id_apontamento: supervisor
+                    for id_apontamento, supervisor in supervisores_sql.items()
+                    if supervisor
+                }
             )
 
         for formulario in formularios:

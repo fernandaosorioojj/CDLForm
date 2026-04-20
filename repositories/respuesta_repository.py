@@ -1,75 +1,310 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
+import pyodbc
+
+from config.sql_server_config import build_connection_string
 from models.respuesta import Respuesta
 from repositories.base_repository import BaseRepository
 
 
-class RespuestaRepository(BaseRepository):
+class RespuestaRepository:
     def __init__(self, file_path: Path | None = None) -> None:
-        super().__init__(file_path or Path("storage/respuestas.json"))
+        self.file_path = Path(file_path) if file_path else None
+        self._json_repository = BaseRepository(self.file_path) if self.file_path else None
+
+    def _usar_json(self) -> bool:
+        return self._json_repository is not None
+
+    def _connect(self) -> pyodbc.Connection:
+        return pyodbc.connect(build_connection_string())
+
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
+
+    @staticmethod
+    def _serializar_fecha(valor: Any) -> str:
+        if valor is None:
+            return ""
+        if isinstance(valor, datetime):
+            return valor.isoformat(timespec="seconds")
+        return str(valor).strip()
+
+    @staticmethod
+    def _fecha_sql(valor: Any) -> Any:
+        texto = str(valor or "").strip()
+        if not texto:
+            return None
+        return texto.replace("T", " ")
+
+    @staticmethod
+    def _numero_decimal(valor: Any) -> Any:
+        if valor is None or str(valor).strip() == "":
+            return None
+        return valor
+
+    @staticmethod
+    def _rows_to_dicts(
+        cursor: pyodbc.Cursor,
+        rows: list[pyodbc.Row],
+    ) -> list[dict[str, Any]]:
+        columnas = [columna[0] for columna in cursor.description]
+        return [dict(zip(columnas, row)) for row in rows]
 
     def _from_dict(self, data: dict) -> Respuesta:
         return Respuesta.from_dict(data)
+
+    def _from_row(self, row: dict[str, Any]) -> Respuesta:
+        numero = row.get("respuesta_numero")
+        if numero is not None:
+            try:
+                numero = int(numero)
+            except (TypeError, ValueError):
+                pass
+
+        return Respuesta(
+            id_respuesta=self._normalizar_texto(row.get("id_respuesta")),
+            id_formulario=self._normalizar_texto(row.get("id_formulario")),
+            id_pregunta=self._normalizar_texto(row.get("id_pregunta")),
+            respuesta_texto=(
+                self._normalizar_texto(row.get("respuesta_texto")) or None
+            ),
+            respuesta_numero=numero,
+            id_opcion=self._normalizar_texto(row.get("id_opcion")) or None,
+            accion_correctiva_aplicada=(
+                self._normalizar_texto(row.get("accion_correctiva_aplicada"))
+                or None
+            ),
+            fecha_creacion=self._serializar_fecha(row.get("fecha_creacion")),
+        )
 
     def _get_entity_id(self, entity: Respuesta) -> str:
         return entity.id_respuesta
 
     def list_all(self) -> list[Respuesta]:
-        registros = self.get_all()
-        return [self._from_dict(item) for item in registros]
+        if self._usar_json():
+            registros = self._json_repository.get_all()
+            return [self._from_dict(item) for item in registros]
+
+        sql = """
+        SELECT
+            [id_respuesta],
+            [id_formulario],
+            [id_pregunta],
+            [respuesta_texto],
+            [respuesta_numero],
+            [id_opcion],
+            [accion_correctiva_aplicada],
+            [fecha_creacion]
+        FROM [dbo].[respuestas_formulario]
+        ORDER BY [fecha_creacion], [id_respuesta];
+        """
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            rows = self._rows_to_dicts(cursor, cursor.fetchall())
+            return [self._from_row(row) for row in rows]
 
     def get_by_id(self, id_respuesta: str) -> Respuesta | None:
-        if not id_respuesta or not str(id_respuesta).strip():
+        id_normalizado = self._normalizar_texto(id_respuesta)
+        if not id_normalizado:
             return None
 
-        data = self.find_by_id(str(id_respuesta).strip())
-        if not data:
-            return None
+        if self._usar_json():
+            data = self._json_repository.find_by_id(id_normalizado)
+            if not data:
+                return None
+            return self._from_dict(data)
 
-        return self._from_dict(data)
+        sql = """
+        SELECT
+            [id_respuesta],
+            [id_formulario],
+            [id_pregunta],
+            [respuesta_texto],
+            [respuesta_numero],
+            [id_opcion],
+            [accion_correctiva_aplicada],
+            [fecha_creacion]
+        FROM [dbo].[respuestas_formulario]
+        WHERE [id_respuesta] = ?;
+        """
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (id_normalizado,))
+            rows = self._rows_to_dicts(cursor, cursor.fetchall())
+            return self._from_row(rows[0]) if rows else None
 
     def add_respuesta(self, respuesta: Respuesta) -> Respuesta:
-        self.add(respuesta.to_dict())
-        return respuesta
+        if self._usar_json():
+            self._json_repository.add(respuesta.to_dict())
+            return respuesta
+
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO [dbo].[respuestas_formulario] (
+                    [id_respuesta],
+                    [id_formulario],
+                    [id_pregunta],
+                    [respuesta_texto],
+                    [respuesta_numero],
+                    [id_opcion],
+                    [accion_correctiva_aplicada],
+                    [fecha_creacion]
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, SYSDATETIME()));
+                """,
+                (
+                    respuesta.id_respuesta,
+                    respuesta.id_formulario,
+                    respuesta.id_pregunta,
+                    respuesta.respuesta_texto,
+                    self._numero_decimal(respuesta.respuesta_numero),
+                    respuesta.id_opcion,
+                    respuesta.accion_correctiva_aplicada,
+                    self._fecha_sql(respuesta.fecha_creacion),
+                ),
+            )
+            conn.commit()
+            return respuesta
 
     def update(self, respuesta: Respuesta) -> Respuesta:
-        self.update_by_id(respuesta.id_respuesta, respuesta.to_dict())
-        return respuesta
+        if self._usar_json():
+            self._json_repository.update_by_id(
+                respuesta.id_respuesta,
+                respuesta.to_dict(),
+            )
+            return respuesta
+
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE [dbo].[respuestas_formulario]
+                SET
+                    [id_formulario] = ?,
+                    [id_pregunta] = ?,
+                    [respuesta_texto] = ?,
+                    [respuesta_numero] = ?,
+                    [id_opcion] = ?,
+                    [accion_correctiva_aplicada] = ?,
+                    [fecha_creacion] = COALESCE(?, [fecha_creacion])
+                WHERE [id_respuesta] = ?;
+                """,
+                (
+                    respuesta.id_formulario,
+                    respuesta.id_pregunta,
+                    respuesta.respuesta_texto,
+                    self._numero_decimal(respuesta.respuesta_numero),
+                    respuesta.id_opcion,
+                    respuesta.accion_correctiva_aplicada,
+                    self._fecha_sql(respuesta.fecha_creacion),
+                    respuesta.id_respuesta,
+                ),
+            )
+            conn.commit()
+            return respuesta
 
     def delete_by_formulario(self, id_formulario: str) -> int:
-        id_formulario_normalizado = str(id_formulario).strip()
-        if not id_formulario_normalizado:
+        id_normalizado = self._normalizar_texto(id_formulario)
+        if not id_normalizado:
             return 0
 
-        respuestas_a_eliminar = [
-            respuesta.id_respuesta
-            for respuesta in self.list_all()
-            if respuesta.id_formulario == id_formulario_normalizado
-        ]
+        if self._usar_json():
+            respuestas_a_eliminar = [
+                respuesta.id_respuesta
+                for respuesta in self.list_all()
+                if respuesta.id_formulario == id_normalizado
+            ]
 
-        eliminadas = 0
-        for id_respuesta in respuestas_a_eliminar:
-            if self.delete_by_id(id_respuesta):
-                eliminadas += 1
+            eliminadas = 0
+            for id_respuesta in respuestas_a_eliminar:
+                if self._json_repository.delete_by_id(id_respuesta):
+                    eliminadas += 1
 
-        return eliminadas
+            return eliminadas
+
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                DELETE FROM [dbo].[respuestas_formulario]
+                WHERE [id_formulario] = ?;
+                """,
+                (id_normalizado,),
+            )
+            eliminadas = cursor.rowcount
+            conn.commit()
+            return int(eliminadas or 0)
 
     def get_respuestas_por_formulario(self, id_formulario: str) -> list[Respuesta]:
-        id_formulario = id_formulario.strip()
+        id_normalizado = self._normalizar_texto(id_formulario)
+        if not id_normalizado:
+            return []
 
-        return [
-            respuesta
-            for respuesta in self.list_all()
-            if respuesta.id_formulario == id_formulario
-        ]
+        if self._usar_json():
+            return [
+                respuesta
+                for respuesta in self.list_all()
+                if respuesta.id_formulario == id_normalizado
+            ]
+
+        sql = """
+        SELECT
+            [id_respuesta],
+            [id_formulario],
+            [id_pregunta],
+            [respuesta_texto],
+            [respuesta_numero],
+            [id_opcion],
+            [accion_correctiva_aplicada],
+            [fecha_creacion]
+        FROM [dbo].[respuestas_formulario]
+        WHERE [id_formulario] = ?
+        ORDER BY [fecha_creacion], [id_respuesta];
+        """
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (id_normalizado,))
+            rows = self._rows_to_dicts(cursor, cursor.fetchall())
+            return [self._from_row(row) for row in rows]
 
     def get_respuestas_por_pregunta(self, id_pregunta: str) -> list[Respuesta]:
-        id_pregunta = id_pregunta.strip()
+        id_normalizado = self._normalizar_texto(id_pregunta)
+        if not id_normalizado:
+            return []
 
-        return [
-            respuesta
-            for respuesta in self.list_all()
-            if respuesta.id_pregunta == id_pregunta
-        ]
+        if self._usar_json():
+            return [
+                respuesta
+                for respuesta in self.list_all()
+                if respuesta.id_pregunta == id_normalizado
+            ]
+
+        sql = """
+        SELECT
+            [id_respuesta],
+            [id_formulario],
+            [id_pregunta],
+            [respuesta_texto],
+            [respuesta_numero],
+            [id_opcion],
+            [accion_correctiva_aplicada],
+            [fecha_creacion]
+        FROM [dbo].[respuestas_formulario]
+        WHERE [id_pregunta] = ?
+        ORDER BY [fecha_creacion], [id_respuesta];
+        """
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (id_normalizado,))
+            rows = self._rows_to_dicts(cursor, cursor.fetchall())
+            return [self._from_row(row) for row in rows]

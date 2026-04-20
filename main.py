@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import inspect
 import sys
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
+from integrations.event_processor import EventProcessor
 from ui.login import LoginView
-from ui.seleccion_operario import SeleccionOperarioView
 from utils.style_loader import load_qss_files
 
 
@@ -39,38 +38,40 @@ def parse_args():
 
 
 def validar_argumentos_modo_auto(args) -> list[str]:
-    errores = []
-
-    if not args.op or not str(args.op).strip():
-        errores.append("Falta el parametro --op")
-
-    if not args.area or not str(args.area).strip():
-        errores.append("Falta el parametro --area")
-
-    if not args.maquina or not str(args.maquina).strip():
-        errores.append("Falta el parametro --maquina")
-
-    return errores
+    return []
 
 
-def crear_seleccion_operario_modo_auto(args) -> SeleccionOperarioView:
-    kwargs_disponibles = {
-        "op": args.op.strip() if args.op else None,
-        "area": args.area.strip() if args.area else None,
-        "maquina": args.maquina.strip() if args.maquina else None,
-        "evento_origen": (
-            args.evento_origen.strip()
-            if args.evento_origen and str(args.evento_origen).strip()
-            else None
-        ),
-    }
-    signature = inspect.signature(SeleccionOperarioView.__init__)
-    kwargs_aceptados = {
-        nombre: valor
-        for nombre, valor in kwargs_disponibles.items()
-        if nombre in signature.parameters
-    }
-    return SeleccionOperarioView(**kwargs_aceptados)
+def construir_mensaje_sin_formulario(resultado: dict) -> str:
+    contexto = resultado.get("contexto", {})
+    recursos = contexto.get("cod_recursos", [])
+    recursos_texto = ", ".join(str(recurso) for recurso in recursos) or "sin recursos"
+
+    lineas = [
+        "No hay formularios pendientes para abrir.",
+        "",
+        f"Origen: {resultado.get('origen_sincronizacion', 'desconocido')}",
+        f"Estacion: {contexto.get('estacion') or 'sin estacion'}",
+        f"Recursos consultados: {recursos_texto}",
+        f"Eventos consultados: {resultado.get('total_consultados', 0)}",
+        f"Formularios creados: {resultado.get('total_formularios_creados', 0)}",
+        f"Formularios existentes pendientes: {resultado.get('total_formularios_existentes', 0)}",
+        f"Omitidos ya cerrados/localmente procesados: {resultado.get('total_omitidos_ya_procesados', 0)}",
+        f"Omitidos sin NumOrdem: {resultado.get('total_omitidos_sin_num_ordem', 0)}",
+        f"Errores: {resultado.get('total_errores_formulario', 0)}",
+    ]
+
+    errores = resultado.get("errores", [])
+    if errores:
+        primer_error = errores[0]
+        lineas.extend(
+            [
+                "",
+                "Primer error:",
+                str(primer_error.get("error") or primer_error),
+            ]
+        )
+
+    return "\n".join(lineas)
 
 
 def main() -> None:
@@ -95,8 +96,34 @@ def main() -> None:
             )
             sys.exit(1)
 
-        ventana = crear_seleccion_operario_modo_auto(args)
-        ventana.show()
+        try:
+            app.event_processor_operario = EventProcessor()
+            resultado = app.event_processor_operario.procesar_evento_externo(
+                evento={
+                    "op": args.op,
+                    "area": args.area,
+                    "maquina": args.maquina,
+                    "evento_origen": args.evento_origen,
+                },
+                usar_fallback_consulta=False,
+            )
+        except Exception as exc:
+            QMessageBox.critical(
+                None,
+                "Error de ejecucion",
+                f"No se pudo procesar la cola de formularios.\n\n{exc}",
+            )
+            sys.exit(1)
+
+        resultado_disparo = resultado.get("resultado_disparo", {})
+        if not resultado_disparo.get("se_abrio"):
+            QMessageBox.information(
+                None,
+                "Formulario",
+                construir_mensaje_sin_formulario(resultado),
+            )
+            sys.exit(0)
+
         sys.exit(app.exec_())
 
     QMessageBox.critical(None, "Error", "Modo de ejecucion no valido.")

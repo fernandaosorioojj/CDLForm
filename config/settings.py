@@ -9,14 +9,8 @@ from pathlib import Path
 class AppPaths:
     base_dir: Path
     config_dir: Path
-    storage_dir: Path
     logs_dir: Path
 
-    formularios_file: Path
-    respuestas_file: Path
-    preguntas_file: Path
-    eventos_op_file: Path
-    disparadores_file: Path
     app_log_file: Path
 
 
@@ -35,19 +29,12 @@ class AppSettings:
 def _build_paths() -> AppPaths:
     base_dir = Path(__file__).resolve().parent.parent
     config_dir = base_dir / "config"
-    storage_dir = base_dir / "storage"
     logs_dir = base_dir / "logs"
 
     return AppPaths(
         base_dir=base_dir,
         config_dir=config_dir,
-        storage_dir=storage_dir,
         logs_dir=logs_dir,
-        formularios_file=storage_dir / "formularios.json",
-        respuestas_file=storage_dir / "respuestas.json",
-        preguntas_file=storage_dir / "preguntas.json",
-        eventos_op_file=storage_dir / "eventos_op.json",
-        disparadores_file=storage_dir / "disparadores_formulario.json",
         app_log_file=logs_dir / "cdlform.log",
     )
 

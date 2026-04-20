@@ -80,6 +80,13 @@ class ApontamentoQueryService:
                 normalizados.append(texto)
         return normalizados
 
+    @staticmethod
+    def _normalizar_id_evento(valor: Any) -> str:
+        texto = str(valor or "").strip()
+        if not texto:
+            raise ValueError("El id_evento no puede venir vacio.")
+        return texto
+
     def _listar_valores_distintos(
         self,
         nombre_columna: str,
@@ -240,6 +247,35 @@ class ApontamentoQueryService:
 
         return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
 
+    def listar_cod_recursos_por_cod_estacao(
+        self,
+        cod_estacao: str,
+    ) -> list[str]:
+        cod_estacao_normalizado = str(cod_estacao or "").strip()
+        if not cod_estacao_normalizado:
+            raise ValueError("Debe indicar un CodEstacao para homologar recursos.")
+
+        expresion_estacao = "LTRIM(RTRIM(CAST([CodEstacao] AS VARCHAR(100))))"
+        expresion_recurso = "LTRIM(RTRIM(CAST([CodRecurso] AS VARCHAR(100))))"
+
+        sql = f"""
+        SELECT DISTINCT
+            {expresion_recurso} AS CodRecurso
+        FROM [dbo].[jbt_EstacaoXMaquinas]
+        WHERE [CodEstacao] IS NOT NULL
+          AND {expresion_estacao} = ?
+          AND [CodRecurso] IS NOT NULL
+          AND {expresion_recurso} <> ''
+        ORDER BY CodRecurso
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (cod_estacao_normalizado,))
+            rows = cursor.fetchall()
+
+        return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
+
     def _resolver_columna_supervisor(self, cursor: pyodbc.Cursor) -> str | None:
         placeholders = self.catalogo_contexto_service.construir_placeholders_in(
             len(self.COLUMNAS_SUPERVISOR_CANDIDATAS)
@@ -301,6 +337,113 @@ class ApontamentoQueryService:
                 supervisores[id_apontamento] = supervisor
 
         return supervisores
+
+    def listar_eventos_op_pendientes(
+        self,
+        cod_recursos: Sequence[str] | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        limit_normalizado = self._normalizar_limit(limit)
+        where_clauses = ["[procesado] = 0"]
+        params: list[Any] = []
+
+        if cod_recursos is not None:
+            cod_recursos_normalizados = self._normalizar_cod_recursos(cod_recursos)
+            placeholders = self.catalogo_contexto_service.construir_placeholders_in(
+                len(cod_recursos_normalizados)
+            )
+            where_clauses.append(
+                f"LTRIM(RTRIM(CAST([cod_recurso] AS VARCHAR(100)))) IN ({placeholders})"
+            )
+            params.extend(cod_recursos_normalizados)
+
+        sql = f"""
+        SELECT TOP ({limit_normalizado})
+            [id_evento],
+            [id_apontamento],
+            [num_ordem],
+            [cod_recurso],
+            [cod_setor],
+            [operador],
+            [turno],
+            [hora_inicio],
+            [hora_fim],
+            [origen_evento],
+            [fecha_deteccion],
+            [procesado],
+            [fecha_procesado],
+            [mensaje_error]
+        FROM [dbo].[eventos_op_pendientes]
+        WHERE {" AND ".join(where_clauses)}
+        ORDER BY [fecha_deteccion] ASC, [id_evento] ASC
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+            return self._rows_to_dicts(cursor, rows)
+
+    def marcar_evento_op_pendiente_procesado(self, id_evento: Any) -> None:
+        id_evento_normalizado = self._normalizar_id_evento(id_evento)
+        sql = """
+        UPDATE [dbo].[eventos_op_pendientes]
+        SET
+            [procesado] = 1,
+            [fecha_procesado] = GETDATE(),
+            [mensaje_error] = NULL
+        WHERE [id_evento] = ?
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (id_evento_normalizado,))
+            conn.commit()
+
+    def marcar_evento_op_pendiente_error(
+        self,
+        id_evento: Any,
+        mensaje_error: str,
+    ) -> None:
+        id_evento_normalizado = self._normalizar_id_evento(id_evento)
+        mensaje = str(mensaje_error or "").strip()
+        if len(mensaje) > 500:
+            mensaje = mensaje[:497] + "..."
+
+        sql = """
+        UPDATE [dbo].[eventos_op_pendientes]
+        SET [mensaje_error] = ?
+        WHERE [id_evento] = ?
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (mensaje, id_evento_normalizado))
+            conn.commit()
+
+    def marcar_evento_op_pendiente_omitido(
+        self,
+        id_evento: Any,
+        motivo: str,
+    ) -> None:
+        id_evento_normalizado = self._normalizar_id_evento(id_evento)
+        mensaje = str(motivo or "").strip()
+        if len(mensaje) > 500:
+            mensaje = mensaje[:497] + "..."
+
+        sql = """
+        UPDATE [dbo].[eventos_op_pendientes]
+        SET
+            [procesado] = 1,
+            [fecha_procesado] = GETDATE(),
+            [mensaje_error] = ?
+        WHERE [id_evento] = ?
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, (mensaje, id_evento_normalizado))
+            conn.commit()
 
     def listar_apontamentos_por_estacion(
         self,
