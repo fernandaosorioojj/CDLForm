@@ -160,6 +160,7 @@ BEGIN
             [estado] IN (
                 N'en_apertura',
                 N'pendiente_operario',
+                N'en_progreso',
                 N'completado',
                 N'cancelado',
                 N'error'

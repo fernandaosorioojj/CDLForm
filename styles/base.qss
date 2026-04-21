@@ -5,6 +5,10 @@ QWidget {
     font-size: ${font_size_base}px;
 }
 
+QWidget[animatedBackground="true"] {
+    background-color: transparent;
+}
+
 QLabel {
     background: transparent;
     color: $text_on_app;

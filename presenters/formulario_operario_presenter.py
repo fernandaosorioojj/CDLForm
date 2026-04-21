@@ -4,6 +4,7 @@ from typing import Any
 
 from models.formulario import (
     ESTADO_EN_APERTURA,
+    ESTADO_EN_PROGRESO,
     ESTADO_PENDIENTE_OPERARIO,
     Formulario,
 )
@@ -136,12 +137,12 @@ class FormularioOperarioPresenter:
                 operario_seleccionado,
             )
 
-        if formulario.estado == ESTADO_EN_APERTURA:
-            return self.formulario_service.marcar_formulario_pendiente_operario(
+        if formulario.estado in {ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO}:
+            return self.formulario_service.marcar_formulario_en_progreso(
                 formulario.id_formulario
             )
 
-        if formulario.estado != ESTADO_PENDIENTE_OPERARIO:
+        if formulario.estado != ESTADO_EN_PROGRESO:
             return (
                 self.formulario_service.obtener_formulario_por_id(
                     formulario.id_formulario

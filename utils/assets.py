@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
+from config.settings import SETTINGS
 
-
-ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+ASSETS_DIR = SETTINGS.paths.assets_dir
 IMAGES_DIR = ASSETS_DIR / "images"
 
 

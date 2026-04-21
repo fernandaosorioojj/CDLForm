@@ -11,6 +11,8 @@ class CatalogoContextoService:
     ) -> None:
         self.apontamento_query_service = apontamento_query_service
         self.usar_sql_catalogos = usar_sql_catalogos
+        self._ultimo_error_catalogo_sql: Exception | None = None
+        self._ultimo_error_homologacion_sql: Exception | None = None
 
     def _obtener_apontamento_query_service(self):
         if self.apontamento_query_service is None:
@@ -41,8 +43,10 @@ class CatalogoContextoService:
             query_service = self._obtener_apontamento_query_service()
             metodo = getattr(query_service, nombre_metodo)
             resultado = metodo()
+            self._ultimo_error_catalogo_sql = None
             return self._normalizar_lista(resultado)
-        except Exception:
+        except Exception as exc:
+            self._ultimo_error_catalogo_sql = exc
             return []
 
     def listar_cod_recursos(self) -> list[str]:
@@ -81,6 +85,12 @@ class CatalogoContextoService:
         if recursos_sql:
             return recursos_sql
 
+        if self._ultimo_error_homologacion_sql is not None:
+            raise RuntimeError(
+                "No se pudo consultar la homologacion SQL de estacion a CodRecurso "
+                f"para {estacion_normalizada}: {self._ultimo_error_homologacion_sql}"
+            ) from self._ultimo_error_homologacion_sql
+
         raise ValueError(
             "No existe homologaciÃ³n SQL de estaciÃ³n a CodRecurso para: "
             f"{estacion_normalizada}. Revise la tabla "
@@ -96,10 +106,13 @@ class CatalogoContextoService:
 
         try:
             query_service = self._obtener_apontamento_query_service()
-            return self._normalizar_lista(
+            resultado = self._normalizar_lista(
                 query_service.listar_cod_recursos_por_cod_estacao(estacion)
             )
-        except Exception:
+            self._ultimo_error_homologacion_sql = None
+            return resultado
+        except Exception as exc:
+            self._ultimo_error_homologacion_sql = exc
             return []
 
     def homologar_estacion_a_cod_recursos(self, estacion: str) -> list[str]:

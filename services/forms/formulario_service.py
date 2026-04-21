@@ -3,10 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+import pyodbc
+
 from models.formulario import (
     ESTADO_CANCELADO,
     ESTADO_COMPLETADO,
     ESTADO_EN_APERTURA,
+    ESTADO_EN_PROGRESO,
     ESTADO_PENDIENTE_OPERARIO,
     Formulario,
 )
@@ -72,6 +75,14 @@ class FormularioService:
             pass
 
         return texto
+
+    @staticmethod
+    def _es_error_constraint_estado_en_progreso(exc: Exception) -> bool:
+        if not isinstance(exc, pyodbc.IntegrityError):
+            return False
+
+        mensaje = str(exc)
+        return "CK_formularios_operario_estado" in mensaje
 
     def _generar_id_formulario(self) -> str:
         formularios = self.formulario_repository.listar_formularios()
@@ -408,11 +419,22 @@ class FormularioService:
         id_formulario: str,
         observacion_general: str | None = None,
     ) -> Formulario:
-        return self.actualizar_estado_formulario(
-            id_formulario=id_formulario,
-            estado=ESTADO_PENDIENTE_OPERARIO,
-            observacion_general=observacion_general,
-        )
+        try:
+            return self.actualizar_estado_formulario(
+                id_formulario=id_formulario,
+                estado=ESTADO_EN_PROGRESO,
+                observacion_general=observacion_general,
+            )
+        except Exception as exc:
+            if not self._es_error_constraint_estado_en_progreso(exc):
+                raise
+
+            # Compatibilidad temporal para bases que aun no aceptan en_progreso.
+            return self.actualizar_estado_formulario(
+                id_formulario=id_formulario,
+                estado=ESTADO_PENDIENTE_OPERARIO,
+                observacion_general=observacion_general,
+            )
 
     def marcar_formulario_enviado(
         self,

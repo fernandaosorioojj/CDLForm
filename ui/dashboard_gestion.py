@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QFrame,
+    QGraphicsDropShadowEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -15,7 +16,6 @@ from PyQt5.QtWidgets import (
 from presenters.dashboard_gestion_presenter import DashboardGestionPresenter
 from utils.assets import image_path
 from widgets.base_window import BaseWindow
-from widgets.card_frame import CardFrame
 from widgets.asset_image import AssetImage
 
 
@@ -73,32 +73,37 @@ class DashboardGestionView(BaseWindow):
 
         layout_principal.addWidget(encabezado)
 
-        contenedor = CardFrame()
+        contenedor = QFrame()
+        contenedor.setObjectName("dashboardActions")
         grid = QGridLayout(contenedor)
         grid.setSpacing(16)
-        grid.setContentsMargins(24, 24, 24, 24)
+        grid.setContentsMargins(0, 0, 0, 0)
 
-        btn_preguntas = QPushButton("Administrar Preguntas")
-        btn_reportes = QPushButton("Reportes")
-        btn_acciones = QPushButton("Acciones Correctivas")
-        btn_auditoria = QPushButton("Auditoria de Plantillas")
-        btn_salir = QPushButton("Cerrar sesion")
-
-        btn_salir.setProperty("variant", "danger")
-
-        btn_preguntas.setIcon(QIcon(image_path("icon-questions.svg")))
-        btn_reportes.setIcon(QIcon(image_path("icon-reports.svg")))
-        btn_acciones.setIcon(QIcon(image_path("icon-corrective.svg")))
-        btn_auditoria.setIcon(QIcon(image_path("icon-audit.svg")))
-
-        btn_preguntas.setMinimumHeight(54)
-        btn_reportes.setMinimumHeight(54)
-        btn_acciones.setMinimumHeight(54)
-        btn_auditoria.setMinimumHeight(54)
-        btn_salir.setMinimumHeight(50)
-
-        for boton in (btn_preguntas, btn_reportes, btn_acciones, btn_auditoria):
-            boton.setIconSize(QSize(30, 30))
+        btn_preguntas = self._crear_tarjeta_accion(
+            texto="Administrar Preguntas",
+            icono="icon-questions.svg",
+            accent="accent",
+        )
+        btn_reportes = self._crear_tarjeta_accion(
+            texto="Reportes",
+            icono="icon-reports.svg",
+            accent="light",
+        )
+        btn_acciones = self._crear_tarjeta_accion(
+            texto="Acciones Correctivas",
+            icono="icon-corrective.svg",
+            accent="mid",
+        )
+        btn_auditoria = self._crear_tarjeta_accion(
+            texto="Auditoria de Plantillas",
+            icono="icon-audit.svg",
+            accent="soft",
+        )
+        btn_salir = self._crear_tarjeta_accion(
+            texto="Cerrar sesion",
+            icono="icon-audit.svg",
+            accent="danger",
+        )
 
         btn_preguntas.clicked.connect(self.abrir_admin_preguntas)
         btn_reportes.clicked.connect(self.abrir_reportes)
@@ -114,6 +119,29 @@ class DashboardGestionView(BaseWindow):
 
         layout_principal.addWidget(contenedor)
         layout_principal.addStretch()
+
+    def _crear_tarjeta_accion(
+        self,
+        *,
+        texto: str,
+        icono: str,
+        accent: str,
+    ) -> QPushButton:
+        boton = QPushButton(texto)
+        boton.setProperty("dashboardTile", True)
+        boton.setProperty("tileAccent", accent)
+        boton.setCursor(Qt.PointingHandCursor)
+        boton.setIcon(QIcon(image_path(icono)))
+        boton.setIconSize(QSize(30, 30))
+        boton.setMinimumHeight(118)
+
+        sombra = QGraphicsDropShadowEffect(self)
+        sombra.setBlurRadius(28)
+        sombra.setOffset(0, 10)
+        sombra.setColor(Qt.black)
+        boton.setGraphicsEffect(sombra)
+
+        return boton
 
     def abrir_admin_preguntas(self) -> None:
         try:

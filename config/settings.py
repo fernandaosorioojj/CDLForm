@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 
 @dataclass(frozen=True)
 class AppPaths:
-    base_dir: Path
-    config_dir: Path
+    package_dir: Path
+    bundled_config_dir: Path
+    assets_dir: Path
+    styles_dir: Path
+    data_dir: Path
     logs_dir: Path
-
+    jobtrack_config_file: Path
+    sql_server_local_config_file: Path
+    gestion_login_file: Path
+    admin_login_file: Path
     app_log_file: Path
 
 
@@ -26,15 +33,43 @@ class AppSettings:
     paths: AppPaths
 
 
+def _resolve_package_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent.parent
+
+
+def _resolve_data_dir(app_name: str) -> Path:
+    override = os.getenv("CDLFORM_DATA_DIR", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+
+    appdata = os.getenv("APPDATA", "").strip()
+    if appdata:
+        return Path(appdata).expanduser().resolve() / app_name
+
+    return (_resolve_package_dir() / ".local").resolve()
+
+
 def _build_paths() -> AppPaths:
-    base_dir = Path(__file__).resolve().parent.parent
-    config_dir = base_dir / "config"
-    logs_dir = base_dir / "logs"
+    app_name = "CDLform"
+    package_dir = _resolve_package_dir()
+    bundled_config_dir = package_dir / "config"
+    data_dir = _resolve_data_dir(app_name)
+    logs_dir = data_dir / "logs"
 
     return AppPaths(
-        base_dir=base_dir,
-        config_dir=config_dir,
+        package_dir=package_dir,
+        bundled_config_dir=bundled_config_dir,
+        assets_dir=package_dir / "assets",
+        styles_dir=package_dir / "styles",
+        data_dir=data_dir,
         logs_dir=logs_dir,
+        jobtrack_config_file=data_dir / "jobtrack.ini",
+        sql_server_local_config_file=data_dir / "sql_server.local.json",
+        gestion_login_file=data_dir / "gestion_login.json",
+        admin_login_file=data_dir / "admin_login.json",
         app_log_file=logs_dir / "cdlform.log",
     )
 

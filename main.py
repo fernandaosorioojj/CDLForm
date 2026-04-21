@@ -6,6 +6,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from integrations.event_processor import EventProcessor
+from launcher.app_launcher import AppLauncher
+from launcher.pending_form_coordinator import PendingFormCoordinator
 from ui.login import LoginView
 from utils.style_loader import load_qss_files
 
@@ -78,8 +80,13 @@ def main() -> None:
     args = parse_args()
     app = QApplication(sys.argv)
     cargar_estilos(app)
+    app.formulario_launcher = AppLauncher()
+    app.pending_form_coordinator = PendingFormCoordinator(
+        formulario_launcher=app.formulario_launcher,
+    )
 
     if args.modo == "normal":
+        app.pending_form_coordinator.iniciar()
         ventana = LoginView()
         ventana.show()
         sys.exit(app.exec_())
@@ -115,8 +122,8 @@ def main() -> None:
             )
             sys.exit(1)
 
-        resultado_disparo = resultado.get("resultado_disparo", {})
-        if not resultado_disparo.get("se_abrio"):
+        resultado_apertura = app.pending_form_coordinator.revisar_pendientes()
+        if not resultado_apertura.get("se_preparo"):
             QMessageBox.information(
                 None,
                 "Formulario",

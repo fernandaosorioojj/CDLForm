@@ -23,6 +23,9 @@ class AppLauncher:
         self.respuesta_service = respuesta_service or RespuestaService()
         self._ventanas_abiertas: list[Any] = []
 
+    def tiene_ventanas_abiertas(self) -> bool:
+        return bool(self._ventanas_abiertas)
+
     @staticmethod
     def _obtener_o_crear_app() -> tuple[QApplication, bool]:
         app = QApplication.instance()

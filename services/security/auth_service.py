@@ -16,8 +16,20 @@ HASH_ITERATIONS = 260000
 
 class AuthService:
     def __init__(self, config_path: Path | None = None) -> None:
-        self.config_path = config_path or (SETTINGS.paths.config_dir / "gestion_login.json")
-        self.legacy_config_path = SETTINGS.paths.config_dir / "admin_login.json"
+        self.config_path = config_path or self._resolver_config_path(
+            SETTINGS.paths.gestion_login_file,
+            SETTINGS.paths.bundled_config_dir / "gestion_login.json",
+        )
+        self.legacy_config_path = self._resolver_config_path(
+            SETTINGS.paths.admin_login_file,
+            SETTINGS.paths.bundled_config_dir / "admin_login.json",
+        )
+
+    @staticmethod
+    def _resolver_config_path(path_local: Path, path_bundled: Path) -> Path:
+        if path_local.exists():
+            return path_local
+        return path_bundled
 
     @staticmethod
     def _normalizar_texto(valor: object) -> str:
@@ -130,7 +142,7 @@ class AuthService:
         raise RuntimeError(
             "No hay credenciales de Gestion configuradas. "
             "Defina CDLFORM_GESTION_USER/CDLFORM_GESTION_PASSWORD_HASH o cree "
-            "config/gestion_login.json."
+            f"{self.config_path}."
         )
 
     def obtener_credenciales_admin(self) -> dict[str, str]:

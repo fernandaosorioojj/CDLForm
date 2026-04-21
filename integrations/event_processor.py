@@ -1,21 +1,18 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Any
 
 from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
-from services.workflows.disparador_service import DisparadorService
 
 
 class EventProcessor:
     def __init__(
         self,
         apontamento_procesado_service: ApontamentoProcesadoService | None = None,
-        disparador_service: DisparadorService | None = None,
     ) -> None:
         self.apontamento_procesado_service = (
             apontamento_procesado_service or ApontamentoProcesadoService()
         )
-        self.disparador_service = disparador_service or DisparadorService()
 
     def procesar_evento_externo(
         self,
@@ -60,20 +57,6 @@ class EventProcessor:
             )
             resultado_sincronizacion["error_cola_sql"] = str(exc)
 
-        formulario_a_disparar = self._obtener_formulario_sincronizado(
-            resultado_sincronizacion
-        )
-        if formulario_a_disparar:
-            resultado_disparo = self.disparador_service.disparar_formulario_pendiente(
-                formulario_a_disparar
-            )
-        else:
-            resultado_disparo = {
-                "se_abrio": False,
-                "motivo": "sin_formularios_sincronizados",
-                "formulario": None,
-            }
-
         return {
             "evento_recibido": evento or {},
             "origen_sincronizacion": origen_sincronizacion,
@@ -101,15 +84,4 @@ class EventProcessor:
                 "total_omitidos_sin_num_ordem", 0
             ),
             "errores": resultado_sincronizacion.get("errores", []),
-            "resultado_disparo": resultado_disparo,
         }
-
-    @staticmethod
-    def _obtener_formulario_sincronizado(
-        resultado_sincronizacion: dict[str, Any],
-    ) -> dict[str, Any] | None:
-        for clave in ("formularios_creados", "formularios_existentes"):
-            formularios = resultado_sincronizacion.get(clave, [])
-            if formularios:
-                return formularios[0]
-        return None

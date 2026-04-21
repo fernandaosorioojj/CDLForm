@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 from string import Template
 
+from config.settings import SETTINGS
 from styles.theme import THEME
 
 
@@ -41,8 +41,7 @@ def _theme_mapping() -> dict[str, object]:
 
 
 def load_qss_files(*filenames: str) -> str:
-    base_dir = Path(__file__).resolve().parent.parent
-    styles_dir = base_dir / "styles"
+    styles_dir = SETTINGS.paths.styles_dir
     partes: list[str] = []
 
     for filename in filenames:

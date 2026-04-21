@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class AppTheme:
-    bg_app: str = "#eef4f1"
+    bg_app: str = "#f4f8f6"
     bg_card: str = "#ffffff"
     bg_input: str = "#f7fbf8"
     bg_button: str = "#163d34"
@@ -26,6 +26,10 @@ class AppTheme:
     border: str = "#d9e5df"
     border_input: str = "#b8ccc2"
     focus: str = "#42b883"
+    gradient_start: str = "#39997C"
+    gradient_mid: str = "#51695E"
+    gradient_end: str = "#FFFFFF"
+    gradient_accent: str = "#00E0AE"
 
     radius_sm: int = 8
     radius_md: int = 8

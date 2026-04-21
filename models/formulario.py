@@ -6,11 +6,11 @@ from typing import Any
 
 ESTADO_EN_APERTURA = "en_apertura"
 ESTADO_PENDIENTE_OPERARIO = "pendiente_operario"
+ESTADO_EN_PROGRESO = "en_progreso"
 ESTADO_COMPLETADO = "completado"
 ESTADO_CANCELADO = "cancelado"
 
 MAPA_ESTADOS_LEGACY = {
-    "en_progreso": ESTADO_PENDIENTE_OPERARIO,
     "enviado": ESTADO_COMPLETADO,
 }
 

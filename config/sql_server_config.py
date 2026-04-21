@@ -5,8 +5,9 @@ import os
 from pathlib import Path
 from typing import Any
 
+from config.settings import SETTINGS
 
-LOCAL_CONFIG_PATH = Path(__file__).with_name("sql_server.local.json")
+LOCAL_CONFIG_PATH = SETTINGS.paths.sql_server_local_config_file
 DEFAULT_DRIVER = "ODBC Driver 18 for SQL Server"
 DEFAULT_TRUST_SERVER_CERTIFICATE = "yes"
 DEFAULT_ENCRYPT = "no"
@@ -18,17 +19,46 @@ def _normalizar_texto(valor: Any) -> str:
     return str(valor).strip()
 
 
+def _resolver_rutas_config_local() -> list[Path]:
+    rutas: list[Path] = []
+
+    override = _normalizar_texto(os.getenv("CDLFORM_SQL_CONFIG_PATH"))
+    if override:
+        rutas.append(Path(override).expanduser())
+
+    rutas.append(LOCAL_CONFIG_PATH)
+    rutas.append(SETTINGS.paths.bundled_config_dir / "sql_server.local.json")
+
+    unicas: list[Path] = []
+    for ruta in rutas:
+        if ruta not in unicas:
+            unicas.append(ruta)
+
+    return unicas
+
+
+def get_sql_server_local_config_path() -> Path:
+    for ruta in _resolver_rutas_config_local():
+        if ruta.exists():
+            return ruta
+
+    return _resolver_rutas_config_local()[0]
+
+
 def _leer_config_local() -> dict[str, Any]:
-    if not LOCAL_CONFIG_PATH.exists():
-        return {}
+    for config_path in _resolver_rutas_config_local():
+        if not config_path.exists():
+            continue
 
-    data = json.loads(LOCAL_CONFIG_PATH.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError(
-            f"El archivo {LOCAL_CONFIG_PATH} debe contener un objeto JSON."
-        )
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"El archivo {config_path} debe contener un objeto JSON."
+            )
 
-    return data
+        return data
+
+    return {}
 
 
 def _obtener_config(clave: str, *, default: str = "") -> str:
@@ -50,9 +80,10 @@ def _obtener_config_requerida(clave: str) -> str:
         return valor
 
     variable_entorno = f"CDLFORM_SQL_{clave.upper()}"
+    ruta_config = get_sql_server_local_config_path()
     raise RuntimeError(
         f"No hay configuracion SQL Server para {clave}. "
-        f"Defina {variable_entorno} o config/sql_server.local.json."
+        f"Defina {variable_entorno} o {ruta_config}."
     )
 
 
