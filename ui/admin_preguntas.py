@@ -47,11 +47,45 @@ class AdminPreguntasView(QWidget):
         self.cargar_preguntas()
 
     def _init_ui(self) -> None:
-        layout_principal = QHBoxLayout(self)
-        layout_principal.setContentsMargins(24, 24, 24, 24)
+        layout_raiz = QVBoxLayout(self)
+        layout_raiz.setContentsMargins(24, 24, 24, 24)
+        layout_raiz.setSpacing(18)
+
+        top_panel = QFrame()
+        top_panel.setObjectName("adminTopPanel")
+        top_layout = QVBoxLayout(top_panel)
+        top_layout.setContentsMargins(18, 18, 18, 18)
+        top_layout.setSpacing(14)
+
+        header_panel = QFrame()
+        header_panel.setObjectName("adminHeader")
+        header_layout = QVBoxLayout(header_panel)
+        header_layout.setContentsMargins(22, 20, 22, 20)
+        header_layout.setSpacing(6)
+
+        eyebrow = QLabel("Gestion")
+        eyebrow.setProperty("role", "eyebrow")
+
+        titulo_superior = QLabel("Gestion de Preguntas")
+        titulo_superior.setProperty("role", "title")
+
+        subtitulo_superior = QLabel(
+            "Crea, edita y organiza las preguntas del formulario dinamico."
+        )
+        subtitulo_superior.setWordWrap(True)
+        subtitulo_superior.setProperty("role", "subtitle")
+
+        header_layout.addWidget(eyebrow)
+        header_layout.addWidget(titulo_superior)
+        header_layout.addWidget(subtitulo_superior)
+        top_layout.addWidget(header_panel)
+        layout_raiz.addWidget(top_panel)
+
+        layout_principal = QHBoxLayout()
         layout_principal.setSpacing(18)
 
         panel_izquierdo = QFrame()
+        panel_izquierdo.setObjectName("adminSidebar")
         panel_izquierdo.setProperty("card", "true")
         panel_izquierdo.setMinimumWidth(360)
         panel_izquierdo.setMaximumWidth(430)
@@ -69,17 +103,22 @@ class AdminPreguntasView(QWidget):
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
+        titulo.hide()
+        subtitulo.hide()
 
         self.input_busqueda = QLineEdit()
+        self.input_busqueda.setObjectName("adminSidebarSearch")
         self.input_busqueda.setPlaceholderText(
             "Buscar por texto, tipo o filtros de contexto..."
         )
         self.input_busqueda.textChanged.connect(self.filtrar_preguntas)
 
         label_lista = QLabel("Listado de preguntas")
+        label_lista.setObjectName("adminSidebarLabel")
         label_lista.setProperty("role", "section")
 
         self.lista_preguntas = QListWidget()
+        self.lista_preguntas.setObjectName("adminSidebarList")
         self.lista_preguntas.itemClicked.connect(self.cargar_pregunta_seleccionada)
         self.lista_preguntas.setMinimumHeight(540)
 
@@ -283,6 +322,7 @@ class AdminPreguntasView(QWidget):
 
         layout_principal.addWidget(panel_izquierdo, 0)
         layout_principal.addWidget(panel_derecho, 1)
+        layout_raiz.addLayout(layout_principal, 1)
 
         self._actualizar_estado_opciones()
 

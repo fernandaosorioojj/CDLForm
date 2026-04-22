@@ -86,7 +86,6 @@ def main() -> None:
     )
 
     if args.modo == "normal":
-        app.pending_form_coordinator.iniciar()
         ventana = LoginView()
         ventana.show()
         sys.exit(app.exec_())

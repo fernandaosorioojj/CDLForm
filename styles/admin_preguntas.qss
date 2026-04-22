@@ -1,13 +1,82 @@
 QWidget#adminPreguntasView {
-    background-color: $bg_app;
+    background-color: #D1CDC2;
+}
+
+QWidget#adminPreguntasView QFrame#adminTopPanel {
+    background-color: #171717;
+    border: 1px solid rgba(34, 34, 34, 220);
+    border-radius: 18px;
+}
+
+QWidget#adminPreguntasView QFrame#adminHeader {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="title"] {
+    color: #f7f2ea;
+    font-size: 30px;
+}
+
+QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="subtitle"] {
+    color: rgba(247, 242, 234, 0.72);
+    font-size: 15px;
+}
+
+QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="eyebrow"] {
+    color: rgba(247, 242, 234, 0.56);
+}
+
+QWidget#adminPreguntasView QFrame#adminSidebar {
+    background-color: #171717;
+    border: 1px solid rgba(34, 34, 34, 220);
+    border-radius: 18px;
 }
 
 QWidget#adminPreguntasView QFrame[card="true"] {
     padding: 12px;
+    background-color: rgba(255, 255, 255, 244);
+    border: 1px solid rgba(220, 212, 201, 232);
+    border-radius: 18px;
+}
+
+QWidget#adminPreguntasView QFrame#adminSidebar[card="true"] {
+    background-color: #171717;
+    border: 1px solid rgba(34, 34, 34, 220);
 }
 
 QWidget#adminPreguntasView QLabel[role="title"] {
-    color: $text_heading;
+    color: #2c4c62;
+}
+
+QWidget#adminPreguntasView QLabel[role="subtitle"] {
+    color: #677887;
+}
+
+QWidget#adminPreguntasView QLabel#adminSidebarLabel {
+    color: #d1cdc2;
+}
+
+QWidget#adminPreguntasView QPushButton {
+    background-color: #171717;
+    color: #f7f2ea;
+    border: 1px solid #171717;
+}
+
+QWidget#adminPreguntasView QPushButton:hover {
+    background-color: #2a2a2a;
+    border: 1px solid #2a2a2a;
+}
+
+QWidget#adminPreguntasView QPushButton[variant="secondary"] {
+    background-color: #efebe4;
+    color: #495d70;
+    border: 1px solid rgba(215, 205, 192, 0.95);
+}
+
+QWidget#adminPreguntasView QPushButton[variant="secondary"]:hover {
+    background-color: #f5f1eb;
+    border: 1px solid rgba(215, 205, 192, 1);
 }
 
 QWidget#adminPreguntasView QScrollArea {
@@ -17,8 +86,8 @@ QWidget#adminPreguntasView QScrollArea {
 QWidget#adminPreguntasView QFrame#bloqueBasicoPregunta,
 QWidget#adminPreguntasView QFrame#bloqueContextoPregunta,
 QWidget#adminPreguntasView QFrame#panelOpcionesPregunta {
-    background-color: #f7fbf8;
-    border: 1px solid $border;
+    background-color: rgba(255, 255, 255, 250);
+    border: 1px solid rgba(220, 212, 201, 220);
     border-radius: ${radius_lg}px;
 }
 
@@ -35,10 +104,28 @@ QWidget#adminPreguntasView QFrame[compactCard="true"] QLabel[role="section"] {
     padding: 2px 0 6px 0;
 }
 
+QWidget#adminPreguntasView QLineEdit#adminSidebarSearch {
+    background-color: #d1cdc2;
+    color: #2f2a26;
+    border: 1px solid rgba(209, 205, 194, 0.96);
+    border-radius: 8px;
+}
+
+QWidget#adminPreguntasView QLineEdit#adminSidebarSearch:focus {
+    border: 1px solid rgba(209, 205, 194, 1);
+}
+
 QWidget#adminPreguntasView QListWidget {
     background-color: $bg_input;
     border: 1px solid $border_input;
     border-radius: ${radius_sm}px;
+}
+
+QWidget#adminPreguntasView QListWidget#adminSidebarList {
+    background-color: #d1cdc2;
+    color: #2f2a26;
+    border: 1px solid rgba(209, 205, 194, 0.96);
+    border-radius: 10px;
 }
 
 QWidget#adminPreguntasView QListWidget::item {
@@ -46,9 +133,24 @@ QWidget#adminPreguntasView QListWidget::item {
     padding: 10px 8px;
 }
 
+QWidget#adminPreguntasView QListWidget#adminSidebarList::item {
+    border-bottom: 1px solid rgba(180, 173, 160, 0.9);
+    padding: 10px 8px;
+}
+
 QWidget#adminPreguntasView QListWidget::item:hover {
     background-color: $bg_button_secondary_hover;
     color: $text_on_button;
+}
+
+QWidget#adminPreguntasView QListWidget#adminSidebarList::item:hover {
+    background-color: rgba(245, 240, 232, 0.96);
+    color: #171717;
+}
+
+QWidget#adminPreguntasView QListWidget#adminSidebarList::item:selected {
+    background-color: rgba(23, 23, 23, 0.9);
+    color: #f7f2ea;
 }
 
 QWidget#adminPreguntasView QWidget#estadoPregunta {

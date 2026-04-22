@@ -45,23 +45,26 @@ class LoginView(BaseWindow):
         shell.setObjectName("loginShell")
         shell_layout = QHBoxLayout(shell)
         shell_layout.setSpacing(18)
-        shell_layout.setContentsMargins(0, 0, 0, 0)
+        shell_layout.setContentsMargins(10, 10, 10, 10)
 
         visual = QFrame()
         visual.setObjectName("loginVisual")
         visual.setProperty("visualPanel", "true")
         visual_layout = QVBoxLayout(visual)
-        visual_layout.setSpacing(12)
-        visual_layout.setContentsMargins(24, 24, 24, 24)
+        visual_layout.setSpacing(14)
+        visual_layout.setContentsMargins(28, 28, 28, 28)
 
         logo = AssetImage("cdl-logo.svg", width=96, height=96)
         logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        visual_eyebrow = QLabel("Bienvenida")
+        visual_eyebrow.setProperty("role", "eyebrow")
 
         visual_titulo = QLabel("CDLform")
         visual_titulo.setProperty("role", "title")
 
         visual_subtitulo = QLabel(
-            "Gestiona formularios, auditorias y reportes desde un flujo mas claro."
+            "Gestiona formularios, auditorias y reportes desde un espacio mas claro y ordenado."
         )
         visual_subtitulo.setWordWrap(True)
         visual_subtitulo.setProperty("role", "subtitle")
@@ -69,23 +72,29 @@ class LoginView(BaseWindow):
         ilustracion = AssetImage("workflow-illustration.svg", width=280, height=190)
 
         visual_layout.addWidget(logo)
+        visual_layout.addWidget(visual_eyebrow)
         visual_layout.addWidget(visual_titulo)
         visual_layout.addWidget(visual_subtitulo)
         visual_layout.addStretch()
         visual_layout.addWidget(ilustracion)
 
         contenedor = CardFrame()
+        contenedor.setObjectName("loginCard")
         contenedor.setMaximumWidth(380)
 
         layout = QVBoxLayout(contenedor)
         layout.setSpacing(12)
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setContentsMargins(28, 28, 28, 28)
+
+        eyebrow = QLabel("Acceso")
+        eyebrow.setAlignment(Qt.AlignCenter)
+        eyebrow.setProperty("role", "eyebrow")
 
         titulo = QLabel("Ingreso Gestion")
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
-        subtitulo = QLabel("Accede al panel de Gestion.")
+        subtitulo = QLabel("Entra al tablero para revisar actividad, reportes y seguimiento.")
         subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
@@ -100,12 +109,13 @@ class LoginView(BaseWindow):
         self.btn_ingresar = QPushButton("Ingresar")
         self.btn_ingresar.clicked.connect(self.iniciar_sesion)
 
+        layout.addWidget(eyebrow)
         layout.addWidget(titulo)
         layout.addWidget(subtitulo)
-        layout.addSpacing(8)
+        layout.addSpacing(10)
         layout.addWidget(self.input_usuario)
         layout.addWidget(self.input_password)
-        layout.addSpacing(8)
+        layout.addSpacing(10)
         layout.addWidget(self.btn_ingresar)
 
         shell_layout.addWidget(visual, 1)
@@ -130,7 +140,7 @@ class LoginView(BaseWindow):
 
         try:
             if self.presenter.iniciar_sesion(usuario, password):
-                self.dashboard_gestion = DashboardGestionView()
+                self.dashboard_gestion = DashboardGestionView(usuario=usuario)
                 self.dashboard_gestion.show()
                 self.close()
                 return

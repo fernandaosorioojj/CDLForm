@@ -1,20 +1,58 @@
 QWidget#loginView {
-    background-color: $bg_app;
-}
-
-QWidget#loginView QFrame[card="true"] {
-    min-width: 360px;
+    background-color: transparent;
 }
 
 QWidget#loginView QFrame#loginShell {
-    background-color: transparent;
-    border: none;
+    background-color: rgba(255, 255, 255, 110);
+    border: 1px solid rgba(227, 221, 210, 220);
+    border-radius: 18px;
 }
 
 QWidget#loginView QFrame#loginVisual {
     min-width: 300px;
+    background-color: rgba(255, 255, 255, 208);
+    border: 1px solid rgba(219, 212, 199, 228);
+    border-radius: 18px;
+}
+
+QWidget#loginView QFrame#loginCard {
+    min-width: 360px;
+    background-color: rgba(255, 255, 255, 246);
+    border: 1px solid rgba(219, 212, 199, 236);
+    border-radius: 18px;
+}
+
+QWidget#loginView QLabel[role="eyebrow"] {
+    color: #7d7097;
+}
+
+QWidget#loginView QFrame#loginVisual QLabel[role="title"] {
+    font-size: 34px;
+    color: #2a4b61;
+}
+
+QWidget#loginView QFrame#loginVisual QLabel[role="subtitle"] {
+    color: #617381;
+    font-size: 15px;
+}
+
+QWidget#loginView QFrame#loginCard QLabel[role="title"] {
+    color: #2d4d63;
+    font-size: 26px;
+}
+
+QWidget#loginView QFrame#loginCard QLabel[role="subtitle"] {
+    color: #677887;
 }
 
 QWidget#loginView QLineEdit {
-    min-height: 20px;
+    min-height: 22px;
+}
+
+QWidget#loginView QPushButton {
+    min-height: 22px;
+}
+
+QWidget#loginView QPushButton:hover {
+    background-color: #c8c8c8;
 }

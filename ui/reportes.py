@@ -52,26 +52,42 @@ class ReportesView(QWidget):
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(24, 24, 24, 24)
-        layout_principal.setSpacing(16)
+        layout_principal.setSpacing(18)
+
+        top_panel = QFrame()
+        top_panel.setObjectName("reportesTopPanel")
+        top_layout = QVBoxLayout(top_panel)
+        top_layout.setContentsMargins(18, 18, 18, 18)
+        top_layout.setSpacing(14)
+
+        header_panel = QFrame()
+        header_panel.setObjectName("reportesHeader")
+        header_layout = QVBoxLayout(header_panel)
+        header_layout.setContentsMargins(22, 20, 22, 20)
+        header_layout.setSpacing(6)
+
+        eyebrow = QLabel("Gestion")
+        eyebrow.setProperty("role", "eyebrow")
 
         titulo = QLabel(self.title_text)
-        titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
         subtitulo = QLabel(self.subtitle_text)
-        subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
 
-        layout_principal.addWidget(titulo)
-        layout_principal.addWidget(subtitulo)
+        header_layout.addWidget(eyebrow)
+        header_layout.addWidget(titulo)
+        header_layout.addWidget(subtitulo)
+        top_layout.addWidget(header_panel)
 
         panel_filtros = QFrame()
+        panel_filtros.setObjectName("reportesFiltros")
         panel_filtros.setProperty("card", "true")
 
         layout_filtros = QHBoxLayout(panel_filtros)
-        layout_filtros.setContentsMargins(14, 12, 14, 12)
-        layout_filtros.setSpacing(10)
+        layout_filtros.setContentsMargins(18, 16, 18, 16)
+        layout_filtros.setSpacing(14)
 
         filtros_fila_1 = QHBoxLayout()
         filtros_fila_1.setSpacing(10)
@@ -138,14 +154,16 @@ class ReportesView(QWidget):
         botones.addWidget(self.btn_limpiar)
 
         layout_filtros.addLayout(botones)
-        layout_principal.addWidget(panel_filtros)
+        top_layout.addWidget(panel_filtros)
+        layout_principal.addWidget(top_panel)
 
         panel_tabla = QFrame()
+        panel_tabla.setObjectName("reportesTablaPanel")
         panel_tabla.setProperty("card", "true")
 
         layout_tabla = QVBoxLayout(panel_tabla)
-        layout_tabla.setContentsMargins(18, 18, 18, 18)
-        layout_tabla.setSpacing(12)
+        layout_tabla.setContentsMargins(20, 20, 20, 20)
+        layout_tabla.setSpacing(14)
 
         label_resultados = QLabel("Resultados")
         label_resultados.setProperty("role", "section")

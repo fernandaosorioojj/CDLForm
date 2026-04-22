@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from PyQt5.QtCore import QObject, QTimer
 
 from launcher.app_launcher import AppLauncher
 from services.workflows.disparador_service import DisparadorService
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PendingFormCoordinator(QObject):
@@ -56,7 +59,16 @@ class PendingFormCoordinator(QObject):
         self._revisando = True
 
         try:
-            resultado = self.disparador_service.preparar_siguiente_formulario_pendiente()
+            try:
+                resultado = self.disparador_service.preparar_siguiente_formulario_pendiente()
+            except Exception as exc:
+                LOGGER.exception("No fue posible revisar formularios pendientes.")
+                resultado = {
+                    "se_preparo": False,
+                    "motivo": "error_revision",
+                    "formulario": None,
+                    "error": str(exc),
+                }
             self.ultimo_resultado = resultado
 
             formulario = resultado.get("formulario")

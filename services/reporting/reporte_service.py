@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any
 
 from models.formulario import Formulario
@@ -35,6 +36,107 @@ class ReporteService:
 
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_service.listar_formularios()
+
+    def obtener_serie_acciones_correctivas_ultimos_7_dias(self) -> list[dict[str, Any]]:
+        hoy = datetime.now().date()
+        inicio = hoy - timedelta(days=6)
+        conteos = {
+            inicio + timedelta(days=offset): 0
+            for offset in range(7)
+        }
+
+        for accion in self.listar_acciones_correctivas():
+            fecha = self._resolver_fecha_dashboard(
+                accion.get("fecha_formulario"),
+            )
+            if fecha is None:
+                continue
+
+            fecha_dia = fecha.date()
+            if fecha_dia in conteos:
+                conteos[fecha_dia] += 1
+
+        return [
+            {
+                "label": fecha.strftime("%d/%m"),
+                "value": conteos[fecha],
+            }
+            for fecha in sorted(conteos.keys())
+        ]
+
+    def obtener_serie_formularios_hoy_por_estado(self) -> list[dict[str, Any]]:
+        hoy = datetime.now().date()
+        formularios_hoy: list[Formulario] = []
+
+        for formulario in self.listar_formularios():
+            fecha = self._resolver_fecha_dashboard(
+                formulario.fecha_formulario,
+                formulario.fecha_actualizacion,
+                formulario.fecha_creacion,
+            )
+            if fecha and fecha.date() == hoy:
+                formularios_hoy.append(formulario)
+
+        orden_estados = [
+            "pendiente_operario",
+            "en_apertura",
+            "en_progreso",
+            "completado",
+            "cancelado",
+        ]
+        conteos = {estado: 0 for estado in orden_estados}
+        extras: dict[str, int] = {}
+
+        for formulario in formularios_hoy:
+            estado = str(formulario.estado or "").strip().lower()
+            if not estado:
+                continue
+            if estado in conteos:
+                conteos[estado] += 1
+            else:
+                extras[estado] = extras.get(estado, 0) + 1
+
+        etiquetas = {
+            "pendiente_operario": "Pendiente",
+            "en_apertura": "Apertura",
+            "en_progreso": "En progreso",
+            "completado": "Completado",
+            "cancelado": "Cancelado",
+        }
+
+        serie = [
+            {
+                "label": etiquetas.get(estado, estado.title()),
+                "value": valor,
+            }
+            for estado, valor in conteos.items()
+        ]
+        serie.extend(
+            {
+                "label": estado.title(),
+                "value": valor,
+            }
+            for estado, valor in sorted(extras.items())
+        )
+        return serie
+
+    def obtener_metricas_dashboard(self) -> dict[str, Any]:
+        acciones_semana = self.obtener_serie_acciones_correctivas_ultimos_7_dias()
+        formularios_hoy = self.obtener_serie_formularios_hoy_por_estado()
+
+        return {
+            "acciones_semana": acciones_semana,
+            "formularios_hoy": formularios_hoy,
+            "kpis": {
+                "acciones_total": sum(item["value"] for item in acciones_semana),
+                "formularios_hoy_total": sum(item["value"] for item in formularios_hoy),
+                "formularios_hoy_completados": sum(
+                    item["value"]
+                    for item in formularios_hoy
+                    if str(item.get("label")) == "Completado"
+                ),
+            },
+        }
 
     def listar_formularios_completados(self) -> list[Formulario]:
         return self.formulario_service.listar_formularios_por_estado("completado")
@@ -378,3 +480,43 @@ class ReporteService:
             return max(fechas_respuestas)
 
         return formulario.fecha_actualizacion or formulario.fecha_creacion or ""
+
+    @staticmethod
+    def _resolver_fecha_dashboard(*valores: Any) -> datetime | None:
+        for valor in valores:
+            fecha = ReporteService._coerce_datetime(valor)
+            if fecha is not None:
+                return fecha
+        return None
+
+    @staticmethod
+    def _coerce_datetime(valor: Any) -> datetime | None:
+        texto = str(valor or "").strip()
+        if not texto:
+            return None
+
+        candidatos = [
+            texto,
+            texto.replace("Z", "+00:00"),
+            texto.replace(" ", "T"),
+        ]
+        for candidato in candidatos:
+            try:
+                return datetime.fromisoformat(candidato)
+            except ValueError:
+                continue
+
+        formatos = (
+            "%Y-%m-%d",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%dT%H:%M",
+        )
+        for formato in formatos:
+            try:
+                return datetime.strptime(texto, formato)
+            except ValueError:
+                continue
+
+        return None

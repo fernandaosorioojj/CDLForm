@@ -1,15 +1,82 @@
 QWidget#accionesCorrectivasView {
-    background-color: $bg_app;
+    background-color: #D1CDC2;
+}
+
+QWidget#accionesCorrectivasView QFrame#accionesTopPanel {
+    background-color: #171717;
+    border: 1px solid rgba(34, 34, 34, 220);
+    border-radius: 18px;
+}
+
+QWidget#accionesCorrectivasView QFrame#accionesHeader {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#accionesCorrectivasView QFrame#accionesHeader QLabel[role="title"] {
+    color: #f7f2ea;
+    font-size: 30px;
+}
+
+QWidget#accionesCorrectivasView QFrame#accionesHeader QLabel[role="subtitle"] {
+    color: rgba(247, 242, 234, 0.72);
+    font-size: 15px;
+}
+
+QWidget#accionesCorrectivasView QFrame#accionesHeader QLabel[role="eyebrow"] {
+    color: rgba(247, 242, 234, 0.56);
 }
 
 QWidget#accionesCorrectivasView QFrame[card="true"] {
     padding: 12px;
+    background-color: rgba(255, 255, 255, 244);
+    border: 1px solid rgba(220, 212, 201, 232);
+    border-radius: 18px;
 }
 
 QWidget#accionesCorrectivasView QLabel[role="title"] {
-    color: $text_heading;
+    color: #2c4c62;
+}
+
+QWidget#accionesCorrectivasView QLabel[role="subtitle"] {
+    color: #677887;
+}
+
+QWidget#accionesCorrectivasView QPushButton {
+    background-color: #171717;
+    color: #f7f2ea;
+    border: 1px solid #171717;
+}
+
+QWidget#accionesCorrectivasView QPushButton:hover {
+    background-color: #2a2a2a;
+    border: 1px solid #2a2a2a;
+}
+
+QWidget#accionesCorrectivasView QPushButton[variant="secondary"] {
+    background-color: #efebe4;
+    color: #495d70;
+    border: 1px solid rgba(215, 205, 192, 0.95);
+}
+
+QWidget#accionesCorrectivasView QPushButton[variant="secondary"]:hover {
+    background-color: #f5f1eb;
+    border: 1px solid rgba(215, 205, 192, 1);
 }
 
 QWidget#accionesCorrectivasView QTableWidget::item {
     min-height: 28px;
+}
+
+QWidget#accionesCorrectivasView QTableWidget {
+    background-color: rgba(255, 255, 255, 252);
+    border: 1px solid rgba(220, 212, 201, 220);
+    border-radius: 14px;
+}
+
+QWidget#accionesCorrectivasView QHeaderView::section {
+    background-color: #f2ede4;
+    color: #465b70;
+    border-bottom: 1px solid rgba(214, 206, 193, 0.95);
+    padding: 10px 8px;
 }

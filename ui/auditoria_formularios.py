@@ -48,19 +48,34 @@ class AuditoriaFormulariosView(QWidget):
         layout_principal.setContentsMargins(24, 24, 24, 24)
         layout_principal.setSpacing(16)
 
+        top_panel = QFrame()
+        top_panel.setObjectName("auditoriaTopPanel")
+        top_layout = QVBoxLayout(top_panel)
+        top_layout.setContentsMargins(18, 18, 18, 18)
+        top_layout.setSpacing(14)
+
+        header_panel = QFrame()
+        header_panel.setObjectName("auditoriaHeader")
+        header_layout = QVBoxLayout(header_panel)
+        header_layout.setContentsMargins(22, 20, 22, 20)
+        header_layout.setSpacing(6)
+
+        eyebrow = QLabel("Gestion")
+        eyebrow.setProperty("role", "eyebrow")
+
         titulo = QLabel("Auditoria de Plantillas")
-        titulo.setAlignment(Qt.AlignCenter)
         titulo.setProperty("role", "title")
 
         subtitulo = QLabel(
             "Consulta todas las versiones de conjuntos de preguntas por recurso y setor."
         )
-        subtitulo.setAlignment(Qt.AlignCenter)
         subtitulo.setWordWrap(True)
         subtitulo.setProperty("role", "subtitle")
 
-        layout_principal.addWidget(titulo)
-        layout_principal.addWidget(subtitulo)
+        header_layout.addWidget(eyebrow)
+        header_layout.addWidget(titulo)
+        header_layout.addWidget(subtitulo)
+        top_layout.addWidget(header_panel)
 
         panel_filtros = QFrame()
         panel_filtros.setProperty("card", "true")
@@ -96,7 +111,8 @@ class AuditoriaFormulariosView(QWidget):
         fila_filtros.addWidget(self.btn_recargar)
 
         layout_filtros.addLayout(fila_filtros)
-        layout_principal.addWidget(panel_filtros)
+        top_layout.addWidget(panel_filtros)
+        layout_principal.addWidget(top_panel)
 
         panel_tabla = QFrame()
         panel_tabla.setProperty("card", "true")
