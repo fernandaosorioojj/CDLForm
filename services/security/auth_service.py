@@ -8,14 +8,21 @@ import secrets
 from pathlib import Path
 
 from config.settings import SETTINGS
+from repositories.usuario_gestion_repository import UsuarioGestionRepository
 
 
 HASH_ALGORITHM = "pbkdf2_sha256"
 HASH_ITERATIONS = 260000
+ROL_ADMIN = "admin"
+ROL_GESTION = "gestion"
 
 
 class AuthService:
-    def __init__(self, config_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        config_path: Path | None = None,
+        usuario_gestion_repository: UsuarioGestionRepository | None = None,
+    ) -> None:
         self.config_path = config_path or self._resolver_config_path(
             SETTINGS.paths.gestion_login_file,
             SETTINGS.paths.bundled_config_dir / "gestion_login.json",
@@ -23,6 +30,9 @@ class AuthService:
         self.legacy_config_path = self._resolver_config_path(
             SETTINGS.paths.admin_login_file,
             SETTINGS.paths.bundled_config_dir / "admin_login.json",
+        )
+        self.usuario_gestion_repository = (
+            usuario_gestion_repository or UsuarioGestionRepository()
         )
 
     @staticmethod
@@ -36,6 +46,13 @@ class AuthService:
         if valor is None:
             return ""
         return str(valor).strip()
+
+    @classmethod
+    def normalizar_rol(cls, valor: object) -> str:
+        rol = cls._normalizar_texto(valor).lower()
+        if rol in {ROL_ADMIN, ROL_GESTION}:
+            return rol
+        return ROL_GESTION
 
     @staticmethod
     def generar_password_hash(password: str) -> str:
@@ -91,6 +108,7 @@ class AuthService:
             return {
                 "usuario": usuario,
                 "password_hash": password_hash,
+                "rol": ROL_ADMIN,
             }
 
         return None
@@ -110,11 +128,13 @@ class AuthService:
 
         usuario = self._normalizar_texto(data.get("usuario"))
         password_hash = self._normalizar_texto(data.get("password_hash"))
+        rol = self.normalizar_rol(data.get("rol") or ROL_ADMIN)
 
         if usuario and password_hash:
             return {
                 "usuario": usuario,
                 "password_hash": password_hash,
+                "rol": rol,
             }
 
         raise ValueError(
@@ -145,26 +165,72 @@ class AuthService:
             f"{self.config_path}."
         )
 
+    def obtener_credenciales_gestion_sql(
+        self,
+        usuario: str,
+    ) -> dict[str, str] | None:
+        try:
+            return self.usuario_gestion_repository.obtener_usuario_activo(usuario)
+        except Exception:
+            return None
+
     def obtener_credenciales_admin(self) -> dict[str, str]:
         return self.obtener_credenciales_gestion()
 
-    def validar_login(self, usuario: str, password: str) -> bool:
+    def autenticar_usuario(self, usuario: str, password: str) -> dict[str, str] | None:
         usuario_ingresado = self._normalizar_texto(usuario)
         password_ingresado = self._normalizar_texto(password)
 
         if not usuario_ingresado or not password_ingresado:
-            return False
+            return None
 
-        credenciales = self.obtener_credenciales_gestion()
+        origen_sql = True
+        credenciales = self.obtener_credenciales_gestion_sql(usuario_ingresado)
+        if not credenciales:
+            origen_sql = False
+            credenciales = self.obtener_credenciales_gestion()
+
         usuario_configurado = self._normalizar_texto(credenciales.get("usuario"))
         password_hash_configurado = self._normalizar_texto(
             credenciales.get("password_hash")
         )
+        rol = self.normalizar_rol(credenciales.get("rol"))
 
-        return (
+        if (
             usuario_ingresado == usuario_configurado
             and self._validar_password_hash(
                 password_ingresado,
                 password_hash_configurado,
             )
-        )
+        ):
+            if not origen_sql:
+                self._sincronizar_credenciales_fallback_a_sql(
+                    usuario=usuario_configurado,
+                    password_hash=password_hash_configurado,
+                    rol=rol,
+                )
+            return {
+                "usuario": usuario_configurado,
+                "rol": rol,
+            }
+
+        return None
+
+    def _sincronizar_credenciales_fallback_a_sql(
+        self,
+        usuario: str,
+        password_hash: str,
+        rol: str,
+    ) -> None:
+        try:
+            self.usuario_gestion_repository.guardar_usuario(
+                usuario=usuario,
+                password_hash=password_hash,
+                rol=self.normalizar_rol(rol or ROL_ADMIN),
+                activo=True,
+            )
+        except Exception:
+            return
+
+    def validar_login(self, usuario: str, password: str) -> bool:
+        return self.autenticar_usuario(usuario, password) is not None

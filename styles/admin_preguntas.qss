@@ -57,6 +57,33 @@ QWidget#adminPreguntasView QLabel#adminSidebarLabel {
     color: #d1cdc2;
 }
 
+QWidget#adminPreguntasView QLabel#adminPasoFlujo {
+    background-color: #efebe4;
+    border: 1px solid rgba(215, 205, 192, 0.95);
+    border-radius: 8px;
+    color: #495d70;
+    font-weight: 700;
+    padding: 8px 10px;
+}
+
+QWidget#adminPreguntasView QLabel#adminPasoFlujo[estado="actual"] {
+    background-color: #171717;
+    border-color: #171717;
+    color: #f7f2ea;
+}
+
+QWidget#adminPreguntasView QLabel#adminResumenConfirmacion {
+    background-color: #f7f2ea;
+    border: 1px solid rgba(220, 212, 201, 220);
+    border-radius: 8px;
+    color: #2f2a26;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.45;
+    min-height: 380px;
+    padding: 24px 28px;
+}
+
 QWidget#adminPreguntasView QPushButton {
     background-color: #171717;
     color: #f7f2ea;

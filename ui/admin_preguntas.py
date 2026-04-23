@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QFrame,
     QScrollArea,
     QSizePolicy,
+    QStackedWidget,
 )
 
 from presenters.admin_preguntas_presenter import AdminPreguntasPresenter
@@ -37,6 +38,8 @@ class AdminPreguntasView(QWidget):
         self.pregunta_service = PreguntaService()
         self.presenter = AdminPreguntasPresenter(self.pregunta_service)
         self.id_pregunta_en_edicion: str | None = None
+        self.paso_actual = 0
+        self.etiquetas_pasos: list[QLabel] = []
 
         self.setWindowTitle("Administración de Preguntas")
         self.setObjectName("adminPreguntasView")
@@ -140,6 +143,16 @@ class AdminPreguntasView(QWidget):
         titulo_form.setProperty("role", "section")
         layout_derecho_externo.addWidget(titulo_form)
 
+        pasos_layout = QHBoxLayout()
+        pasos_layout.setSpacing(8)
+        for texto_paso in ("1. Datos", "2. Contexto", "3. Opciones", "4. Resumen"):
+            etiqueta_paso = QLabel(texto_paso)
+            etiqueta_paso.setObjectName("adminPasoFlujo")
+            etiqueta_paso.setAlignment(Qt.AlignCenter)
+            self.etiquetas_pasos.append(etiqueta_paso)
+            pasos_layout.addWidget(etiqueta_paso)
+        layout_derecho_externo.addLayout(pasos_layout)
+
         self.scroll_form = QScrollArea()
         self.scroll_form.setWidgetResizable(True)
         self.scroll_form.setFrameShape(QFrame.NoFrame)
@@ -150,6 +163,8 @@ class AdminPreguntasView(QWidget):
         form_wrapper = QVBoxLayout(self.form_container)
         form_wrapper.setContentsMargins(6, 6, 6, 6)
         form_wrapper.setSpacing(18)
+
+        self.stack_fases = QStackedWidget()
 
         bloque_basico = QFrame()
         bloque_basico.setProperty("card", "true")
@@ -291,15 +306,52 @@ class AdminPreguntasView(QWidget):
         layout_opciones.addWidget(self.lista_opciones)
         layout_opciones.addLayout(fila_botones_opciones)
 
-        form_wrapper.addWidget(bloque_basico)
-        form_wrapper.addWidget(bloque_contexto)
-        form_wrapper.addWidget(self.panel_opciones)
+        self.label_sin_opciones = QLabel("")
+        self.label_sin_opciones.setWordWrap(True)
+        self.label_sin_opciones.setProperty("role", "subtitle")
+
+        self.label_resumen_confirmacion = QLabel("")
+        self.label_resumen_confirmacion.setWordWrap(True)
+        self.label_resumen_confirmacion.setObjectName("adminResumenConfirmacion")
+        self.label_resumen_confirmacion.setAlignment(Qt.AlignJustify | Qt.AlignTop)
+
+        fase_datos = self._crear_fase_flujo(bloque_basico)
+        fase_contexto = self._crear_fase_flujo(bloque_contexto)
+        fase_opciones = QWidget()
+        fase_opciones_layout = QVBoxLayout(fase_opciones)
+        fase_opciones_layout.setContentsMargins(0, 0, 0, 0)
+        fase_opciones_layout.setSpacing(12)
+        fase_opciones_layout.addWidget(self.panel_opciones)
+        fase_opciones_layout.addWidget(self.label_sin_opciones)
+        fase_opciones_layout.addStretch()
+
+        fase_resumen = QWidget()
+        fase_resumen_layout = QVBoxLayout(fase_resumen)
+        fase_resumen_layout.setContentsMargins(0, 0, 0, 0)
+        fase_resumen_layout.setSpacing(12)
+        fase_resumen_layout.addWidget(self.label_resumen_confirmacion)
+        fase_resumen_layout.addStretch()
+
+        self.stack_fases.addWidget(fase_datos)
+        self.stack_fases.addWidget(fase_contexto)
+        self.stack_fases.addWidget(fase_opciones)
+        self.stack_fases.addWidget(fase_resumen)
+
+        form_wrapper.addWidget(self.stack_fases)
         form_wrapper.addStretch()
 
         layout_derecho_externo.addWidget(self.scroll_form, 1)
 
         botones_layout = QHBoxLayout()
         botones_layout.setSpacing(10)
+
+        self.btn_atras = QPushButton("Back")
+        self.btn_atras.setProperty("variant", "secondary")
+        self.btn_atras.clicked.connect(self.paso_anterior)
+
+        self.btn_siguiente = QPushButton("Siguiente")
+        self.btn_siguiente.setProperty("variant", "secondary")
+        self.btn_siguiente.clicked.connect(self.paso_siguiente)
 
         self.btn_guardar = QPushButton("Guardar")
         self.btn_guardar.setProperty("variant", "success")
@@ -313,10 +365,12 @@ class AdminPreguntasView(QWidget):
         self.btn_eliminar.setProperty("variant", "danger")
         self.btn_eliminar.clicked.connect(self.eliminar_pregunta)
 
+        botones_layout.addWidget(self.btn_atras)
+        botones_layout.addWidget(self.btn_siguiente)
         botones_layout.addStretch()
-        botones_layout.addWidget(self.btn_guardar)
         botones_layout.addWidget(self.btn_nuevo)
         botones_layout.addWidget(self.btn_eliminar)
+        botones_layout.addWidget(self.btn_guardar)
 
         layout_derecho_externo.addLayout(botones_layout)
 
@@ -325,6 +379,16 @@ class AdminPreguntasView(QWidget):
         layout_raiz.addLayout(layout_principal, 1)
 
         self._actualizar_estado_opciones()
+        self._ir_a_paso(0)
+
+    def _crear_fase_flujo(self, contenido: QWidget) -> QWidget:
+        fase = QWidget()
+        layout = QVBoxLayout(fase)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+        layout.addWidget(contenido)
+        layout.addStretch()
+        return fase
 
     def _crear_lista_multiseleccion(self, valores: list[str]) -> QListWidget:
         lista = QListWidget()
@@ -398,18 +462,15 @@ class AdminPreguntasView(QWidget):
 
         self._cargar_opciones_en_lista(pregunta.get("opciones_respuesta", []))
         self._actualizar_estado_opciones()
+        self._ir_a_paso(0)
 
     def guardar_pregunta(self) -> None:
+        if self.paso_actual < self.stack_fases.count() - 1:
+            self.paso_siguiente()
+            return
+
         try:
-            payload = self.presenter.construir_payload_pregunta(
-                texto=self.input_texto.text().strip(),
-                tipo=self.combo_tipo.currentText().strip(),
-                obligatoria=self.check_obligatoria.isChecked(),
-                activa=self.check_activa.isChecked(),
-                orden=self.spin_orden.value(),
-                filtros_contexto=self._construir_filtros_contexto(),
-                opciones_respuesta=self._construir_opciones_respuesta(),
-            )
+            payload = self._construir_payload_desde_formulario()
             mensaje = self.presenter.guardar_pregunta(
                 self.id_pregunta_en_edicion,
                 payload,
@@ -462,6 +523,80 @@ class AdminPreguntasView(QWidget):
         self.input_opcion_accion.clear()
         self.lista_opciones.clear()
         self._actualizar_estado_opciones()
+        self._ir_a_paso(0)
+
+    def paso_anterior(self) -> None:
+        self._ir_a_paso(self.paso_actual - 1)
+
+    def paso_siguiente(self) -> None:
+        if not self._validar_paso_actual():
+            return
+        self._ir_a_paso(self.paso_actual + 1)
+
+    def _ir_a_paso(self, indice: int) -> None:
+        if not hasattr(self, "stack_fases"):
+            return
+
+        indice_limitado = max(0, min(indice, self.stack_fases.count() - 1))
+        self.paso_actual = indice_limitado
+        self.stack_fases.setCurrentIndex(indice_limitado)
+        self._actualizar_resumen_confirmacion()
+        self._actualizar_navegacion_fases()
+
+    def _validar_paso_actual(self) -> bool:
+        try:
+            if self.paso_actual == 0 and not self.input_texto.text().strip():
+                raise ValueError("El texto de la pregunta es obligatorio.")
+
+            if self.paso_actual == 2:
+                self._construir_payload_desde_formulario()
+        except Exception as exc:
+            QMessageBox.warning(self, "AtenciÃ³n", str(exc))
+            return False
+
+        return True
+
+    def _actualizar_navegacion_fases(self) -> None:
+        total_pasos = self.stack_fases.count()
+        es_ultimo_paso = self.paso_actual == total_pasos - 1
+
+        self.btn_atras.setEnabled(self.paso_actual > 0)
+        self.btn_siguiente.setVisible(not es_ultimo_paso)
+        self.btn_guardar.setVisible(es_ultimo_paso)
+        self.btn_eliminar.setVisible(es_ultimo_paso)
+        self.btn_eliminar.setEnabled(bool(self.id_pregunta_en_edicion))
+
+        for indice, etiqueta in enumerate(self.etiquetas_pasos):
+            etiqueta.setProperty("estado", "actual" if indice == self.paso_actual else "")
+            etiqueta.style().unpolish(etiqueta)
+            etiqueta.style().polish(etiqueta)
+
+    def _actualizar_resumen_confirmacion(self) -> None:
+        if not hasattr(self, "label_resumen_confirmacion"):
+            return
+
+        filtros = self._construir_filtros_contexto()
+        resumen_filtros = self._resumen_filtros_contexto(filtros) or "Sin filtros"
+        tipo = self.combo_tipo.currentText().strip()
+        cantidad_opciones = len(self._obtener_opciones_actuales())
+        estado = "Activa" if self.check_activa.isChecked() else "Inactiva"
+        obligatoria = "Obligatoria" if self.check_obligatoria.isChecked() else "Opcional"
+
+        self.label_resumen_confirmacion.setText(
+            "<h2>Resumen antes de guardar</h2>"
+            "<p><b>Texto</b><br>"
+            f"{self.input_texto.text().strip() or '-'}</p>"
+            "<p><b>Tipo</b><br>"
+            f"{tipo}</p>"
+            "<p><b>Orden</b><br>"
+            f"{self.spin_orden.value()}</p>"
+            "<p><b>Estado</b><br>"
+            f"{estado} | {obligatoria}</p>"
+            "<p><b>Contexto</b><br>"
+            f"{resumen_filtros}</p>"
+            "<p><b>Opciones configuradas</b><br>"
+            f"{cantidad_opciones}</p>"
+        )
 
     def agregar_opcion(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
@@ -488,6 +623,7 @@ class AdminPreguntasView(QWidget):
         self.input_opcion_valor.clear()
         self.input_opcion_accion.clear()
         self.input_opcion_valor.setFocus()
+        self._actualizar_resumen_confirmacion()
 
     def eliminar_opcion_seleccionada(self) -> None:
         item = self.lista_opciones.currentItem()
@@ -496,11 +632,13 @@ class AdminPreguntasView(QWidget):
             return
 
         self.lista_opciones.takeItem(self.lista_opciones.row(item))
+        self._actualizar_resumen_confirmacion()
 
     def limpiar_opciones(self) -> None:
         self.lista_opciones.clear()
         self.input_opcion_valor.clear()
         self.input_opcion_accion.clear()
+        self._actualizar_resumen_confirmacion()
 
     def _actualizar_estado_opciones(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
@@ -510,6 +648,9 @@ class AdminPreguntasView(QWidget):
 
         if not requiere_opciones:
             self.label_info_opciones.setText(self.presenter.mensaje_opciones(tipo))
+            if hasattr(self, "label_sin_opciones"):
+                self.label_sin_opciones.setText(self.presenter.mensaje_opciones(tipo))
+                self.label_sin_opciones.setVisible(True)
             self.input_opcion_valor.clear()
             self.input_opcion_accion.clear()
             self.lista_opciones.clear()
@@ -518,15 +659,31 @@ class AdminPreguntasView(QWidget):
             self.btn_agregar_opcion.setEnabled(False)
             self.btn_eliminar_opcion.setEnabled(False)
             self.btn_limpiar_opciones.setEnabled(False)
+            self._actualizar_resumen_confirmacion()
             return
 
         self.label_info_opciones.setText(self.presenter.mensaje_opciones(tipo))
+        if hasattr(self, "label_sin_opciones"):
+            self.label_sin_opciones.clear()
+            self.label_sin_opciones.setVisible(False)
 
         self.input_opcion_valor.setEnabled(True)
         self.input_opcion_accion.setEnabled(True)
         self.btn_agregar_opcion.setEnabled(True)
         self.btn_eliminar_opcion.setEnabled(True)
         self.btn_limpiar_opciones.setEnabled(True)
+        self._actualizar_resumen_confirmacion()
+
+    def _construir_payload_desde_formulario(self) -> dict:
+        return self.presenter.construir_payload_pregunta(
+            texto=self.input_texto.text().strip(),
+            tipo=self.combo_tipo.currentText().strip(),
+            obligatoria=self.check_obligatoria.isChecked(),
+            activa=self.check_activa.isChecked(),
+            orden=self.spin_orden.value(),
+            filtros_contexto=self._construir_filtros_contexto(),
+            opciones_respuesta=self._construir_opciones_respuesta(),
+        )
 
     def _construir_filtros_contexto(self) -> dict[str, list[str]]:
         cod_setor = self._obtener_valores_seleccionados(self.lista_cod_setor)

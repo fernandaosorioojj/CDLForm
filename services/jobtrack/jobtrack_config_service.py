@@ -18,18 +18,21 @@ class JobtrackConfigService:
             self.ini_path = Path(override).expanduser()
             return
 
-        ruta_local = SETTINGS.paths.jobtrack_config_file
-        if ruta_local.exists():
-            self.ini_path = ruta_local
-            return
-
-        self.ini_path = SETTINGS.paths.bundled_config_dir / "jobtrack.ini"
+        self.ini_path = self._resolver_ini_path()
 
     @staticmethod
     def _normalizar_texto(valor: object) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
+
+    @staticmethod
+    def _resolver_ini_path() -> Path:
+        ruta_datos = SETTINGS.paths.jobtrack_config_file
+        if ruta_datos.exists():
+            return ruta_datos
+
+        return SETTINGS.paths.bundled_config_dir / "jobtrack.ini"
 
     def _load_parser(self) -> ConfigParser:
         if not self.ini_path.exists():

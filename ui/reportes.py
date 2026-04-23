@@ -24,6 +24,7 @@ from ui.detalle_formulario import DetalleFormularioView
 
 
 class ReportesView(QWidget):
+    registros_por_pagina = 100
     qss_files = ("base.qss", "reportes.qss")
     window_title = "Reportes"
     title_text = "Reportes de Formularios"
@@ -40,6 +41,7 @@ class ReportesView(QWidget):
 
         self.formularios: list[Formulario] = []
         self.formularios_filtrados: list[Formulario] = []
+        self.pagina_actual = 0
 
         self.setWindowTitle(self.window_title)
         self.setObjectName("reportesView")
@@ -174,10 +176,25 @@ class ReportesView(QWidget):
 
         layout_tabla.addWidget(self.tabla_reportes)
 
+        fila_paginacion = QHBoxLayout()
+        fila_paginacion.setSpacing(10)
+
         self.label_total = QLabel("Total formularios: 0")
-        self.label_total.setAlignment(Qt.AlignRight)
+        self.label_total.setAlignment(Qt.AlignLeft)
         self.label_total.setProperty("role", "subtitle")
-        layout_tabla.addWidget(self.label_total)
+
+        self.btn_anterior = QPushButton("Anterior")
+        self.btn_anterior.setProperty("variant", "secondary")
+        self.btn_anterior.clicked.connect(self.pagina_anterior)
+
+        self.btn_siguiente = QPushButton("Siguiente")
+        self.btn_siguiente.setProperty("variant", "secondary")
+        self.btn_siguiente.clicked.connect(self.pagina_siguiente)
+
+        fila_paginacion.addWidget(self.label_total, 1)
+        fila_paginacion.addWidget(self.btn_anterior)
+        fila_paginacion.addWidget(self.btn_siguiente)
+        layout_tabla.addLayout(fila_paginacion)
 
         layout_principal.addWidget(panel_tabla, 1)
 
@@ -209,12 +226,12 @@ class ReportesView(QWidget):
         self.tabla_reportes.doubleClicked.connect(self.abrir_detalle)
 
     def _conectar_filtros(self) -> None:
-        self.input_identificador.textChanged.connect(self.cargar_reporte)
-        self.input_operario.textChanged.connect(self.cargar_reporte)
-        self.combo_cod_setor.currentIndexChanged.connect(self.cargar_reporte)
-        self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_reporte)
-        self.combo_turno.currentIndexChanged.connect(self.cargar_reporte)
-        self.combo_estado_formulario.currentIndexChanged.connect(self.cargar_reporte)
+        self.input_identificador.textChanged.connect(self.cargar_reporte_desde_inicio)
+        self.input_operario.textChanged.connect(self.cargar_reporte_desde_inicio)
+        self.combo_cod_setor.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
+        self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
+        self.combo_turno.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
+        self.combo_estado_formulario.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
 
     def _cargar_combo_con_todos(
         self,
@@ -229,15 +246,18 @@ class ReportesView(QWidget):
             if valor_limpio:
                 combo.addItem(valor_limpio, valor_limpio)
 
+    def cargar_reporte_desde_inicio(self, *_args) -> None:
+        self.pagina_actual = 0
+        self.cargar_reporte()
+
     def cargar_reporte(self, *_args) -> None:
         try:
             self.formularios = self.reporte_service.listar_formularios()
             self.formularios_filtrados = self._filtrar_formularios(self.formularios)
             self._ordenar_formularios(self.formularios_filtrados)
-            self._cargar_tabla(self.formularios_filtrados)
-            self.label_total.setText(
-                f"Total formularios: {len(self.formularios_filtrados)}"
-            )
+            self.pagina_actual = min(self.pagina_actual, self._total_paginas() - 1)
+            self._cargar_tabla(self._obtener_formularios_pagina())
+            self._actualizar_paginacion()
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
@@ -250,7 +270,48 @@ class ReportesView(QWidget):
         self.combo_turno.setCurrentIndex(0)
         self.combo_estado_formulario.setCurrentIndex(0)
 
-        self.cargar_reporte()
+        self.cargar_reporte_desde_inicio()
+
+    def _obtener_formularios_pagina(self) -> list[Formulario]:
+        inicio = self.pagina_actual * self.registros_por_pagina
+        fin = inicio + self.registros_por_pagina
+        return self.formularios_filtrados[inicio:fin]
+
+    def _total_paginas(self) -> int:
+        total = len(self.formularios_filtrados)
+        if total == 0:
+            return 1
+        return (total - 1) // self.registros_por_pagina + 1
+
+    def _actualizar_paginacion(self) -> None:
+        total = len(self.formularios_filtrados)
+        if total == 0:
+            self.label_total.setText("Total formularios: 0")
+            self.btn_anterior.setEnabled(False)
+            self.btn_siguiente.setEnabled(False)
+            return
+
+        inicio = self.pagina_actual * self.registros_por_pagina + 1
+        fin = min(inicio + self.registros_por_pagina - 1, total)
+        self.label_total.setText(
+            f"Formularios {inicio}-{fin} de {total}"
+        )
+        self.btn_anterior.setEnabled(self.pagina_actual > 0)
+        self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
+
+    def pagina_anterior(self) -> None:
+        if self.pagina_actual <= 0:
+            return
+        self.pagina_actual -= 1
+        self._cargar_tabla(self._obtener_formularios_pagina())
+        self._actualizar_paginacion()
+
+    def pagina_siguiente(self) -> None:
+        if self.pagina_actual >= self._total_paginas() - 1:
+            return
+        self.pagina_actual += 1
+        self._cargar_tabla(self._obtener_formularios_pagina())
+        self._actualizar_paginacion()
 
     def _filtrar_formularios(
         self,

@@ -117,6 +117,15 @@ class FormularioOperarioPresenter:
 
         return self.formulario_service.obtener_siguiente_formulario_pendiente_operario()
 
+    def obtener_operario_inicial(
+        self,
+        formulario: Formulario | None,
+        operario: Any = "",
+    ) -> str:
+        return self.normalizar_texto(
+            operario or (formulario.operario if formulario else "")
+        )
+
     def preparar_formulario(
         self,
         formulario: Formulario | None,
@@ -131,10 +140,14 @@ class FormularioOperarioPresenter:
         if formulario_persistido:
             formulario = formulario_persistido
 
-        if operario_seleccionado:
+        operario_normalizado = self.normalizar_texto(operario_seleccionado)
+        if (
+            operario_normalizado
+            and operario_normalizado != self.normalizar_texto(formulario.operario)
+        ):
             formulario = self.formulario_service.asignar_operario(
                 formulario.id_formulario,
-                operario_seleccionado,
+                operario_normalizado,
             )
 
         if formulario.estado in {ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO}:

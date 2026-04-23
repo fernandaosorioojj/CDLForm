@@ -168,7 +168,13 @@ class ApontamentoQueryService:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
-            return self._rows_to_dicts(cursor, rows)
+            apontamentos = self._rows_to_dicts(cursor, rows)
+
+        return self._enriquecer_con_supervisores(
+            apontamentos,
+            clave_id="IdApontamento",
+            clave_destino="Supervisor",
+        )
 
     def listar_operadores_por_contexto(
         self,
@@ -338,6 +344,25 @@ class ApontamentoQueryService:
 
         return supervisores
 
+    def _enriquecer_con_supervisores(
+        self,
+        registros: list[dict[str, Any]],
+        clave_id: str,
+        clave_destino: str = "supervisor",
+    ) -> list[dict[str, Any]]:
+        ids = [registro.get(clave_id) for registro in registros]
+        supervisores = self.listar_supervisores_por_id_apontamentos(ids)
+        if not supervisores:
+            return registros
+
+        for registro in registros:
+            id_apontamento = str(registro.get(clave_id) or "").strip()
+            supervisor = supervisores.get(id_apontamento)
+            if supervisor:
+                registro[clave_destino] = supervisor
+
+        return registros
+
     def listar_eventos_op_pendientes(
         self,
         cod_recursos: Sequence[str] | None = None,
@@ -382,7 +407,13 @@ class ApontamentoQueryService:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
-            return self._rows_to_dicts(cursor, rows)
+            eventos = self._rows_to_dicts(cursor, rows)
+
+        return self._enriquecer_con_supervisores(
+            eventos,
+            clave_id="id_apontamento",
+            clave_destino="supervisor",
+        )
 
     def marcar_evento_op_pendiente_procesado(self, id_evento: Any) -> None:
         id_evento_normalizado = self._normalizar_id_evento(id_evento)

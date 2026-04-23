@@ -25,6 +25,7 @@ from ui.detalle_formulario import DetalleFormularioView
 
 
 class AccionesCorrectivasView(QWidget):
+    registros_por_pagina = 100
     qss_files = ("base.qss", "acciones_correctivas.qss")
 
     def __init__(
@@ -40,6 +41,7 @@ class AccionesCorrectivasView(QWidget):
         )
         self.acciones: list[dict[str, Any]] = []
         self.acciones_filtradas: list[dict[str, Any]] = []
+        self.pagina_actual = 0
         self.incluir_supervisores_sql = False
 
         self.setWindowTitle("Acciones Correctivas")
@@ -94,7 +96,7 @@ class AccionesCorrectivasView(QWidget):
         self.input_busqueda.setPlaceholderText(
             "Buscar OP, operario, pregunta o accion..."
         )
-        self.input_busqueda.textChanged.connect(self.cargar_acciones)
+        self.input_busqueda.textChanged.connect(self.cargar_acciones_desde_inicio)
 
         self.combo_cod_setor = QComboBox()
         self._cargar_combo_con_todos(
@@ -136,9 +138,9 @@ class AccionesCorrectivasView(QWidget):
         layout_filtros.addWidget(self.btn_supervisores)
         layout_filtros.addWidget(self.btn_recargar)
 
-        self.combo_cod_setor.currentIndexChanged.connect(self.cargar_acciones)
-        self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_acciones)
-        self.combo_estado.currentIndexChanged.connect(self.cargar_acciones)
+        self.combo_cod_setor.currentIndexChanged.connect(self.cargar_acciones_desde_inicio)
+        self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_acciones_desde_inicio)
+        self.combo_estado.currentIndexChanged.connect(self.cargar_acciones_desde_inicio)
 
         top_layout.addWidget(panel_filtros)
         layout_principal.addWidget(top_panel)
@@ -179,10 +181,25 @@ class AccionesCorrectivasView(QWidget):
 
         layout_tabla.addWidget(self.tabla_acciones)
 
+        fila_paginacion = QHBoxLayout()
+        fila_paginacion.setSpacing(10)
+
         self.label_total = QLabel("Total acciones correctivas: 0")
-        self.label_total.setAlignment(Qt.AlignRight)
+        self.label_total.setAlignment(Qt.AlignLeft)
         self.label_total.setProperty("role", "subtitle")
-        layout_tabla.addWidget(self.label_total)
+
+        self.btn_anterior = QPushButton("Anterior")
+        self.btn_anterior.setProperty("variant", "secondary")
+        self.btn_anterior.clicked.connect(self.pagina_anterior)
+
+        self.btn_siguiente = QPushButton("Siguiente")
+        self.btn_siguiente.setProperty("variant", "secondary")
+        self.btn_siguiente.clicked.connect(self.pagina_siguiente)
+
+        fila_paginacion.addWidget(self.label_total, 1)
+        fila_paginacion.addWidget(self.btn_anterior)
+        fila_paginacion.addWidget(self.btn_siguiente)
+        layout_tabla.addLayout(fila_paginacion)
 
         layout_principal.addWidget(panel_tabla, 1)
 
@@ -198,22 +215,66 @@ class AccionesCorrectivasView(QWidget):
             if valor_limpio:
                 combo.addItem(valor_limpio, valor_limpio)
 
+    def cargar_acciones_desde_inicio(self, *_args) -> None:
+        self.pagina_actual = 0
+        self.cargar_acciones()
+
     def cargar_acciones(self, *_args) -> None:
         try:
             self.acciones = self.reporte_service.listar_acciones_correctivas(
                 incluir_supervisor_sql=self.incluir_supervisores_sql,
             )
             self.acciones_filtradas = self._filtrar_acciones(self.acciones)
-            self._cargar_tabla(self.acciones_filtradas)
-            self.label_total.setText(
-                f"Total acciones correctivas: {len(self.acciones_filtradas)}"
-            )
+            self.pagina_actual = min(self.pagina_actual, self._total_paginas() - 1)
+            self._cargar_tabla(self._obtener_acciones_pagina())
+            self._actualizar_paginacion()
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
     def cargar_supervisores(self) -> None:
         self.incluir_supervisores_sql = True
-        self.cargar_acciones()
+        self.cargar_acciones_desde_inicio()
+
+    def _obtener_acciones_pagina(self) -> list[dict[str, Any]]:
+        inicio = self.pagina_actual * self.registros_por_pagina
+        fin = inicio + self.registros_por_pagina
+        return self.acciones_filtradas[inicio:fin]
+
+    def _total_paginas(self) -> int:
+        total = len(self.acciones_filtradas)
+        if total == 0:
+            return 1
+        return (total - 1) // self.registros_por_pagina + 1
+
+    def _actualizar_paginacion(self) -> None:
+        total = len(self.acciones_filtradas)
+        if total == 0:
+            self.label_total.setText("Total acciones correctivas: 0")
+            self.btn_anterior.setEnabled(False)
+            self.btn_siguiente.setEnabled(False)
+            return
+
+        inicio = self.pagina_actual * self.registros_por_pagina + 1
+        fin = min(inicio + self.registros_por_pagina - 1, total)
+        self.label_total.setText(
+            f"Acciones correctivas {inicio}-{fin} de {total}"
+        )
+        self.btn_anterior.setEnabled(self.pagina_actual > 0)
+        self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
+
+    def pagina_anterior(self) -> None:
+        if self.pagina_actual <= 0:
+            return
+        self.pagina_actual -= 1
+        self._cargar_tabla(self._obtener_acciones_pagina())
+        self._actualizar_paginacion()
+
+    def pagina_siguiente(self) -> None:
+        if self.pagina_actual >= self._total_paginas() - 1:
+            return
+        self.pagina_actual += 1
+        self._cargar_tabla(self._obtener_acciones_pagina())
+        self._actualizar_paginacion()
 
     def _filtrar_acciones(
         self,

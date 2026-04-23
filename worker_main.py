@@ -18,11 +18,6 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="ID o referencia del evento origen",
     )
-    parser.add_argument(
-        "--usar-fallback-consulta",
-        action="store_true",
-        help="Permite caer a consulta directa de apontamientos si falla la cola SQL.",
-    )
     return parser.parse_args()
 
 
@@ -37,7 +32,6 @@ def main() -> int:
             "maquina": args.maquina,
             "evento_origen": args.evento_origen,
         },
-        usar_fallback_consulta=args.usar_fallback_consulta,
     )
 
     sys.stdout.write(json.dumps(resultado, ensure_ascii=False, indent=2))

@@ -203,6 +203,11 @@ class ApontamentoProcesadoService:
             "hora_inicio": self._serializar_valor(apontamento.get("HoraInicio")),
             "hora_fim": self._serializar_valor(apontamento.get("HoraFim")),
             "operador": self._normalizar_texto(apontamento.get("Operador")),
+            "supervisor": self._normalizar_texto(
+                apontamento.get("Supervisor")
+                or apontamento.get("supervisor")
+                or apontamento.get("supervisor_apontamento")
+            ),
             "descripcion_op": self._normalizar_texto(apontamento.get("DescricaoOP")),
             "descripcion_proceso": self._normalizar_texto(
                 apontamento.get("DescricaoProcesso")
@@ -251,6 +256,9 @@ class ApontamentoProcesadoService:
             "CodRecurso": evento.get("cod_recurso"),
             "CodSetor": evento.get("cod_setor"),
             "Operador": evento.get("operador"),
+            "Supervisor": evento.get("supervisor")
+            or evento.get("Supervisor")
+            or evento.get("supervisor_apontamento"),
             "Turno": evento.get("turno"),
             "HoraInicio": evento.get("hora_inicio"),
             "HoraFim": evento.get("hora_fim"),

@@ -139,8 +139,12 @@ class LoginView(BaseWindow):
             return
 
         try:
-            if self.presenter.iniciar_sesion(usuario, password):
-                self.dashboard_gestion = DashboardGestionView(usuario=usuario)
+            sesion = self.presenter.autenticar_usuario(usuario, password)
+            if sesion:
+                self.dashboard_gestion = DashboardGestionView(
+                    usuario=sesion.get("usuario", usuario),
+                    rol=sesion.get("rol", "gestion"),
+                )
                 self.dashboard_gestion.show()
                 self.close()
                 return

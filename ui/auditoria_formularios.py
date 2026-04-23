@@ -23,6 +23,7 @@ from ui.detalle_plantilla_preguntas import DetallePlantillaPreguntasView
 
 
 class AuditoriaFormulariosView(QWidget):
+    registros_por_pagina = 100
     qss_files = ("base.qss", "auditoria_formularios.qss")
 
     def __init__(
@@ -34,6 +35,7 @@ class AuditoriaFormulariosView(QWidget):
         self.plantilla_service = plantilla_service or PlantillaPreguntasService()
         self.plantillas: list[PlantillaPreguntas] = []
         self.plantillas_filtradas: list[PlantillaPreguntas] = []
+        self.pagina_actual = 0
 
         self.setWindowTitle("Auditoria de Plantillas")
         self.setObjectName("auditoriaFormulariosView")
@@ -90,13 +92,13 @@ class AuditoriaFormulariosView(QWidget):
         self.input_busqueda.setPlaceholderText(
             "Buscar plantilla, recurso, setor o version..."
         )
-        self.input_busqueda.textChanged.connect(self.cargar_plantillas)
+        self.input_busqueda.textChanged.connect(self.cargar_plantillas_desde_inicio)
 
         self.combo_estado = QComboBox()
         self.combo_estado.addItem("Estado: Todos", "")
         self.combo_estado.addItem("Activas", "activa")
         self.combo_estado.addItem("Historicas", "historica")
-        self.combo_estado.currentIndexChanged.connect(self.cargar_plantillas)
+        self.combo_estado.currentIndexChanged.connect(self.cargar_plantillas_desde_inicio)
 
         self.btn_ver_detalle = QPushButton("Ver detalle")
         self.btn_ver_detalle.clicked.connect(self.abrir_detalle)
@@ -146,12 +148,31 @@ class AuditoriaFormulariosView(QWidget):
 
         layout_tabla.addWidget(self.tabla_plantillas)
 
+        fila_paginacion = QHBoxLayout()
+        fila_paginacion.setSpacing(10)
+
         self.label_total = QLabel("Total versiones: 0")
-        self.label_total.setAlignment(Qt.AlignRight)
+        self.label_total.setAlignment(Qt.AlignLeft)
         self.label_total.setProperty("role", "subtitle")
-        layout_tabla.addWidget(self.label_total)
+
+        self.btn_anterior = QPushButton("Anterior")
+        self.btn_anterior.setProperty("variant", "secondary")
+        self.btn_anterior.clicked.connect(self.pagina_anterior)
+
+        self.btn_siguiente = QPushButton("Siguiente")
+        self.btn_siguiente.setProperty("variant", "secondary")
+        self.btn_siguiente.clicked.connect(self.pagina_siguiente)
+
+        fila_paginacion.addWidget(self.label_total, 1)
+        fila_paginacion.addWidget(self.btn_anterior)
+        fila_paginacion.addWidget(self.btn_siguiente)
+        layout_tabla.addLayout(fila_paginacion)
 
         layout_principal.addWidget(panel_tabla, 1)
+
+    def cargar_plantillas_desde_inicio(self, *_args) -> None:
+        self.pagina_actual = 0
+        self.cargar_plantillas()
 
     def cargar_plantillas(self, *_args) -> None:
         try:
@@ -164,12 +185,50 @@ class AuditoriaFormulariosView(QWidget):
                 ),
                 reverse=True,
             )
-            self._cargar_tabla(self.plantillas_filtradas)
-            self.label_total.setText(
-                f"Total versiones: {len(self.plantillas_filtradas)}"
-            )
+            self.pagina_actual = min(self.pagina_actual, self._total_paginas() - 1)
+            self._cargar_tabla(self._obtener_plantillas_pagina())
+            self._actualizar_paginacion()
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
+
+    def _obtener_plantillas_pagina(self) -> list[PlantillaPreguntas]:
+        inicio = self.pagina_actual * self.registros_por_pagina
+        fin = inicio + self.registros_por_pagina
+        return self.plantillas_filtradas[inicio:fin]
+
+    def _total_paginas(self) -> int:
+        total = len(self.plantillas_filtradas)
+        if total == 0:
+            return 1
+        return (total - 1) // self.registros_por_pagina + 1
+
+    def _actualizar_paginacion(self) -> None:
+        total = len(self.plantillas_filtradas)
+        if total == 0:
+            self.label_total.setText("Total versiones: 0")
+            self.btn_anterior.setEnabled(False)
+            self.btn_siguiente.setEnabled(False)
+            return
+
+        inicio = self.pagina_actual * self.registros_por_pagina + 1
+        fin = min(inicio + self.registros_por_pagina - 1, total)
+        self.label_total.setText(f"Versiones {inicio}-{fin} de {total}")
+        self.btn_anterior.setEnabled(self.pagina_actual > 0)
+        self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
+
+    def pagina_anterior(self) -> None:
+        if self.pagina_actual <= 0:
+            return
+        self.pagina_actual -= 1
+        self._cargar_tabla(self._obtener_plantillas_pagina())
+        self._actualizar_paginacion()
+
+    def pagina_siguiente(self) -> None:
+        if self.pagina_actual >= self._total_paginas() - 1:
+            return
+        self.pagina_actual += 1
+        self._cargar_tabla(self._obtener_plantillas_pagina())
+        self._actualizar_paginacion()
 
     def _filtrar_plantillas(
         self,

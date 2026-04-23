@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication
 from services.forms.formulario_service import FormularioService
 from services.forms.pregunta_service import PreguntaService
 from services.forms.respuesta_service import RespuestaService
-from ui.seleccion_operario import SeleccionOperarioView
+from ui.formulario_operario import FormularioOperarioView
 
 
 class AppLauncher:
@@ -46,21 +46,45 @@ class AppLauncher:
 
         raise ValueError("La vista no tiene mÃ©todos show ni showMaximized.")
 
-    def _instanciar_seleccion_operario_view(
+    @staticmethod
+    def _normalizar_texto(valor: Any) -> str:
+        if valor is None:
+            return ""
+        return str(valor).strip()
+
+    @classmethod
+    def _obtener_valor_formulario(
+        cls,
+        formulario: Any,
+        clave: str,
+        default: Any = None,
+    ) -> Any:
+        if hasattr(formulario, "get"):
+            return formulario.get(clave, default)
+        return getattr(formulario, clave, default)
+
+    @classmethod
+    def _obtener_operario_formulario(cls, formulario: Any) -> str:
+        return cls._normalizar_texto(
+            cls._obtener_valor_formulario(formulario, "operario")
+            or cls._obtener_valor_formulario(formulario, "operador")
+        )
+
+    def _instanciar_formulario_operario_view(
         self,
-        formulario: dict[str, Any],
+        formulario: Any,
         on_close: Callable[[dict[str, Any]], None] | None = None,
     ) -> Any:
+        operario = self._obtener_operario_formulario(formulario)
         kwargs_disponibles = {
             "formulario": formulario,
-            "id_formulario": formulario.get("id_formulario"),
             "formulario_service": self.formulario_service,
             "pregunta_service": self.pregunta_service,
             "respuesta_service": self.respuesta_service,
-            "on_close": on_close,
+            "operario": operario,
         }
 
-        signature = inspect.signature(SeleccionOperarioView.__init__)
+        signature = inspect.signature(FormularioOperarioView.__init__)
         kwargs_aceptados: dict[str, Any] = {}
 
         for nombre_parametro in list(signature.parameters.keys())[1:]:
@@ -72,14 +96,14 @@ class AppLauncher:
         errores: list[str] = []
 
         try:
-            return SeleccionOperarioView(**kwargs_aceptados)
+            return FormularioOperarioView(**kwargs_aceptados)
         except TypeError as exc:
             errores.append(str(exc))
 
         intentos = [
-            lambda: SeleccionOperarioView(formulario),
-            lambda: SeleccionOperarioView(formulario.get("id_formulario")),
-            lambda: SeleccionOperarioView(),
+            lambda: FormularioOperarioView(formulario=formulario, operario=operario),
+            lambda: FormularioOperarioView(formulario),
+            lambda: FormularioOperarioView(),
         ]
 
         for intento in intentos:
@@ -89,7 +113,7 @@ class AppLauncher:
                 errores.append(str(exc))
 
         raise RuntimeError(
-            "No se pudo instanciar SeleccionOperarioView con las firmas probadas. "
+            "No se pudo instanciar FormularioOperarioView con las firmas probadas. "
             f"Errores detectados: {' | '.join(errores)}"
         )
 
@@ -99,7 +123,7 @@ class AppLauncher:
         on_close: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         app, app_creada = self._obtener_o_crear_app()
-        view = self._instanciar_seleccion_operario_view(
+        view = self._instanciar_formulario_operario_view(
             formulario=formulario,
             on_close=on_close,
         )

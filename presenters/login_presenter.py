@@ -25,4 +25,7 @@ class LoginPresenter:
     def iniciar_sesion(self, usuario: str, password: str) -> bool:
         return self.auth_service.validar_login(usuario, password)
 
+    def autenticar_usuario(self, usuario: str, password: str) -> dict[str, str] | None:
+        return self.auth_service.autenticar_usuario(usuario, password)
+
 

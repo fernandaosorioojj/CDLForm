@@ -274,6 +274,11 @@ class FormularioService:
             operario=self._normalizar_texto(
                 registro.get("operador") or registro.get("operario")
             ),
+            supervisor_apontamento=self._normalizar_texto(
+                registro.get("supervisor_apontamento")
+                or registro.get("supervisor")
+                or registro.get("Supervisor")
+            ),
             estacion=self._normalizar_texto(registro.get("estacion")),
             evento_origen="apontamento_sql",
             estado=ESTADO_EN_APERTURA,

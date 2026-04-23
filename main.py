@@ -111,7 +111,6 @@ def main() -> None:
                     "maquina": args.maquina,
                     "evento_origen": args.evento_origen,
                 },
-                usar_fallback_consulta=False,
             )
         except Exception as exc:
             QMessageBox.critical(

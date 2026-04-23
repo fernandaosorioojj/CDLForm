@@ -211,15 +211,17 @@ class DashboardChartPanel(QFrame):
 class DashboardGestionView(BaseWindow):
     qss_files = ("base.qss", "dashboard_gestion.qss")
 
-    def __init__(self, usuario: str = "") -> None:
+    def __init__(self, usuario: str = "", rol: str = "gestion") -> None:
         super().__init__()
 
         self.presenter = DashboardGestionPresenter()
         self.usuario = str(usuario or "").strip()
+        self.rol = str(rol or "gestion").strip().lower()
         self.admin_preguntas_view = None
         self.reportes_view = None
         self.auditoria_formularios_view = None
         self.acciones_correctivas_view = None
+        self.usuarios_gestion_view = None
         self.login_view = None
         self.metric_acciones = None
         self.metric_formularios = None
@@ -270,6 +272,8 @@ class DashboardGestionView(BaseWindow):
             ("Acciones", "icon-corrective.svg", False),
             ("Auditoria", "icon-audit.svg", False),
         ]
+        if self._es_admin():
+            nav_items.append(("Usuarios", "icon-audit.svg", False))
         for texto, icono, activo in nav_items:
             boton = self._crear_boton_nav(texto, icono, activo)
             layout.addWidget(boton)
@@ -512,9 +516,12 @@ class DashboardGestionView(BaseWindow):
 
         perfil_titulo = QLabel(self.usuario or "Usuario")
         perfil_titulo.setObjectName("dashboardProfileTitle")
+        perfil_rol = QLabel(f"Rol: {self.rol}")
+        perfil_rol.setObjectName("dashboardProfileSubtitle")
 
         profile_layout.addWidget(avatar, 0, Qt.AlignCenter)
         profile_layout.addWidget(perfil_titulo, 0, Qt.AlignLeft)
+        profile_layout.addWidget(perfil_rol, 0, Qt.AlignLeft)
         layout.addWidget(profile)
 
         quick_buttons = [
@@ -523,6 +530,8 @@ class DashboardGestionView(BaseWindow):
             ("Acciones", self.abrir_acciones_correctivas),
             ("Auditoria", self.abrir_auditoria_formularios),
         ]
+        if self._es_admin():
+            quick_buttons.append(("Usuarios", self.abrir_usuarios_gestion))
         for texto, callback in quick_buttons:
             boton = QPushButton(texto)
             boton.setObjectName("dashboardQuickButton")
@@ -579,9 +588,13 @@ class DashboardGestionView(BaseWindow):
             boton.clicked.connect(self.abrir_acciones_correctivas)
         elif texto == "Auditoria":
             boton.clicked.connect(self.abrir_auditoria_formularios)
+        elif texto == "Usuarios":
+            boton.clicked.connect(self.abrir_usuarios_gestion)
 
         return boton
 
+    def _es_admin(self) -> bool:
+        return self.rol == "admin"
 
     def abrir_admin_preguntas(self) -> None:
         try:
@@ -629,6 +642,27 @@ class DashboardGestionView(BaseWindow):
                 self,
                 "Error",
                 f"No fue posible abrir las acciones correctivas.\n\n{exc}",
+            )
+
+    def abrir_usuarios_gestion(self) -> None:
+        if not self._es_admin():
+            QMessageBox.warning(
+                self,
+                "Permisos",
+                "Solo usuarios admin pueden administrar usuarios.",
+            )
+            return
+
+        try:
+            self.usuarios_gestion_view = (
+                self.presenter.crear_usuarios_gestion_view()
+            )
+            self.usuarios_gestion_view.show()
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"No fue posible abrir la administracion de usuarios.\n\n{exc}",
             )
 
     def cerrar_sesion(self) -> None:

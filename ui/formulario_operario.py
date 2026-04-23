@@ -181,7 +181,10 @@ class FormularioOperarioView(QWidget):
             formulario=formulario,
             contexto=contexto,
         )
-        self.operario_seleccionado = self.presenter.normalizar_texto(operario)
+        self.operario_seleccionado = self.presenter.obtener_operario_inicial(
+            formulario=self.formulario,
+            operario=operario,
+        )
         self.preguntas: list[dict[str, Any]] = []
         self.controles_respuesta: list[dict[str, Any]] = []
         self._acciones_correctivas_mostradas: set[str] = set()
