@@ -368,8 +368,8 @@ Riesgos:
 Origen:
 
 - `config/sql_server_config.py`
-- `data/sql_server.local.json`
-- `config/sql_server.local.json` como respaldo de bootstrap/desarrollo
+- `config/sql_server.local.json`
+- ruta local de datos de la app
 - Variables de entorno
 - Driver ODBC instalado
 
@@ -460,102 +460,84 @@ Como los archivos de test fueron eliminados, la validacion manual minima deberia
 
 ## 8. Despliegue y distribucion
 
-Esta seccion describe como deberia instalarse y operarse CDLform en una estacion o equipo de gestion. El proyecto hoy esta preparado como aplicacion Python/PyQt ejecutada desde carpeta, no como instalador formal. Si mas adelante se empaqueta con PyInstaller u otro instalador, las mismas responsabilidades se mantienen: binario/codigo, configuracion local, permisos SQL y tarea programada.
+Esta seccion describe como deberia instalarse y operarse CDLform en una estacion o equipo de gestion. Hoy la referencia valida del proyecto es ejecucion desde codigo fuente con Python, no empaquetado EXE.
 
 ### 8.1 Conceptos clave
 
-Hay tres formas practicas de ejecutar la aplicacion. En desarrollo se pueden usar scripts Python; para distribucion a estaciones se recomienda generar ejecutables `.exe`.
+Hay dos superficies operativas:
 
-| Modo | Desarrollo | Distribucion EXE | Para que sirve |
+| Superficie | Comando | Para que sirve |
 | --- | --- | --- |
-| Gestion | `python main.py --modo normal` | `CDLformGestion.exe` | Abre login, dashboard, administracion, reportes, auditoria y usuarios. |
-| Operario automatico con UI | `python main.py --modo auto` | `CDLformOperario.exe` | Procesa eventos de cola y abre formulario al operario si existe pendiente. |
-| Worker sin UI | `python worker_main.py` | `CDLformWorker.exe` | Corre en segundo plano o tarea programada para crear formularios sin abrir pantalla. |
+| Gestion | `python main.py --modo normal` | Abre login, dashboard, administracion, reportes, auditoria y usuarios. |
+| Operario automatico | `python main.py --modo auto` | Consulta la cola SQL de la estacion y abre el formulario si corresponde. |
 
-La distribucion real puede usar los mismos scripts `.py` o accesos directos que ejecuten esos comandos. Lo importante es que el usuario Windows que los ejecute tenga:
+Adicionalmente existe `worker_main.py` como herramienta tecnica sin UI, pero no debe considerarse la pieza principal del despliegue de operario si la tarea programada debe revisar cola y abrir formulario.
 
-- Python instalado o runtime empaquetado.
+Lo importante es que el usuario Windows que ejecute la app tenga:
+
+- Python instalado.
 - Dependencias instaladas (`PyQt5`, `pyodbc`, etc.).
 - Driver ODBC compatible.
 - Acceso a SQL Server.
 - Configuracion local correcta.
-- Permisos de escritura en rutas de datos/logs.
+- Permisos de escritura en la ruta local de datos/logs.
 
 ### 8.2 Que se debe hacer manualmente
 
-Antes de dejar el sistema operativo, hay pasos manuales que no conviene automatizar a ciegas:
+Antes de dejar una estacion operativa, hay pasos manuales que no conviene automatizar a ciegas:
 
 1. Copiar o desplegar la carpeta de aplicacion en el equipo destino.
-2. Confirmar que Python/dependencias o el ejecutable empaquetado funcionan.
+2. Confirmar que Python y dependencias funcionan.
 3. Instalar/verificar driver ODBC de SQL Server.
 4. Configurar conexion SQL del ambiente correcto.
 5. Configurar estacion Jobtrack del equipo.
 6. Ejecutar scripts SQL pendientes en la base correcta con DBA si aplica.
 7. Crear o validar usuario administrador de gestion.
-8. Crear accesos directos para gestion/operario si se usaran manualmente.
-9. Crear tarea programada si el procesamiento debe correr solo.
+8. Crear acceso directo para gestion si se usara en ese equipo.
+9. Crear tarea programada en cada estacion de operario.
 10. Ejecutar checklist de validacion.
 
 ### 8.3 Estructura recomendada en el equipo destino
 
-El estandar recomendado es separar ejecutables/codigo de una carpeta unica de datos.
-
-Produccion:
+Ejemplo simple:
 
 ```text
 C:\CDLform\
-  CDLformGestion\
-    CDLformGestion.exe
-    assets\
-    config\
-    docs\
-    styles\
-  CDLformOperario\
-    CDLformOperario.exe
-    assets\
-    config\
-    docs\
-    styles\
-  CDLformWorker\
-    CDLformWorker.exe
-    assets\
-    config\
-    docs\
-    styles\
-  data\
-    jobtrack.ini
-    sql_server.local.json
-    gestion_login.json
-    admin_login.json
-    logs\
+  main.py
+  worker_main.py
+  assets\
+  config\
+  database\
+  docs\
+  integrations\
+  launcher\
+  models\
+  presenters\
+  repositories\
+  services\
+  styles\
+  ui\
+  utils\
+  widgets\
 ```
 
-Desarrollo desde repo:
+Tambien puede mantenerse en:
 
 ```text
-C:\...\CDLform\
-  config\
-  docs\
-  services\
-  ...
-  data\
+C:\Users\<usuario>\Desktop\CDLform\
 ```
 
-Regla tecnica:
+Para produccion es preferible una ruta estable como `C:\CDLform` o `C:\Aplicaciones\CDLform`, porque Task Scheduler y accesos directos quedan menos fragiles.
 
-- En desarrollo, la app usa por defecto `.\data\`.
-- En ejecutables congelados, la app usa por defecto `..\data\` respecto de cada `.exe`.
-- Solo si se define `CDLFORM_DATA_DIR` se usa otra ruta.
-
-Con esto evitamos depender de `%APPDATA%` y hacemos que ejecucion manual y Task Scheduler lean exactamente la misma configuracion.
+Evitar rutas que dependan de descargas temporales, carpetas sincronizadas o escritorios de usuarios que puedan cambiar.
 
 ### 8.4 Configuracion SQL
 
 La conexion se arma en `config/sql_server_config.py` leyendo, en este orden:
 
 1. Variable `CDLFORM_SQL_CONFIG_PATH`, si existe.
-2. Archivo `data/sql_server.local.json`.
-3. Archivo `config/sql_server.local.json` dentro del proyecto o del paquete, solo como respaldo de bootstrap/desarrollo.
+2. Archivo local en ruta de datos de la app.
+3. Archivo `config/sql_server.local.json` dentro del proyecto.
 4. Variables de entorno `CDLFORM_SQL_SERVER`, `CDLFORM_SQL_DATABASE`, etc.
 
 Archivo esperado:
@@ -604,7 +586,7 @@ Si la app no ve usuarios de gestion, revisar primero que se esta mirando la mism
 
 ### 8.5 Configuracion de estacion Jobtrack
 
-El archivo oficial es `data/jobtrack.ini`. El archivo `config/jobtrack.ini` queda como respaldo de bootstrap/desarrollo.
+El archivo `config/jobtrack.ini` indica que estacion local representa este equipo.
 
 Ejemplo:
 
@@ -702,126 +684,51 @@ C:\Users\<usuario>\AppData\Local\Programs\Python\Python314\python.exe C:\CDLform
 
 Para Task Scheduler es mejor configurar `Start in` en `C:\CDLform` y `Program/script` como `python.exe` o la ruta completa a Python.
 
-Si se distribuye como EXE, los accesos directos deberian apuntar directamente a:
-
-```text
-C:\CDLform\CDLformGestion\CDLformGestion.exe
-C:\CDLform\CDLformOperario\CDLformOperario.exe
-```
-
-El worker se usa desde Task Scheduler:
-
-```text
-C:\CDLform\CDLformWorker\CDLformWorker.exe
-```
-
-### 8.8.1 Generacion de ejecutables
-
-El proyecto incluye preparacion de empaquetado en `packaging/`:
-
-```text
-packaging\entrypoints\gestion.py
-packaging\entrypoints\operario.py
-packaging\entrypoints\worker.py
-packaging\build_exe.ps1
-packaging\README.md
-```
-
-Instalar dependencias y PyInstaller en el equipo de build:
-
-```bat
-python -m pip install -r requirements.txt
-```
-
-Generar ejecutables:
-
-```powershell
-.\packaging\build_exe.ps1
-```
-
-Salida esperada:
-
-```text
-dist\exe\CDLformGestion\
-dist\exe\CDLformOperario\
-dist\exe\CDLformWorker\
-```
-
-Importante:
-
-- No empaquetar credenciales reales dentro del exe.
-- `data/sql_server.local.json` debe configurarse en destino.
-- `data/jobtrack.ini` debe configurarse por estacion.
-- El equipo destino aun necesita el driver ODBC de SQL Server.
-- Si todas las estaciones usan la misma base/usuario SQL, `sql_server.local.json` puede ser igual para todas.
-- `jobtrack.ini` normalmente cambia por estacion.
-
 ### 8.9 Task Scheduler: para que se usa
 
-Task Scheduler deberia usarse para ejecutar el worker de forma periodica, por ejemplo cada 5 minutos. Su objetivo es mantener la cola procesada y crear formularios aunque nadie abra manualmente gestion.
+Task Scheduler deberia usarse en cada estacion de operario para ejecutar periodicamente `main.py --modo auto`, por ejemplo cada 5 minutos. Su objetivo es revisar la cola SQL de la estacion y abrir el formulario cuando exista uno pendiente.
 
 Importante:
 
-- El worker no abre pantalla.
-- El worker procesa datos y crea formularios.
-- La UI de operario se abre con `main.py --modo auto`, no con `worker_main.py`.
+- La tarea programada de operario si puede abrir pantalla cuando encuentre un formulario pendiente.
+- No hace falta separar conceptualmente "worker" y "operario" si la estacion debe consultar cola y desplegar el formulario.
+- `worker_main.py` queda como herramienta tecnica o diagnostico.
 
 Configuracion recomendada:
 
 | Campo | Valor sugerido |
 | --- | --- |
-| Name | `CDLform Worker Apontamentos` |
+| Name | `CDLform Operario Auto` |
 | Security options | Usuario Windows con permisos SQL/config local |
-| Run whether user is logged on or not | Solo si no necesita UI y el entorno SQL funciona con ese usuario |
+| Run whether user is logged on or not | No recomendado si la tarea debe abrir UI en pantalla |
 | Run with highest privileges | Activar si politicas locales lo requieren |
 | Trigger | Daily, repetir cada 5 minutos indefinidamente |
 | Action | Start a program |
-| Program/script | `C:\CDLform\CDLformWorker\CDLformWorker.exe` |
-| Add arguments | Vacio |
-| Start in | `C:\CDLform\CDLformWorker` |
+| Program/script | Ruta a `python.exe` |
+| Add arguments | `main.py --modo auto` |
+| Start in | `C:\CDLform` |
 
 Ejemplo de Action:
 
 ```text
 Program/script:
-C:\CDLform\CDLformWorker\CDLformWorker.exe
+`C:\Users\<usuario>\AppData\Local\Programs\Python\Python314\python.exe`
 
 Add arguments:
- 
-
-Start in:
-C:\CDLform\CDLformWorker
-```
-
-Si se quiere guardar log de salida, Task Scheduler no maneja redireccion con comodidad en "Program/script" directo. En ese caso crear un `.bat` controlado, por ejemplo `run_worker.bat`:
-
-```bat
-@echo off
-cd /d C:\CDLform\CDLformWorker
-if not exist logs mkdir logs
-CDLformWorker.exe >> logs\worker.log 2>&1
-```
-
-Luego en Task Scheduler:
-
-```text
-Program/script:
-C:\CDLform\run_worker.bat
+main.py --modo auto
 
 Start in:
 C:\CDLform
 ```
-
-Si se usa `.bat`, crear manualmente la carpeta `logs` o asegurar que el script pueda escribirla. En una version futura conviene agregar logging formal al worker.
 
 ### 8.10 Task Scheduler paso a paso
 
 1. Abrir `Task Scheduler`.
 2. Click en `Create Task...`.
 3. Pestaña `General`:
-   - Name: `CDLform Worker Apontamentos`.
+   - Name: `CDLform Operario Auto`.
    - Seleccionar usuario correcto.
-   - Marcar `Run whether user is logged on or not` si correra sin sesion.
+   - Preferir `Run only when user is logged on` si la tarea debe abrir formularios visibles.
    - Marcar `Run with highest privileges` si corresponde.
 4. Pestaña `Triggers`:
    - `New...`
@@ -833,9 +740,9 @@ Si se usa `.bat`, crear manualmente la carpeta `logs` o asegurar que el script p
 5. Pestaña `Actions`:
    - `New...`
    - Action: `Start a program`.
-   - Program/script: `C:\CDLform\CDLformWorker\CDLformWorker.exe` o `C:\CDLform\run_worker.bat`.
-   - Add arguments: vacio si se usa EXE.
-   - Start in: `C:\CDLform\CDLformWorker`.
+   - Program/script: ruta a `python.exe`.
+   - Add arguments: `main.py --modo auto`.
+   - Start in: `C:\CDLform`.
 6. Pestaña `Conditions`:
    - Desmarcar opciones de energia que impidan correr si no aplica.
 7. Pestaña `Settings`:
@@ -852,36 +759,27 @@ Valores comunes de `Last Run Result`:
 - `0x2`: ruta incorrecta o archivo no encontrado.
 - `0x41301`: tarea en ejecucion.
 
-### 8.11 Validar worker manualmente antes de programarlo
+### 8.11 Validar operario automatico manualmente antes de programarlo
 
 En CMD o PowerShell:
 
 ```bat
 cd /d C:\CDLform
-python worker_main.py
-```
-
-Con EXE:
-
-```bat
-cd /d C:\CDLform\CDLformWorker
-CDLformWorker.exe
+python main.py --modo auto
 ```
 
 Resultado esperado:
 
-- Debe imprimir JSON.
-- `origen_sincronizacion` debe indicar `cola_sql`.
-- `total_consultados` muestra cuantos eventos de cola reviso.
-- `total_formularios_creados` indica cuantos formularios nuevos se crearon.
-- `errores` deberia venir vacio o con mensajes claros.
+- Debe consultar la cola SQL de la estacion.
+- Si hay formulario pendiente, debe abrir `FormularioOperarioView`.
+- Si no hay pendientes, debe informar que no hay formularios disponibles.
 
 Si falla:
 
 - Error de driver: revisar ODBC instalado.
 - Error de login: revisar usuario/clave SQL.
 - Error de permisos: pedir grant al DBA.
-- Sin recursos: revisar `jobtrack.ini` y `jbt_EstacaoXMaquinas`.
+- Sin recursos: revisar `config/jobtrack.ini` y `jbt_EstacaoXMaquinas`.
 - Sin plantilla: crear/activar plantilla para `CodSetor` + `CodRecurso`.
 
 ### 8.12 Validar modo automatico con UI
@@ -937,7 +835,7 @@ python -c "from services.workflows.apontamento_procesado_service import Apontame
 
 Antes de usarlo:
 
-1. Confirmar estacion en `data/jobtrack.ini`.
+1. Confirmar estacion en `config/jobtrack.ini`.
 2. Confirmar recursos asociados en `[dbo].[jbt_EstacaoXMaquinas]`.
 3. Confirmar que la cola no esta funcionando o que la recuperacion se justifica.
 4. Confirmar que existen plantillas activas para los contextos detectados.
@@ -968,9 +866,9 @@ Proceso recomendado para actualizar una estacion:
 1. Cerrar aplicacion abierta.
 2. Deshabilitar temporalmente tarea programada si se reemplazaran archivos.
 3. Respaldar configuraciones locales:
-   - `data/sql_server.local.json`
-   - `data/jobtrack.ini`
-   - JSON de login fallback si aun se usa en `data/`.
+   - `config/sql_server.local.json`
+   - `config/jobtrack.ini`
+   - JSON de login fallback si aun se usa.
 4. Reemplazar carpeta de codigo o copiar nuevos archivos.
 5. Restaurar/verificar configs locales.
 6. Ejecutar scripts SQL nuevos si la version lo requiere.
@@ -981,7 +879,7 @@ python -m compileall -q .
 ```
 
 8. Probar `main.py --modo normal`.
-9. Probar `worker_main.py` o `CDLformWorker.exe`, segun formato desplegado.
+9. Probar `main.py --modo auto`.
 10. Habilitar nuevamente Task Scheduler.
 
 Si hay cambios de base de datos, coordinar ventana con DBA. No actualizar codigo que espera columnas nuevas antes de que la DB las tenga.
@@ -990,34 +888,12 @@ Si hay cambios de base de datos, coordinar ventana con DBA. No actualizar codigo
 
 Mejoras recomendadas:
 
-- Empaquetar con PyInstaller para no depender de Python instalado en cada equipo.
-- Crear instalador o script de deploy.
-- Separar configs sensibles fuera de la carpeta versionada.
+- Estandarizar mejor el despliegue por estacion.
+- Crear instalador o script de deploy cuando el flujo productivo ya este cerrado.
 - Agregar logging formal al worker.
 - Agregar verificacion de salud (`healthcheck`) para SQL/config/estacion.
 - Llevar paginacion pesada a SQL.
 - Reintroducir tests automatizados cuando el flujo se estabilice.
-
-### 8.17 Estandar manual por estacion
-
-La instalacion manual de cada estacion deberia seguir siempre la misma secuencia:
-
-1. Copiar la release a `C:\CDLform\`.
-2. Verificar que exista `C:\CDLform\data\`.
-3. Crear o ajustar `C:\CDLform\data\sql_server.local.json`.
-4. Crear o ajustar `C:\CDLform\data\jobtrack.ini`.
-5. Confirmar permisos de lectura/escritura sobre `C:\CDLform\data\logs\`.
-6. Probar manualmente `CDLformWorker.exe`.
-7. Revisar el JSON de salida o el log.
-8. Recien despues crear la tarea programada.
-
-Regla operativa:
-
-- `sql_server.local.json`: normalmente comun a todas las estaciones si usan el mismo ambiente SQL.
-- `jobtrack.ini`: normalmente cambia por estacion.
-- `logs\`: siempre local a la maquina.
-
-Esto deja un solo lugar oficial para mirar configuracion cuando haya que diagnosticar.
 
 ## 9. Prioridades para manana
 
@@ -1025,8 +901,7 @@ Orden recomendado para retomar el trabajo:
 
 1. Cerrar definicion del entorno operario para produccion:
    - estructura final de carpetas
-   - contenido de `CDLformWorker.exe`
-   - contenido de `CDLformOperario.exe`
+   - comando exacto que correra en cada estacion
    - que archivos se editan por estacion
 2. Dejar estandar de despliegue por estacion:
    - ruta final
@@ -1035,9 +910,9 @@ Orden recomendado para retomar el trabajo:
    - usuario de ejecucion
    - formato del log
 3. Separar formalmente gestion vs operario:
-   - gestion solo manual con `CDLformGestion.exe`
-   - operario con worker programado
-   - operario con UI local solo cuando corresponda
+   - gestion solo manual
+   - operario con tarea programada por estacion
+   - `worker_main.py` solo como apoyo tecnico
 4. Probar un caso real end-to-end con evento en cola:
    - detectar evento real
    - crear formulario

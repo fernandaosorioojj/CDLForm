@@ -40,20 +40,16 @@ def _resolve_package_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def _resolve_deployment_root() -> Path:
-    package_dir = _resolve_package_dir()
-    if getattr(sys, "frozen", False):
-        return package_dir.parent.resolve()
-
-    return package_dir.resolve()
-
-
 def _resolve_data_dir(app_name: str) -> Path:
     override = os.getenv("CDLFORM_DATA_DIR", "").strip()
     if override:
         return Path(override).expanduser().resolve()
 
-    return (_resolve_deployment_root() / "data").resolve()
+    appdata = os.getenv("APPDATA", "").strip()
+    if appdata:
+        return Path(appdata).expanduser().resolve() / app_name
+
+    return (_resolve_package_dir() / ".local").resolve()
 
 
 def _build_paths() -> AppPaths:

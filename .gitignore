@@ -12,8 +12,3 @@ build/
 config/admin_login.json
 config/gestion_login.json
 config/sql_server.local.json
-data/admin_login.json
-data/gestion_login.json
-data/sql_server.local.json
-data/jobtrack.ini
-data/logs/
