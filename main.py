@@ -35,6 +35,11 @@ def parse_args():
         default=None,
         help="ID o referencia del evento origen",
     )
+    parser.add_argument(
+        "--mostrar-sin-pendientes",
+        action="store_true",
+        help="Muestra una ventana informativa cuando no hay formularios pendientes.",
+    )
 
     return parser.parse_args()
 
@@ -122,11 +127,14 @@ def main() -> None:
 
         resultado_apertura = app.pending_form_coordinator.revisar_pendientes()
         if not resultado_apertura.get("se_preparo"):
-            QMessageBox.information(
-                None,
-                "Formulario",
-                construir_mensaje_sin_formulario(resultado),
-            )
+            mensaje_sin_formulario = construir_mensaje_sin_formulario(resultado)
+            print(mensaje_sin_formulario)
+            if args.mostrar_sin_pendientes:
+                QMessageBox.information(
+                    None,
+                    "Formulario",
+                    mensaje_sin_formulario,
+                )
             sys.exit(0)
 
         sys.exit(app.exec_())

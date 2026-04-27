@@ -462,6 +462,67 @@ Como los archivos de test fueron eliminados, la validacion manual minima deberia
 
 Esta seccion describe como deberia instalarse y operarse CDLform en una estacion o equipo de gestion. Hoy la referencia valida del proyecto es ejecucion desde codigo fuente con Python, no empaquetado EXE.
 
+### 8.0 Modelo unico de release
+
+El modelo unico recomendado para planta es este:
+
+```text
+C:\CDLform\
+  main.py
+  worker_main.py
+  assets\
+  config\
+  database\
+  docs\
+  integrations\
+  launcher\
+  models\
+  presenters\
+  repositories\
+  services\
+  styles\
+  ui\
+  utils\
+  widgets\
+  run_gestion.bat
+  run_operario.bat
+  logs\
+```
+
+Regla de distribucion:
+
+- El contenido de la aplicacion es igual para todos los computadores.
+- La configuracion SQL puede ser igual para todos si todas las estaciones apuntan al mismo ambiente.
+- El unico archivo que normalmente cambia por estacion es `config/jobtrack.ini`.
+- Gestion se abre manualmente.
+- Operario corre por tarea programada en cada estacion.
+
+Archivos operativos estandar:
+
+`run_gestion.bat`
+
+```bat
+@echo off
+cd /d C:\CDLform
+python main.py --modo normal
+```
+
+`run_operario.bat`
+
+```bat
+@echo off
+cd /d C:\CDLform
+if not exist logs mkdir logs
+python main.py --modo auto >> logs\operario_auto.log 2>&1
+```
+
+Objetivo del modelo:
+
+- evitar diferencias innecesarias entre estaciones
+- dejar un solo punto de configuracion por equipo
+- facilitar soporte
+- permitir replicacion simple a toda la planta
+
 ### 8.1 Conceptos clave
 
 Hay dos superficies operativas:
@@ -486,7 +547,7 @@ Lo importante es que el usuario Windows que ejecute la app tenga:
 
 Antes de dejar una estacion operativa, hay pasos manuales que no conviene automatizar a ciegas:
 
-1. Copiar o desplegar la carpeta de aplicacion en el equipo destino.
+1. Copiar o desplegar la carpeta release `C:\CDLform` en el equipo destino.
 2. Confirmar que Python y dependencias funcionan.
 3. Instalar/verificar driver ODBC de SQL Server.
 4. Configurar conexion SQL del ambiente correcto.
@@ -499,7 +560,7 @@ Antes de dejar una estacion operativa, hay pasos manuales que no conviene automa
 
 ### 8.3 Estructura recomendada en el equipo destino
 
-Ejemplo simple:
+La estructura objetivo para todas las estaciones debe ser:
 
 ```text
 C:\CDLform\
@@ -519,17 +580,14 @@ C:\CDLform\
   ui\
   utils\
   widgets\
-```
-
-Tambien puede mantenerse en:
-
-```text
-C:\Users\<usuario>\Desktop\CDLform\
+  run_gestion.bat
+  run_operario.bat
+  logs\
 ```
 
 Para produccion es preferible una ruta estable como `C:\CDLform` o `C:\Aplicaciones\CDLform`, porque Task Scheduler y accesos directos quedan menos fragiles.
 
-Evitar rutas que dependan de descargas temporales, carpetas sincronizadas o escritorios de usuarios que puedan cambiar.
+No usar Escritorio, Descargas ni carpetas sincronizadas como ubicacion oficial de planta.
 
 ### 8.4 Configuracion SQL
 
@@ -653,27 +711,18 @@ No crear rol supervisor. Supervisor viene desde Apontamentos y no corresponde a 
 
 ### 8.8 Accesos directos recomendados
 
-Si se ejecuta desde codigo fuente, se pueden usar `.bat`:
+Usar `.bat` estandar para no depender de que cada operador recuerde comandos.
 
 Gestion:
 
 ```bat
-cd /d C:\CDLform
-python main.py --modo normal
+C:\CDLform\run_gestion.bat
 ```
 
 Operario automatico con UI:
 
 ```bat
-cd /d C:\CDLform
-python main.py --modo auto
-```
-
-Worker sin UI:
-
-```bat
-cd /d C:\CDLform
-python worker_main.py
+C:\CDLform\run_operario.bat
 ```
 
 Si hay varias versiones de Python instaladas, usar ruta absoluta:
@@ -682,7 +731,7 @@ Si hay varias versiones de Python instaladas, usar ruta absoluta:
 C:\Users\<usuario>\AppData\Local\Programs\Python\Python314\python.exe C:\CDLform\main.py --modo normal
 ```
 
-Para Task Scheduler es mejor configurar `Start in` en `C:\CDLform` y `Program/script` como `python.exe` o la ruta completa a Python.
+Para Task Scheduler, el estandar recomendado es apuntar a `run_operario.bat`.
 
 ### 8.9 Task Scheduler: para que se usa
 
@@ -704,18 +753,18 @@ Configuracion recomendada:
 | Run with highest privileges | Activar si politicas locales lo requieren |
 | Trigger | Daily, repetir cada 5 minutos indefinidamente |
 | Action | Start a program |
-| Program/script | Ruta a `python.exe` |
-| Add arguments | `main.py --modo auto` |
+| Program/script | `C:\CDLform\run_operario.bat` |
+| Add arguments | Vacio |
 | Start in | `C:\CDLform` |
 
 Ejemplo de Action:
 
 ```text
 Program/script:
-`C:\Users\<usuario>\AppData\Local\Programs\Python\Python314\python.exe`
+`C:\CDLform\run_operario.bat`
 
 Add arguments:
-main.py --modo auto
+ 
 
 Start in:
 C:\CDLform
@@ -740,8 +789,8 @@ C:\CDLform
 5. Pestaña `Actions`:
    - `New...`
    - Action: `Start a program`.
-   - Program/script: ruta a `python.exe`.
-   - Add arguments: `main.py --modo auto`.
+   - Program/script: `C:\CDLform\run_operario.bat`.
+   - Add arguments: vacio.
    - Start in: `C:\CDLform`.
 6. Pestaña `Conditions`:
    - Desmarcar opciones de energia que impidan correr si no aplica.
@@ -773,6 +822,12 @@ Resultado esperado:
 - Debe consultar la cola SQL de la estacion.
 - Si hay formulario pendiente, debe abrir `FormularioOperarioView`.
 - Si no hay pendientes, debe informar que no hay formularios disponibles.
+
+La misma validacion se puede hacer con:
+
+```bat
+C:\CDLform\run_operario.bat
+```
 
 Si falla:
 
@@ -884,7 +939,22 @@ python -m compileall -q .
 
 Si hay cambios de base de datos, coordinar ventana con DBA. No actualizar codigo que espera columnas nuevas antes de que la DB las tenga.
 
-### 8.16 Que queda pendiente para una distribucion mas robusta
+### 8.16 Configuracion minima por estacion
+
+En una instalacion bien estandarizada, esto es lo unico que deberia revisarse por computador:
+
+1. `config/jobtrack.ini`
+2. usuario Windows que ejecuta la tarea
+3. acceso a SQL/ODBC
+
+Y esto deberia mantenerse igual para toda la planta:
+
+1. estructura `C:\CDLform`
+2. codigo fuente
+3. dependencias Python
+4. `run_operario.bat`
+5. nombre y frecuencia de la tarea programada
+### 8.17 Que queda pendiente para una distribucion mas robusta
 
 Mejoras recomendadas:
 
@@ -918,7 +988,7 @@ Orden recomendado para retomar el trabajo:
    - crear formulario
    - validar apertura en la estacion correcta
    - validar operario/supervisor
-5. Armar paquete release preliminar para estacion piloto.
+5. Armar carpeta release preliminar para estacion piloto.
 6. Revisar pendientes de produccion:
    - permisos SQL
    - scripts SQL obligatorios
