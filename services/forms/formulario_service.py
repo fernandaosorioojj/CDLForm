@@ -15,6 +15,7 @@ from models.formulario import (
 )
 from repositories.formulario_repository import FormularioRepository
 from services.forms.plantilla_preguntas_service import PlantillaPreguntasService
+from services.forms.pregunta_service import PreguntaService
 
 
 class FormularioService:
@@ -22,11 +23,13 @@ class FormularioService:
         self,
         formulario_repository: FormularioRepository | None = None,
         plantilla_preguntas_service: PlantillaPreguntasService | None = None,
+        pregunta_service: PreguntaService | None = None,
     ) -> None:
         self.formulario_repository = formulario_repository or FormularioRepository()
         self.plantilla_preguntas_service = (
             plantilla_preguntas_service or PlantillaPreguntasService()
         )
+        self.pregunta_service = pregunta_service or PreguntaService()
 
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
@@ -253,6 +256,11 @@ class FormularioService:
             cod_setor=cod_setor,
         )
         if not plantilla_preguntas:
+            plantilla_preguntas = self.pregunta_service.asegurar_plantilla_para_contexto(
+                cod_recurso=cod_recurso,
+                cod_setor=cod_setor,
+            )
+        if not plantilla_preguntas:
             raise ValueError(
                 "No existe una plantilla activa de preguntas para "
                 f"CodSetor {cod_setor or '-'} y CodRecurso {cod_recurso}."
@@ -354,6 +362,11 @@ class FormularioService:
             cod_recurso=formulario.cod_recurso or formulario.maquina,
             cod_setor=formulario.cod_setor or formulario.area,
         )
+        if not plantilla_preguntas:
+            plantilla_preguntas = self.pregunta_service.asegurar_plantilla_para_contexto(
+                cod_recurso=formulario.cod_recurso or formulario.maquina,
+                cod_setor=formulario.cod_setor or formulario.area,
+            )
         if not plantilla_preguntas:
             raise ValueError(
                 "No existe una plantilla activa de preguntas para "

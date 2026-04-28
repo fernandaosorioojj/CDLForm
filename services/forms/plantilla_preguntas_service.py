@@ -40,6 +40,64 @@ class PlantillaPreguntasService:
             cod_setor=cod_setor_normalizado,
         )
 
+    def asegurar_plantilla_contexto(
+        self,
+        cod_recurso: str,
+        cod_setor: str,
+        preguntas: list[dict[str, Any]],
+    ) -> PlantillaPreguntas | None:
+        cod_recurso_normalizado = self.normalizar_contexto(cod_recurso)
+        cod_setor_normalizado = self.normalizar_contexto(cod_setor)
+
+        if not cod_recurso_normalizado or not cod_setor_normalizado:
+            return None
+
+        preguntas_ordenadas = [
+            pregunta
+            for pregunta in sorted(
+                preguntas,
+                key=lambda item: (
+                    int(item.get("orden", 9999))
+                    if str(item.get("orden", "")).strip().isdigit()
+                    else 9999,
+                    str(item.get("id_pregunta", "")).strip(),
+                ),
+            )
+            if str(pregunta.get("id_pregunta", "")).strip()
+        ]
+
+        if not preguntas_ordenadas:
+            return None
+
+        activa_actual = self.obtener_activa(
+            cod_recurso=cod_recurso_normalizado,
+            cod_setor=cod_setor_normalizado,
+        )
+        items_deseados = [
+            (
+                str(pregunta.get("id_pregunta", "")).strip(),
+                int(pregunta.get("orden", 1)),
+            )
+            for pregunta in preguntas_ordenadas
+        ]
+
+        if activa_actual:
+            items_actuales = [
+                (item.id_pregunta, int(item.orden))
+                for item in sorted(
+                    activa_actual.items,
+                    key=lambda item: (int(item.orden), item.id_pregunta),
+                )
+            ]
+            if items_actuales == items_deseados:
+                return activa_actual
+
+        return self.crear_nueva_version(
+            cod_recurso=cod_recurso_normalizado,
+            cod_setor=cod_setor_normalizado,
+            preguntas=preguntas_ordenadas,
+        )
+
     def crear_nueva_version(
         self,
         cod_recurso: str,

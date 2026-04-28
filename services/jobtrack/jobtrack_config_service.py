@@ -6,6 +6,8 @@ from pathlib import Path
 
 from config.settings import SETTINGS
 
+JOBTRACK_INI_OFICIAL = Path(r"C:\JOBTRACK\jobtrack.ini")
+
 
 class JobtrackConfigService:
     def __init__(self, ini_path: str | Path | None = None) -> None:
@@ -28,11 +30,7 @@ class JobtrackConfigService:
 
     @staticmethod
     def _resolver_ini_path() -> Path:
-        ruta_datos = SETTINGS.paths.jobtrack_config_file
-        if ruta_datos.exists():
-            return ruta_datos
-
-        return SETTINGS.paths.bundled_config_dir / "jobtrack.ini"
+        return JOBTRACK_INI_OFICIAL
 
     def _load_parser(self) -> ConfigParser:
         if not self.ini_path.exists():

@@ -1,9 +1,0 @@
-{
-    "server": "SERVIDOR_SQL",
-    "database": "NOMBRE_BASE_DATOS",
-    "username": "USUARIO_SQL",
-    "password": "CAMBIAR_ESTA_CLAVE",
-    "driver": "ODBC Driver 18 for SQL Server",
-    "encrypt": "no",
-    "trust_server_certificate": "yes"
-}

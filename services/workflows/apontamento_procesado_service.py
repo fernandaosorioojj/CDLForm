@@ -9,6 +9,8 @@ from models.formulario import ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO
 
 
 class ApontamentoProcesadoService:
+    MENSAJE_SIN_PLANTILLA_ACTIVA = "No existe una plantilla activa de preguntas para "
+
     def __init__(
         self,
         apontamento_query_service: ApontamentoQueryService | None = None,
@@ -59,6 +61,10 @@ class ApontamentoProcesadoService:
         if valor is None:
             return ""
         return str(valor).strip()
+
+    @classmethod
+    def _es_error_sin_plantilla_activa(cls, exc: Exception) -> bool:
+        return cls.MENSAJE_SIN_PLANTILLA_ACTIVA in str(exc)
 
     def _formulario_puede_abrirse(self, formulario: dict[str, Any] | None) -> bool:
         if not formulario:
@@ -393,6 +399,7 @@ class ApontamentoProcesadoService:
         formularios_existentes: list[dict[str, Any]] = []
         omitidos_ya_procesados: list[dict[str, Any]] = []
         omitidos_sin_num_ordem: list[dict[str, Any]] = []
+        omitidos_sin_plantilla_activa: list[dict[str, Any]] = []
         errores: list[dict[str, Any]] = []
 
         for evento in eventos:
@@ -455,6 +462,18 @@ class ApontamentoProcesadoService:
                 )
 
             except Exception as exc:
+                if self._es_error_sin_plantilla_activa(exc):
+                    motivo = f"Omitido por la app: {str(exc)}"
+                    omitidos_sin_plantilla_activa.append(evento)
+                    try:
+                        self.apontamento_query_service.marcar_evento_op_pendiente_omitido(
+                            id_evento=id_evento,
+                            motivo=motivo,
+                        )
+                    except Exception:
+                        pass
+                    continue
+
                 error = {
                     "id_evento": id_evento,
                     "id_apontamento": evento.get("id_apontamento"),
@@ -481,6 +500,7 @@ class ApontamentoProcesadoService:
             "total_errores_formulario": len(errores),
             "total_omitidos_ya_procesados": len(omitidos_ya_procesados),
             "total_omitidos_sin_num_ordem": len(omitidos_sin_num_ordem),
+            "total_omitidos_sin_plantilla_activa": len(omitidos_sin_plantilla_activa),
             "formularios_creados": formularios_creados,
             "formularios_existentes": formularios_existentes,
             "errores": errores,

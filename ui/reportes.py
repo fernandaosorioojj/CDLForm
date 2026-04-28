@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
-from PyQt5.QtCore import Qt
+from datetime import datetime
+
+from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -14,6 +16,8 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QHeaderView,
     QFrame,
+    QDateEdit,
+    QCheckBox,
 )
 
 from models.formulario import Formulario
@@ -128,12 +132,31 @@ class ReportesView(QWidget):
         self.combo_estado_formulario.addItem("Completado", "completado")
         self.combo_estado_formulario.addItem("Cancelado", "cancelado")
 
+        self.check_fecha_desde = QCheckBox("Desde")
+        self.check_fecha_hasta = QCheckBox("Hasta")
+
+        self.input_fecha_desde = QDateEdit()
+        self.input_fecha_desde.setCalendarPopup(True)
+        self.input_fecha_desde.setDisplayFormat("dd/MM/yyyy")
+        self.input_fecha_desde.setDate(QDate.currentDate().addMonths(-1))
+        self.input_fecha_desde.setEnabled(False)
+
+        self.input_fecha_hasta = QDateEdit()
+        self.input_fecha_hasta.setCalendarPopup(True)
+        self.input_fecha_hasta.setDisplayFormat("dd/MM/yyyy")
+        self.input_fecha_hasta.setDate(QDate.currentDate())
+        self.input_fecha_hasta.setEnabled(False)
+
         filtros_fila_1.addWidget(self.input_identificador)
         filtros_fila_1.addWidget(self.input_operario)
         filtros_fila_1.addWidget(self.combo_cod_setor)
         filtros_fila_1.addWidget(self.combo_cod_recurso)
         filtros_fila_1.addWidget(self.combo_turno)
         filtros_fila_1.addWidget(self.combo_estado_formulario)
+        filtros_fila_1.addWidget(self.check_fecha_desde)
+        filtros_fila_1.addWidget(self.input_fecha_desde)
+        filtros_fila_1.addWidget(self.check_fecha_hasta)
+        filtros_fila_1.addWidget(self.input_fecha_hasta)
 
         layout_filtros.addLayout(filtros_fila_1, 1)
 
@@ -232,6 +255,10 @@ class ReportesView(QWidget):
         self.combo_cod_recurso.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
         self.combo_turno.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
         self.combo_estado_formulario.currentIndexChanged.connect(self.cargar_reporte_desde_inicio)
+        self.check_fecha_desde.toggled.connect(self._cambiar_uso_fecha_desde)
+        self.check_fecha_hasta.toggled.connect(self._cambiar_uso_fecha_hasta)
+        self.input_fecha_desde.dateChanged.connect(self.cargar_reporte_desde_inicio)
+        self.input_fecha_hasta.dateChanged.connect(self.cargar_reporte_desde_inicio)
 
     def _cargar_combo_con_todos(
         self,
@@ -269,6 +296,10 @@ class ReportesView(QWidget):
         self.combo_cod_recurso.setCurrentIndex(0)
         self.combo_turno.setCurrentIndex(0)
         self.combo_estado_formulario.setCurrentIndex(0)
+        self.check_fecha_desde.setChecked(False)
+        self.check_fecha_hasta.setChecked(False)
+        self.input_fecha_desde.setDate(QDate.currentDate().addMonths(-1))
+        self.input_fecha_hasta.setDate(QDate.currentDate())
 
         self.cargar_reporte_desde_inicio()
 
@@ -324,6 +355,16 @@ class ReportesView(QWidget):
         cod_recurso = str(self.combo_cod_recurso.currentData() or "").strip().lower()
         turno = str(self.combo_turno.currentData() or "").strip().lower()
         estado = str(self.combo_estado_formulario.currentData() or "").strip().lower()
+        fecha_desde = (
+            self.input_fecha_desde.date().toPyDate()
+            if self.check_fecha_desde.isChecked()
+            else None
+        )
+        fecha_hasta = (
+            self.input_fecha_hasta.date().toPyDate()
+            if self.check_fecha_hasta.isChecked()
+            else None
+        )
 
         filtrados: list[Formulario] = []
 
@@ -334,6 +375,7 @@ class ReportesView(QWidget):
             valor_cod_recurso = self._obtener_cod_recurso(formulario).lower()
             valor_turno = str(formulario.turno or "").strip().lower()
             valor_estado = (formulario.estado or "").strip().lower()
+            valor_fecha = self._coerce_fecha(formulario.fecha_formulario)
 
             if identificador and identificador not in valor_identificador:
                 continue
@@ -353,9 +395,56 @@ class ReportesView(QWidget):
             if estado and estado != valor_estado:
                 continue
 
+            if fecha_desde is not None:
+                if valor_fecha is None or valor_fecha.date() < fecha_desde:
+                    continue
+
+            if fecha_hasta is not None:
+                if valor_fecha is None or valor_fecha.date() > fecha_hasta:
+                    continue
+
             filtrados.append(formulario)
 
         return filtrados
+
+    def _cambiar_uso_fecha_desde(self, checked: bool) -> None:
+        self.input_fecha_desde.setEnabled(checked)
+        self.cargar_reporte_desde_inicio()
+
+    def _cambiar_uso_fecha_hasta(self, checked: bool) -> None:
+        self.input_fecha_hasta.setEnabled(checked)
+        self.cargar_reporte_desde_inicio()
+
+    def _coerce_fecha(self, valor) -> datetime | None:
+        texto = str(valor or "").strip()
+        if not texto:
+            return None
+
+        candidatos = [
+            texto,
+            texto.replace("Z", "+00:00"),
+            texto.replace(" ", "T"),
+        ]
+        for candidato in candidatos:
+            try:
+                return datetime.fromisoformat(candidato)
+            except ValueError:
+                continue
+
+        formatos = (
+            "%Y-%m-%d",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%dT%H:%M",
+        )
+        for formato in formatos:
+            try:
+                return datetime.strptime(texto, formato)
+            except ValueError:
+                continue
+
+        return None
 
     def _ordenar_formularios(self, formularios: list[Formulario]) -> None:
         formularios.sort(

@@ -644,7 +644,7 @@ Si la app no ve usuarios de gestion, revisar primero que se esta mirando la mism
 
 ### 8.5 Configuracion de estacion Jobtrack
 
-El archivo `config/jobtrack.ini` indica que estacion local representa este equipo.
+El archivo oficial de estacion es `config/jobtrack.ini` dentro de la carpeta de la aplicacion de cada computador.
 
 Ejemplo:
 
@@ -655,6 +655,12 @@ idioma=1
 ```
 
 Esta estacion se usa para resolver recursos/maquinas mediante SQL. El flujo automatico busca eventos pendientes solo para los `CodRecurso` asociados a esa estacion.
+
+Regla actual del codigo:
+
+1. si se define `CDLFORM_JOBTRACK_INI`, usa esa ruta
+2. si no, usa `config/jobtrack.ini`
+3. solo como respaldo tecnico usa la ruta local de datos del usuario
 
 Acciones manuales:
 

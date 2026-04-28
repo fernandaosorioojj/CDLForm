@@ -8,6 +8,7 @@ from core.enums import TipoPregunta
 from models.pregunta import Pregunta
 from repositories.pregunta_repository import PreguntaRepository
 from services.forms.plantilla_preguntas_service import PlantillaPreguntasService
+from services.jobtrack.catalogo_contexto_service import CatalogoContextoService
 from utils.id_generator import generate_id
 
 
@@ -16,9 +17,13 @@ class PreguntaService:
         self,
         repository: PreguntaRepository | None = None,
         plantilla_service: PlantillaPreguntasService | None = None,
+        catalogo_contexto_service: CatalogoContextoService | None = None,
     ) -> None:
         self.repository = repository or PreguntaRepository()
         self.plantilla_service = plantilla_service or PlantillaPreguntasService()
+        self.catalogo_contexto_service = (
+            catalogo_contexto_service or CatalogoContextoService()
+        )
 
     def listar_preguntas(self, solo_activas: bool = False) -> list[dict]:
         preguntas = self.repository.get_all()
@@ -156,26 +161,26 @@ class PreguntaService:
 
     def listar_preguntas_para_contexto(self, contexto: dict) -> list[dict]:
         contexto_normalizado = self._normalizar_contexto(contexto)
-        plantilla = self.plantilla_service.obtener_activa(
-            cod_recurso=contexto_normalizado.get("cod_recurso", ""),
-            cod_setor=contexto_normalizado.get("cod_setor", ""),
-        )
-
-        if not plantilla:
+        if not contexto_normalizado:
             return []
 
-        preguntas_por_id = {
-            pregunta.get("id_pregunta"): pregunta
+        preguntas = [
+            pregunta
             for pregunta in self.listar_preguntas(solo_activas=True)
-        }
-        resultado: list[dict] = []
-        for item in plantilla.items:
-            pregunta = preguntas_por_id.get(item.id_pregunta)
-            if not pregunta:
-                continue
-            resultado.append(pregunta)
+            if self._cumple_filtros(
+                contexto=contexto_normalizado,
+                filtros=pregunta.get("filtros_contexto", {}),
+            )
+        ]
 
-        return sorted(resultado, key=lambda x: x.get("orden", 0))
+        return sorted(
+            preguntas,
+            key=lambda x: (
+                x.get("orden", 0),
+                x.get("clave_pregunta", x.get("id_pregunta", "")),
+                x.get("version", 1),
+            ),
+        )
 
     def listar_preguntas_para_plantilla(self, id_plantilla: str) -> list[dict]:
         plantilla = self.plantilla_service.repository.obtener_por_id(id_plantilla)
@@ -194,6 +199,27 @@ class PreguntaService:
                 resultado.append(pregunta)
 
         return resultado
+
+    def asegurar_plantilla_para_contexto(
+        self,
+        cod_recurso: str,
+        cod_setor: str,
+    ):
+        contexto = self._normalizar_contexto(
+            {
+                "cod_recurso": cod_recurso,
+                "cod_setor": cod_setor,
+            }
+        )
+        if not contexto.get("cod_recurso") or not contexto.get("cod_setor"):
+            return None
+
+        preguntas = self.listar_preguntas_para_contexto(contexto)
+        return self.plantilla_service.asegurar_plantilla_contexto(
+            cod_recurso=contexto["cod_recurso"],
+            cod_setor=contexto["cod_setor"],
+            preguntas=preguntas,
+        )
 
     def _cumple_filtros(self, contexto: dict, filtros: dict) -> bool:
         if not filtros:
@@ -328,66 +354,111 @@ class PreguntaService:
         self,
         preguntas_afectadas: list[dict[str, Any]],
     ) -> None:
+        contextos_disponibles = self._obtener_contextos_disponibles()
         pares_contexto: set[tuple[str, str]] = set()
 
         for pregunta in preguntas_afectadas:
-            pares_contexto.update(self._pares_contexto_pregunta(pregunta))
+            pares_contexto.update(
+                self._contextos_plantilla_para_pregunta(
+                    pregunta,
+                    contextos_disponibles=contextos_disponibles,
+                )
+            )
 
         if not pares_contexto:
             return
 
-        preguntas_activas = self.listar_preguntas(solo_activas=True)
         for cod_recurso, cod_setor in pares_contexto:
-            preguntas_contexto = [
-                pregunta
-                for pregunta in preguntas_activas
-                if self._pregunta_pertenece_a_contexto_base(
-                    pregunta,
-                    cod_recurso=cod_recurso,
-                    cod_setor=cod_setor,
-                )
-            ]
-
-            self.plantilla_service.crear_nueva_version(
-                cod_recurso=cod_recurso,
-                cod_setor=cod_setor,
-                preguntas=sorted(
-                    preguntas_contexto,
-                    key=lambda pregunta: pregunta.get("orden", 0),
-                ),
+            preguntas_contexto = self.listar_preguntas_para_contexto(
+                {
+                    "cod_recurso": cod_recurso,
+                    "cod_setor": cod_setor,
+                }
             )
 
-    def _pares_contexto_pregunta(self, pregunta: dict[str, Any]) -> set[tuple[str, str]]:
+            self.plantilla_service.asegurar_plantilla_contexto(
+                cod_recurso=cod_recurso,
+                cod_setor=cod_setor,
+                preguntas=preguntas_contexto,
+            )
+
+    def _contextos_plantilla_para_pregunta(
+        self,
+        pregunta: dict[str, Any],
+        *,
+        contextos_disponibles: list[dict[str, str]],
+    ) -> set[tuple[str, str]]:
         filtros = pregunta.get("filtros_contexto", {})
         if not isinstance(filtros, dict):
             return set()
 
+        contextos_coincidentes = {
+            (
+                self._normalizar_valor(contexto.get("cod_recurso", "")),
+                self._normalizar_valor(contexto.get("cod_setor", "")),
+            )
+            for contexto in contextos_disponibles
+            if self._cumple_filtros(contexto, filtros)
+        }
+
+        if contextos_coincidentes:
+            return contextos_coincidentes
+
+        return self._expandir_contextos_desde_catalogos(filtros)
+
+    def _expandir_contextos_desde_catalogos(
+        self,
+        filtros: dict[str, Any],
+    ) -> set[tuple[str, str]]:
         cod_recursos = self._normalizar_lista_filtro(filtros.get("cod_recurso", []))
         cod_setores = self._normalizar_lista_filtro(filtros.get("cod_setor", []))
+
+        if not cod_recursos:
+            cod_recursos = [
+                self._normalizar_valor(valor)
+                for valor in self.catalogo_contexto_service.listar_cod_recursos()
+                if self._normalizar_valor(valor)
+            ]
+
+        if not cod_setores:
+            cod_setores = [
+                self._normalizar_valor(valor)
+                for valor in self.catalogo_contexto_service.listar_cod_setores()
+                if self._normalizar_valor(valor)
+            ]
 
         if not cod_recursos or not cod_setores:
             return set()
 
         return set(product(cod_recursos, cod_setores))
 
-    def _pregunta_pertenece_a_contexto_base(
-        self,
-        pregunta: dict[str, Any],
-        *,
-        cod_recurso: str,
-        cod_setor: str,
-    ) -> bool:
-        filtros = pregunta.get("filtros_contexto", {})
-        if not isinstance(filtros, dict):
-            return False
+    def _obtener_contextos_disponibles(self) -> list[dict[str, str]]:
+        contextos = self.catalogo_contexto_service.listar_contextos_recurso_setor()
+        if not contextos:
+            return []
 
-        cod_recursos = self._normalizar_lista_filtro(filtros.get("cod_recurso", []))
-        cod_setores = self._normalizar_lista_filtro(filtros.get("cod_setor", []))
+        resultado: list[dict[str, str]] = []
+        vistos: set[tuple[str, str]] = set()
 
-        return (
-            self._normalizar_valor(cod_recurso) in cod_recursos
-            and self._normalizar_valor(cod_setor) in cod_setores
-        )
+        for contexto in contextos:
+            cod_recurso = self._normalizar_valor(contexto.get("cod_recurso", ""))
+            cod_setor = self._normalizar_valor(contexto.get("cod_setor", ""))
+            if not cod_recurso or not cod_setor:
+                continue
+
+            clave = (cod_recurso, cod_setor)
+            if clave in vistos:
+                continue
+
+            vistos.add(clave)
+            resultado.append(
+                {
+                    "cod_recurso": cod_recurso,
+                    "cod_setor": cod_setor,
+                }
+            )
+
+        return resultado
 
     def _normalizar_lista_filtro(self, valores: Any) -> list[str]:
         if valores is None:

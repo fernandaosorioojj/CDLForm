@@ -533,6 +533,47 @@ class ApontamentoQueryService:
             limit=limit,
         )
 
+    def listar_contextos_recurso_setor_disponibles(
+        self,
+        limit: int = 5000,
+    ) -> list[dict[str, str]]:
+        limit_normalizado = self._normalizar_limit(limit)
+
+        expresion_recurso = "LTRIM(RTRIM(CAST([CodRecurso] AS VARCHAR(100))))"
+        expresion_setor = "LTRIM(RTRIM(CAST([CodSetor] AS VARCHAR(100))))"
+
+        sql = f"""
+        SELECT DISTINCT TOP ({limit_normalizado})
+            {expresion_recurso} AS CodRecurso,
+            {expresion_setor} AS CodSetor
+        FROM [dbo].[Apontamentos]
+        WHERE [CodRecurso] IS NOT NULL
+          AND {expresion_recurso} <> ''
+          AND [CodSetor] IS NOT NULL
+          AND {expresion_setor} <> ''
+        ORDER BY CodSetor, CodRecurso
+        """
+
+        with pyodbc.connect(build_connection_string()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+
+        contextos: list[dict[str, str]] = []
+        for row in rows:
+            cod_recurso = str(row[0] or "").strip()
+            cod_setor = str(row[1] or "").strip()
+            if not cod_recurso or not cod_setor:
+                continue
+            contextos.append(
+                {
+                    "cod_recurso": cod_recurso,
+                    "cod_setor": cod_setor,
+                }
+            )
+
+        return contextos
+
     def listar_turnos_disponibles(
         self,
         patron: str | None = None,

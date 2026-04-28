@@ -70,6 +70,27 @@ class CatalogoContextoService:
             "listar_turnos_disponibles"
         )
 
+    def listar_contextos_recurso_setor(self) -> list[dict[str, str]]:
+        if not self.usar_sql_catalogos:
+            return []
+
+        try:
+            query_service = self._obtener_apontamento_query_service()
+            resultado = query_service.listar_contextos_recurso_setor_disponibles()
+            self._ultimo_error_catalogo_sql = None
+            return [
+                {
+                    "cod_recurso": str(item.get("cod_recurso", "")).strip(),
+                    "cod_setor": str(item.get("cod_setor", "")).strip(),
+                }
+                for item in resultado
+                if str(item.get("cod_recurso", "")).strip()
+                and str(item.get("cod_setor", "")).strip()
+            ]
+        except Exception as exc:
+            self._ultimo_error_catalogo_sql = exc
+            return []
+
     def listar_tipos_trabajo(self) -> list[str]:
         return []
 
