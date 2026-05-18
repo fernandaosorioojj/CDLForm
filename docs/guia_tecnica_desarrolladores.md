@@ -1,6 +1,6 @@
-# Guia tecnica para desarrolladores CDLform
+﻿# Guia tecnica para desarrolladores CDLform
 
-Ultima revision: 2026-04-23
+Ultima revision: 2026-05-05
 
 Este documento describe como esta organizada la aplicacion, como viajan los datos por el flujo actual y que archivos son relevantes para mantenimiento. Esta escrito para que un desarrollador nuevo pueda modificar el sistema sin romper integraciones con SQL Server, Apontamentos o la UI PyQt.
 
@@ -18,7 +18,7 @@ Capas principales:
 - `ui/`: widgets y ventanas PyQt.
 - `presenters/`: coordinan validaciones y adaptan servicios a la UI.
 - `services/`: reglas de negocio, integracion de datos y flujos.
-- `repositories/`: persistencia SQL/JSON.
+- `repositories/`: persistencia SQL Server vigente; la ruta JSON queda como legado tecnico documentado.
 - `models/`: modelos de dominio serializables.
 - `integrations/` y `launcher/`: entrada automatica, procesamiento y apertura de formularios.
 - `database/`: scripts historicos/migraciones SQL.
@@ -100,7 +100,45 @@ Riesgos:
 - Si falta plantilla activa para `CodSetor` + `CodRecurso`, no se crea formulario.
 - Si el estado `en_progreso` no esta permitido por constraint SQL, `FormularioService` intenta compatibilidad temporal volviendo a `pendiente_operario`.
 
-### 2.3 Worker programado
+### 2.3 Flujo MQTT/watchdog operario
+
+Entrada central:
+
+```text
+runtime\mqtt_sql_watchdog.py
+```
+
+Entrada por estacion:
+
+```text
+runtime\mqtt_station_listener.py --initial-check --run-auto
+```
+
+Secuencia:
+
+```text
+eventos_op_pendientes
+  -> runtime\mqtt_sql_watchdog.py
+  -> Mosquitto
+  -> runtime\mqtt_station_listener.py
+  -> main.py --modo auto
+  -> FormularioOperarioView
+```
+
+Uso esperado:
+
+- El watchdog corre en una sola maquina central y consulta SQL con intervalo/cooldown controlado.
+- Mosquitto solo reparte avisos; no guarda la verdad del negocio.
+- Cada estacion mantiene un listener MQTT y ejecuta `main.py --modo auto` cuando recibe aviso.
+- `run_operario.bat` queda como fallback manual o programado con baja frecuencia, no como polling principal cada 5 minutos.
+
+Riesgos:
+
+- Si Mosquitto no escucha en red o el firewall bloquea TCP 1883, las estaciones no reciben avisos.
+- Si el watchdog no puede conectar a SQL, no publicara eventos aunque la app local siga funcionando manualmente.
+- Si una estacion estaba apagada, `--initial-check` y el fallback periodico recuperan pendientes persistidos en SQL.
+
+### 2.4 Worker tecnico de diagnostico
 
 Entrada:
 
@@ -108,26 +146,10 @@ Entrada:
 worker_main.py
 ```
 
-Secuencia:
-
-```text
-worker_main.py
-  -> EventProcessor
-  -> ApontamentoProcesadoService
-  -> SQL
-  -> imprime JSON de resultado
-```
-
 Uso esperado:
 
-- Ideal para tarea programada de Windows Task Scheduler.
-- Procesa/crea formularios, pero no abre UI.
-- El modo UI automatico es el que abre formularios al operario.
-
-Riesgos:
-
-- Si el usuario Windows de la tarea no tiene permiso sobre la carpeta `data`, puede fallar configuracion, logs o acceso operativo aunque SQL este bien.
-- El output JSON sirve para diagnostico; la tarea programada deberia guardar stdout/stderr si se quiere trazabilidad.
+- Herramienta tecnica para ejecutar el procesador desde consola y revisar JSON de resultado.
+- No es la pieza principal de despliegue de operario porque no administra el listener MQTT ni la apertura visible como flujo residente.
 
 ## 3. Estados del formulario
 
@@ -162,7 +184,12 @@ Riesgos:
 | --- | --- | --- |
 | `.gitignore` | Controla archivos excluidos del versionado. | Mantener fuera credenciales, caches y configs locales sensibles. |
 | `main.py` | Entrada principal de la app PyQt. Maneja modo `normal` y `auto`. | Cambios aqui afectan arranque completo. Validar que no bloquee `QApplication` ni rompa apertura automatica. |
-| `worker_main.py` | Entrada sin UI para tareas programadas. | Depende de SQL/configuracion del usuario que ejecuta la tarea. |
+| `requirements.txt` | Dependencias Python vigentes. | Incluye `paho-mqtt`; si falta, listener/watchdog MQTT no arrancan. |
+| `run_gestion.bat` | Lanzador de gestion. | Debe ejecutarse desde la carpeta del proyecto para resolver rutas relativas. |
+| `run_operario.bat` | Lanzador fallback/manual de modo auto. | Es respaldo operativo; no debe volver a ser polling principal cada 5 minutos. |
+| `run_mqtt_listener.bat` | Lanzador del listener por estacion. | Debe correr con usuario Windows que pueda abrir UI visible. |
+| `run_mqtt_watchdog.bat` | Lanzador del watchdog central. | Debe correr solo en maquina central/broker con acceso SQL. |
+| `worker_main.py` | Entrada tecnica de diagnostico sin UI. | No es el flujo principal de operario; usar para pruebas controladas. |
 
 ### `assets/images`
 
@@ -181,17 +208,18 @@ Riesgos:
 
 | Archivo | Relevancia | Riesgos / notas |
 | --- | --- | --- |
-| `admin_login.example.json` | Ejemplo legacy de credenciales admin. | No usar como fuente real de produccion. |
 | `admin_login.json` | Fallback legacy de login. | Puede ocultar falta de usuarios SQL. Revisar si se mantiene por continuidad. |
-| `gestion_login.example.json` | Ejemplo actual de credenciales gestion. | No debe contener password plano. |
 | `gestion_login.json` | Fallback actual de login. | Sensible; idealmente migrar a SQL y restringir acceso. |
-| `jobtrack.ini` | Configuracion local de estacion Jobtrack. | Si estacion no existe o no mapea recursos, no se crean formularios. |
+| `jobtrack.ini` | Fallback local forzado de estacion JobTrack. | No se lee por defecto; usar solo si `CDLFORM_JOBTRACK_INI` apunta a este archivo. |
 | `logging_config.py` | Configura logging rotativo. | Revisar permisos de escritura en directorio de logs. |
+| `mqtt.json` | Configuracion local de broker/listener MQTT. | No versionar credenciales ni IPs sensibles; usar plantilla en `docs/configuracion`. |
+| `mqtt_watchdog.json` | Configuracion local del watchdog SQL -> MQTT. | Controla intervalo, cooldown y limite; no debe versionarse. |
 | `settings.py` | Define rutas, entorno, timezone y paths de configuracion. | Cambios aqui afectan app congelada, desarrollo y el estandar `data` del despliegue. |
-| `sql_server.example.json` | Ejemplo de conexion SQL. | No poner credenciales reales. |
 | `sql_server.local.json` | Configuracion local SQL. | Sensible; si apunta a DB equivocada, toda la app opera en otro ambiente. |
 | `sql_server_config.py` | Construye connection string desde env/config. | Punto critico para errores ODBC, cifrado, permisos y ambiente. |
 | `__init__.py` | Paquete Python. | Sin logica. |
+
+Las plantillas de configuracion viven en `docs/configuracion/` para no mezclarlas con archivos reales de runtime.
 
 ### `core`
 
@@ -208,19 +236,26 @@ Riesgos:
 | --- | --- | --- |
 | `001_crear_tablas_formularios_operario.sql` | Script base de tablas de formularios. | Ejecutar en DB correcta; revisar constraints antes de reprocesar. |
 | `001b_agregar_foreign_keys_formularios_operario_dba.sql` | Ajustes de FK para DBA. | Requiere permisos; puede fallar si datos historicos no cumplen. |
-| `002_migrar_preguntas_actuales.sql` | Migracion de preguntas. | Historico, pero relevante para reconstruir ambientes. |
-| `003_migrar_plantillas_preguntas_actuales.sql` | Migracion de plantillas. | Necesario para entender versionado de plantillas. |
-| `004_migrar_formularios_operario_actuales.sql` | Migracion de formularios. | Riesgo de duplicados si se reejecuta sin idempotencia. |
-| `005_migrar_respuestas_formulario_actuales.sql` | Migracion de respuestas. | Alto riesgo: respuestas historicas y relaciones con preguntas. |
 | `006_permitir_estado_en_progreso_formularios_operario.sql` | Permite estado `en_progreso`. | Si falta, la app usa compatibilidad parcial. Ejecutar con DBA si constraint falla. |
 | `007_crear_usuarios_gestion.sql` | Crea/ajusta `usuarios_gestion`. | Debe ejecutarse en `MetricsBetaProductivo` u otra DB objetivo correcta. |
+
+Las migraciones de datos de prueba `002` a `005` fueron eliminadas porque no tienen valor para el flujo actual ni para planta.
 
 ### `integrations`
 
 | Archivo | Relevancia | Riesgos / notas |
 | --- | --- | --- |
 | `event_processor.py` | Fachada de procesamiento externo. Procesa exclusivamente la cola SQL productiva. | Si se reintroduce consulta directa a Apontamentos, debe quedar como emergencia controlada y no como fallback automatico. |
+| `mqtt_config.py` | Carga config MQTT y resuelve topicos por estacion. | `station_id=auto` depende de JobTrack; si falla estacion, no hay suscripcion valida. |
 | `__init__.py` | Paquete Python. | Sin logica. |
+
+### `runtime`
+
+| Archivo | Relevancia | Riesgos / notas |
+| --- | --- | --- |
+| `mqtt_station_listener.py` | Listener MQTT por estacion. | Mantiene proceso residente, escucha topico de la estacion y lanza `main.py --modo auto`. |
+| `mqtt_sql_watchdog.py` | Watchdog central SQL -> MQTT. | Consulta eventos pendientes y publica avisos; no marca eventos como procesados. |
+| `mqtt_publish_test.py` | Publicador manual de prueba. | Solo diagnostico del canal MQTT; no usar como integracion productiva. |
 
 ### `launcher`
 
@@ -256,11 +291,11 @@ Riesgos:
 
 | Archivo | Relevancia | Riesgos / notas |
 | --- | --- | --- |
-| `base_repository.py` | Repositorio JSON generico usado como fallback/test/local. | No usar para produccion si se espera SQL. |
-| `formulario_repository.py` | Persistencia de formularios en SQL o JSON. | Mapeo critico de columnas: operador/supervisor/plantilla/estado. |
+| `base_repository.py` | Repositorio JSON generico legado. | No participa del flujo actual; no usar para produccion. |
+| `formulario_repository.py` | Persistencia de formularios en SQL Server. | Mapeo critico de columnas: operador/supervisor/plantilla/estado. La ruta JSON interna es legacy. |
 | `plantilla_preguntas_repository.py` | Persistencia de plantillas/versiones. | Riesgo de activar multiples versiones si no se controla. |
-| `pregunta_repository.py` | Persistencia de preguntas. | Opciones suelen serializarse; validar formato JSON. |
-| `respuesta_repository.py` | Persistencia de respuestas. | Riesgo de duplicados si se guarda dos veces el mismo formulario. |
+| `pregunta_repository.py` | Persistencia SQL de preguntas y opciones. | `filtros_contexto_json` es una columna SQL; la ruta JSON de archivo es legacy. |
+| `respuesta_repository.py` | Persistencia SQL de respuestas. | Riesgo de duplicados si se guarda dos veces el mismo formulario. La ruta JSON interna es legacy. |
 | `usuario_gestion_repository.py` | Persistencia SQL de usuarios gestion. | Requiere permisos CREATE/SELECT/UPDATE en DB objetivo. |
 | `__init__.py` | Paquete Python. | Sin logica. |
 
@@ -346,7 +381,6 @@ Riesgos:
 | Archivo | Relevancia | Riesgos / notas |
 | --- | --- | --- |
 | `assets.py` | Resuelve rutas de imagenes. | Si cambia estructura assets, actualizar aqui. |
-| `datetime_utils.py` | Utilidades de fecha/timezone. | Revisar formatos SQL vs ISO. |
 | `id_generator.py` | Generacion de IDs. | Evitar colisiones con IDs generados por repositorios. |
 | `json_manager.py` | Lectura/escritura JSON. | Usado por fallback; puede sobrescribir si estructura cambia. |
 | `style_loader.py` | Carga QSS y reemplaza tokens de theme. | Si falta QSS, lo omite silenciosamente. |
@@ -469,6 +503,8 @@ El modelo unico recomendado para planta es este:
 ```text
 C:\CDLform\
   main.py
+  runtime\mqtt_station_listener.py
+  runtime\mqtt_sql_watchdog.py
   worker_main.py
   assets\
   config\
@@ -486,6 +522,8 @@ C:\CDLform\
   widgets\
   run_gestion.bat
   run_operario.bat
+  run_mqtt_listener.bat
+  run_mqtt_watchdog.bat
   logs\
 ```
 
@@ -493,9 +531,9 @@ Regla de distribucion:
 
 - El contenido de la aplicacion es igual para todos los computadores.
 - La configuracion SQL puede ser igual para todos si todas las estaciones apuntan al mismo ambiente.
-- El unico archivo que normalmente cambia por estacion es `config/jobtrack.ini`.
+- El unico archivo que normalmente cambia por estacion es `C:\JOBTRACK\jobtrack.ini` o la ruta definida por `CDLFORM_JOBTRACK_INI`.
 - Gestion se abre manualmente.
-- Operario corre por tarea programada en cada estacion.
+- Operario corre con listener MQTT por estacion; Task Scheduler queda como fallback.
 
 Archivos operativos estandar:
 
@@ -532,7 +570,7 @@ Hay dos superficies operativas:
 | Gestion | `python main.py --modo normal` | Abre login, dashboard, administracion, reportes, auditoria y usuarios. |
 | Operario automatico | `python main.py --modo auto` | Consulta la cola SQL de la estacion y abre el formulario si corresponde. |
 
-Adicionalmente existe `worker_main.py` como herramienta tecnica sin UI, pero no debe considerarse la pieza principal del despliegue de operario si la tarea programada debe revisar cola y abrir formulario.
+Adicionalmente existe `worker_main.py` como herramienta tecnica sin UI, pero no debe considerarse la pieza principal del despliegue de operario. El flujo principal recomendado es listener MQTT por estacion + watchdog central; `run_operario.bat` queda como fallback.
 
 Lo importante es que el usuario Windows que ejecute la app tenga:
 
@@ -565,6 +603,8 @@ La estructura objetivo para todas las estaciones debe ser:
 ```text
 C:\CDLform\
   main.py
+  runtime\mqtt_station_listener.py
+  runtime\mqtt_sql_watchdog.py
   worker_main.py
   assets\
   config\
@@ -582,6 +622,8 @@ C:\CDLform\
   widgets\
   run_gestion.bat
   run_operario.bat
+  run_mqtt_listener.bat
+  run_mqtt_watchdog.bat
   logs\
 ```
 
@@ -591,12 +633,15 @@ No usar Escritorio, Descargas ni carpetas sincronizadas como ubicacion oficial d
 
 ### 8.4 Configuracion SQL
 
-La conexion se arma en `config/sql_server_config.py` leyendo, en este orden:
+La conexion se arma en `config/sql_server_config.py`.
+
+Rutas de archivo consideradas:
 
 1. Variable `CDLFORM_SQL_CONFIG_PATH`, si existe.
-2. Archivo local en ruta de datos de la app.
+2. Archivo local en ruta de datos de la app (`%APPDATA%\CDLform\sql_server.local.json` por defecto, o `CDLFORM_DATA_DIR` si se definio).
 3. Archivo `config/sql_server.local.json` dentro del proyecto.
-4. Variables de entorno `CDLFORM_SQL_SERVER`, `CDLFORM_SQL_DATABASE`, etc.
+
+Para cada clave, las variables de entorno `CDLFORM_SQL_SERVER`, `CDLFORM_SQL_DATABASE`, `CDLFORM_SQL_USERNAME`, etc. tienen prioridad sobre el valor leido desde archivo.
 
 Archivo esperado:
 
@@ -644,7 +689,7 @@ Si la app no ve usuarios de gestion, revisar primero que se esta mirando la mism
 
 ### 8.5 Configuracion de estacion Jobtrack
 
-El archivo oficial de estacion es `config/jobtrack.ini` dentro de la carpeta de la aplicacion de cada computador.
+El archivo oficial de estacion es `C:\JOBTRACK\jobtrack.ini` en cada computador.
 
 Ejemplo:
 
@@ -658,9 +703,11 @@ Esta estacion se usa para resolver recursos/maquinas mediante SQL. El flujo auto
 
 Regla actual del codigo:
 
-1. si se define `CDLFORM_JOBTRACK_INI`, usa esa ruta
-2. si no, usa `config/jobtrack.ini`
-3. solo como respaldo tecnico usa la ruta local de datos del usuario
+1. si se instancia `JobtrackConfigService(ini_path=...)`, usa esa ruta explicita
+2. si se define `CDLFORM_JOBTRACK_INI`, usa esa ruta
+3. si no, usa `C:\JOBTRACK\jobtrack.ini`
+
+`config/jobtrack.ini` queda solo como plantilla local/fallback operativo si se fuerza mediante `CDLFORM_JOBTRACK_INI`. No participa por defecto en el flujo actual.
 
 Acciones manuales:
 
@@ -682,16 +729,12 @@ Orden conceptual:
 
 1. `001_crear_tablas_formularios_operario.sql`
 2. `001b_agregar_foreign_keys_formularios_operario_dba.sql`
-3. `002_migrar_preguntas_actuales.sql`
-4. `003_migrar_plantillas_preguntas_actuales.sql`
-5. `004_migrar_formularios_operario_actuales.sql`
-6. `005_migrar_respuestas_formulario_actuales.sql`
-7. `006_permitir_estado_en_progreso_formularios_operario.sql`
-8. `007_crear_usuarios_gestion.sql`
+3. `006_permitir_estado_en_progreso_formularios_operario.sql`
+4. `007_crear_usuarios_gestion.sql`
 
 Recomendacion:
 
-- En ambiente ya cargado, no repetir migraciones historicas sin revisar idempotencia.
+- No ejecutar scripts historicos o de prueba que ya no esten en `database/`.
 - Para la administracion de usuarios, si la tabla no existe o falta rol, ejecutar el `007`.
 - Para estado `en_progreso`, ejecutar el `006` si SQL rechaza ese estado.
 
@@ -737,75 +780,57 @@ Si hay varias versiones de Python instaladas, usar ruta absoluta:
 C:\Users\<usuario>\AppData\Local\Programs\Python\Python314\python.exe C:\CDLform\main.py --modo normal
 ```
 
-Para Task Scheduler, el estandar recomendado es apuntar a `run_operario.bat`.
+Para estaciones de operario, el estandar recomendado es iniciar `run_mqtt_listener.bat`. `run_operario.bat` se mantiene como respaldo/manual.
 
-### 8.9 Task Scheduler: para que se usa
+### 8.9 MQTT/watchdog: para que se usa
 
-Task Scheduler deberia usarse en cada estacion de operario para ejecutar periodicamente `main.py --modo auto`, por ejemplo cada 5 minutos. Su objetivo es revisar la cola SQL de la estacion y abrir el formulario cuando exista uno pendiente.
+El flujo principal evita que cada estacion consulte SQL periodicamente. Un watchdog central consulta `eventos_op_pendientes`, publica avisos en Mosquitto y cada estacion reacciona ejecutando `main.py --modo auto`.
 
 Importante:
 
-- La tarea programada de operario si puede abrir pantalla cuando encuentre un formulario pendiente.
-- No hace falta separar conceptualmente "worker" y "operario" si la estacion debe consultar cola y desplegar el formulario.
+- Mosquitto es solo transporte de avisos; SQL Server sigue siendo la fuente de verdad.
+- `runtime\mqtt_sql_watchdog.py` corre en una maquina central con acceso SQL y al broker.
+- `runtime\mqtt_station_listener.py` corre en cada estacion y debe iniciarse con `--initial-check --run-auto`.
+- `run_operario.bat` queda como fallback manual o tarea programada lenta, por ejemplo cada 30 o 60 minutos.
 - `worker_main.py` queda como herramienta tecnica o diagnostico.
 
-Configuracion recomendada:
+Configuracion recomendada para listener por estacion:
 
 | Campo | Valor sugerido |
 | --- | --- |
-| Name | `CDLform Operario Auto` |
-| Security options | Usuario Windows con permisos SQL/config local |
-| Run whether user is logged on or not | No recomendado si la tarea debe abrir UI en pantalla |
-| Run with highest privileges | Activar si politicas locales lo requieren |
-| Trigger | Daily, repetir cada 5 minutos indefinidamente |
+| Name | `CDLform MQTT Listener` |
+| Security options | Usuario Windows que usa la estacion y puede abrir UI |
+| Run whether user is logged on or not | No recomendado si debe abrir UI visible |
+| Trigger | At log on / al iniciar sesion del usuario |
 | Action | Start a program |
-| Program/script | `C:\CDLform\run_operario.bat` |
+| Program/script | `C:\CDLform\run_mqtt_listener.bat` |
 | Add arguments | Vacio |
 | Start in | `C:\CDLform` |
 
-Ejemplo de Action:
+Configuracion recomendada para watchdog central:
 
-```text
-Program/script:
-`C:\CDLform\run_operario.bat`
+| Campo | Valor sugerido |
+| --- | --- |
+| Name | `CDLform MQTT Watchdog` |
+| Ubicacion | Maquina central/broker o servidor con acceso SQL |
+| Action | Start a program |
+| Program/script | `C:\CDLform\run_mqtt_watchdog.bat` |
+| Start in | `C:\CDLform` |
+| Config | `config\mqtt_watchdog.json` |
 
-Add arguments:
- 
+### 8.10 Task Scheduler como respaldo
 
-Start in:
-C:\CDLform
-```
+Task Scheduler ya no debe ser el mecanismo principal de polling cada 5 minutos. Si se usa, debe ser una red de seguridad para recuperar pendientes ante caidas de MQTT, estaciones apagadas o reinicios.
 
-### 8.10 Task Scheduler paso a paso
+Configuracion de respaldo sugerida:
 
-1. Abrir `Task Scheduler`.
-2. Click en `Create Task...`.
-3. Pestaña `General`:
-   - Name: `CDLform Operario Auto`.
-   - Seleccionar usuario correcto.
-   - Preferir `Run only when user is logged on` si la tarea debe abrir formularios visibles.
-   - Marcar `Run with highest privileges` si corresponde.
-4. Pestaña `Triggers`:
-   - `New...`
-   - Begin the task: `On a schedule`.
-   - Settings: `Daily`.
-   - Advanced settings: `Repeat task every: 5 minutes`.
-   - For a duration of: `Indefinitely`.
-   - Enabled: marcado.
-5. Pestaña `Actions`:
-   - `New...`
-   - Action: `Start a program`.
-   - Program/script: `C:\CDLform\run_operario.bat`.
-   - Add arguments: vacio.
-   - Start in: `C:\CDLform`.
-6. Pestaña `Conditions`:
-   - Desmarcar opciones de energia que impidan correr si no aplica.
-7. Pestaña `Settings`:
-   - Permitir ejecucion bajo demanda.
-   - Si ya esta corriendo: elegir `Do not start a new instance` para evitar procesos duplicados.
-8. Guardar.
-9. Click derecho sobre la tarea -> `Run`.
-10. Revisar `Last Run Result`.
+| Campo | Valor sugerido |
+| --- | --- |
+| Name | `CDLform Operario Fallback` |
+| Trigger | Daily, repetir cada 30 o 60 minutos |
+| Program/script | `C:\CDLform\run_operario.bat` |
+| Start in | `C:\CDLform` |
+| Setting | `Do not start a new instance` |
 
 Valores comunes de `Last Run Result`:
 
@@ -840,7 +865,7 @@ Si falla:
 - Error de driver: revisar ODBC instalado.
 - Error de login: revisar usuario/clave SQL.
 - Error de permisos: pedir grant al DBA.
-- Sin recursos: revisar `config/jobtrack.ini` y `jbt_EstacaoXMaquinas`.
+- Sin recursos: revisar `C:\JOBTRACK\jobtrack.ini` o `CDLFORM_JOBTRACK_INI`, y `jbt_EstacaoXMaquinas`.
 - Sin plantilla: crear/activar plantilla para `CodSetor` + `CodRecurso`.
 
 ### 8.12 Validar modo automatico con UI
@@ -896,7 +921,7 @@ python -c "from services.workflows.apontamento_procesado_service import Apontame
 
 Antes de usarlo:
 
-1. Confirmar estacion en `config/jobtrack.ini`.
+1. Confirmar estacion en `C:\JOBTRACK\jobtrack.ini` o en la ruta definida por `CDLFORM_JOBTRACK_INI`.
 2. Confirmar recursos asociados en `[dbo].[jbt_EstacaoXMaquinas]`.
 3. Confirmar que la cola no esta funcionando o que la recuperacion se justifica.
 4. Confirmar que existen plantillas activas para los contextos detectados.
@@ -928,7 +953,7 @@ Proceso recomendado para actualizar una estacion:
 2. Deshabilitar temporalmente tarea programada si se reemplazaran archivos.
 3. Respaldar configuraciones locales:
    - `config/sql_server.local.json`
-   - `config/jobtrack.ini`
+   - `C:\JOBTRACK\jobtrack.ini` o la ruta definida por `CDLFORM_JOBTRACK_INI`
    - JSON de login fallback si aun se usa.
 4. Reemplazar carpeta de codigo o copiar nuevos archivos.
 5. Restaurar/verificar configs locales.
@@ -941,7 +966,7 @@ python -m compileall -q .
 
 8. Probar `main.py --modo normal`.
 9. Probar `main.py --modo auto`.
-10. Habilitar nuevamente Task Scheduler.
+10. Habilitar nuevamente listener MQTT/watchdog y, si aplica, Task Scheduler de fallback.
 
 Si hay cambios de base de datos, coordinar ventana con DBA. No actualizar codigo que espera columnas nuevas antes de que la DB las tenga.
 
@@ -949,7 +974,7 @@ Si hay cambios de base de datos, coordinar ventana con DBA. No actualizar codigo
 
 En una instalacion bien estandarizada, esto es lo unico que deberia revisarse por computador:
 
-1. `config/jobtrack.ini`
+1. `C:\JOBTRACK\jobtrack.ini` o la ruta definida por `CDLFORM_JOBTRACK_INI`
 2. usuario Windows que ejecuta la tarea
 3. acceso a SQL/ODBC
 
@@ -958,8 +983,10 @@ Y esto deberia mantenerse igual para toda la planta:
 1. estructura `C:\CDLform`
 2. codigo fuente
 3. dependencias Python
-4. `run_operario.bat`
-5. nombre y frecuencia de la tarea programada
+4. `run_mqtt_listener.bat` por estacion
+5. `run_mqtt_watchdog.bat` en maquina central
+6. `run_operario.bat` solo como fallback
+7. nombre/frecuencia de la tarea de respaldo si se mantiene
 ### 8.17 Que queda pendiente para una distribucion mas robusta
 
 Mejoras recomendadas:
@@ -987,7 +1014,9 @@ Orden recomendado para retomar el trabajo:
    - formato del log
 3. Separar formalmente gestion vs operario:
    - gestion solo manual
-   - operario con tarea programada por estacion
+   - operario con listener MQTT por estacion
+   - watchdog MQTT central
+   - Task Scheduler solo como fallback
    - `worker_main.py` solo como apoyo tecnico
 4. Probar un caso real end-to-end con evento en cola:
    - detectar evento real

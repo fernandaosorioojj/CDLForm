@@ -1,7 +1,8 @@
-QDialog#detallePlantillaPreguntasView {
+﻿QDialog#detallePlantillaPreguntasView {
     background-color: $bg_app;
 }
 
 QDialog#detallePlantillaPreguntasView QTableWidget {
     min-height: 420px;
 }
+

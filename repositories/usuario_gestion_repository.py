@@ -1,22 +1,31 @@
+"""Acceso a datos SQL Server para entidades del dominio CDLform.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Any
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 
 
+# Bloque CDLform: clase UsuarioGestionRepository; agrupa estado y comportamiento de esta parte del flujo.
 class UsuarioGestionRepository:
+    # Bloque CDLform: funcion/metodo _connect; encapsula una operacion del flujo del modulo.
     def _connect(self) -> pyodbc.Connection:
-        return pyodbc.connect(build_connection_string())
+        return get_sql_connection()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _rows_to_dicts(
         cursor: pyodbc.Cursor,
@@ -25,6 +34,7 @@ class UsuarioGestionRepository:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo obtener_usuario_activo; encapsula una operacion del flujo del modulo.
     def obtener_usuario_activo(self, usuario: str) -> dict[str, str] | None:
         self.ensure_schema()
         usuario_normalizado = self._normalizar_texto(usuario)
@@ -62,6 +72,7 @@ class UsuarioGestionRepository:
             "rol": rol,
         }
 
+    # Bloque CDLform: funcion/metodo ensure_schema; encapsula una operacion del flujo del modulo.
     def ensure_schema(self) -> None:
         sql = """
         IF OBJECT_ID(N'[dbo].[usuarios_gestion]', N'U') IS NULL
@@ -93,6 +104,7 @@ class UsuarioGestionRepository:
             cursor.execute(sql)
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo listar_usuarios; encapsula una operacion del flujo del modulo.
     def listar_usuarios(self) -> list[dict[str, Any]]:
         self.ensure_schema()
         sql = """
@@ -112,6 +124,7 @@ class UsuarioGestionRepository:
             cursor.execute(sql)
             return self._rows_to_dicts(cursor, cursor.fetchall())
 
+    # Bloque CDLform: funcion/metodo guardar_usuario; encapsula una operacion del flujo del modulo.
     def guardar_usuario(
         self,
         usuario: str,
@@ -162,6 +175,7 @@ class UsuarioGestionRepository:
             )
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo cambiar_password; encapsula una operacion del flujo del modulo.
     def cambiar_password(self, usuario: str, password_hash: str) -> None:
         self.ensure_schema()
         usuario_normalizado = self._normalizar_texto(usuario)
@@ -186,6 +200,7 @@ class UsuarioGestionRepository:
                 raise ValueError(f"No existe el usuario {usuario_normalizado}.")
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo actualizar_activo; encapsula una operacion del flujo del modulo.
     def actualizar_activo(self, usuario: str, activo: bool) -> None:
         self.ensure_schema()
         usuario_normalizado = self._normalizar_texto(usuario)
@@ -207,6 +222,7 @@ class UsuarioGestionRepository:
                 raise ValueError(f"No existe el usuario {usuario_normalizado}.")
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo _normalizar_rol; encapsula una operacion del flujo del modulo.
     @classmethod
     def _normalizar_rol(cls, valor: Any) -> str:
         rol = cls._normalizar_texto(valor).lower()
@@ -214,6 +230,7 @@ class UsuarioGestionRepository:
             return rol
         return "gestion"
 
+    # Bloque CDLform: funcion/metodo actualizar_rol; encapsula una operacion del flujo del modulo.
     def actualizar_rol(self, usuario: str, rol: str) -> None:
         self.ensure_schema()
         usuario_normalizado = self._normalizar_texto(usuario)

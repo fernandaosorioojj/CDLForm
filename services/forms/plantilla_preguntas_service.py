@@ -1,3 +1,8 @@
+"""Servicios de negocio para formularios, preguntas, plantillas y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,23 +12,28 @@ from models.plantilla_preguntas import PlantillaPreguntaItem, PlantillaPreguntas
 from repositories.plantilla_preguntas_repository import PlantillaPreguntasRepository
 
 
+# Bloque CDLform: clase PlantillaPreguntasService; agrupa estado y comportamiento de esta parte del flujo.
 class PlantillaPreguntasService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         repository: PlantillaPreguntasRepository | None = None,
     ) -> None:
         self.repository = repository or PlantillaPreguntasRepository()
 
+    # Bloque CDLform: funcion/metodo normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo normalizar_contexto; encapsula una operacion del flujo del modulo.
     @classmethod
     def normalizar_contexto(cls, valor: Any) -> str:
         return cls.normalizar_texto(valor).upper()
 
+    # Bloque CDLform: funcion/metodo obtener_activa; encapsula una operacion del flujo del modulo.
     def obtener_activa(
         self,
         cod_recurso: str,
@@ -40,6 +50,7 @@ class PlantillaPreguntasService:
             cod_setor=cod_setor_normalizado,
         )
 
+    # Bloque CDLform: funcion/metodo asegurar_plantilla_contexto; encapsula una operacion del flujo del modulo.
     def asegurar_plantilla_contexto(
         self,
         cod_recurso: str,
@@ -98,6 +109,7 @@ class PlantillaPreguntasService:
             preguntas=preguntas_ordenadas,
         )
 
+    # Bloque CDLform: funcion/metodo crear_nueva_version; encapsula una operacion del flujo del modulo.
     def crear_nueva_version(
         self,
         cod_recurso: str,

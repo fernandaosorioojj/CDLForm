@@ -1,10 +1,10 @@
-QWidget#usuariosGestionView {
-    background-color: #D1CDC2;
+﻿QWidget#usuariosGestionView {
+    background-color: #FFFFFF;
 }
 
 QWidget#usuariosGestionView QFrame#usuariosTopPanel {
-    background-color: #171717;
-    border: 1px solid rgba(34, 34, 34, 220);
+    background-color: #05095C;
+    border: 1px solid rgba(5, 9, 92, 220);
     border-radius: 18px;
 }
 
@@ -14,59 +14,60 @@ QWidget#usuariosGestionView QFrame#usuariosHeader {
 }
 
 QWidget#usuariosGestionView QFrame#usuariosHeader QLabel[role="title"] {
-    color: #f7f2ea;
+    color: #FFFFFF;
     font-size: 30px;
 }
 
 QWidget#usuariosGestionView QFrame#usuariosHeader QLabel[role="subtitle"] {
-    color: rgba(247, 242, 234, 0.72);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 15px;
 }
 
 QWidget#usuariosGestionView QFrame#usuariosHeader QLabel[role="eyebrow"] {
-    color: rgba(247, 242, 234, 0.56);
+    color: rgba(255, 255, 255, 0.56);
 }
 
 QWidget#usuariosGestionView QFrame[card="true"] {
     background-color: rgba(255, 255, 255, 248);
-    border: 1px solid rgba(220, 212, 201, 220);
+    border: 1px solid rgba(154, 179, 230, 220);
     border-radius: 12px;
 }
 
 QWidget#usuariosGestionView QLabel[role="section"] {
-    color: #2d5365;
+    color: #05095C;
     font-size: 18px;
     font-weight: 800;
 }
 
 QWidget#usuariosGestionView QLabel[role="subtitle"] {
-    color: #617983;
+    color: #8F8F8F;
     font-size: 13px;
 }
 
 QWidget#usuariosGestionView QPushButton {
-    background-color: #171717;
-    color: #f7f2ea;
-    border: 1px solid #171717;
+    background-color: #05095C;
+    color: #FFFFFF;
+    border: 1px solid #05095C;
 }
 
 QWidget#usuariosGestionView QPushButton:hover {
-    background-color: #2a2a2a;
-    border: 1px solid #2a2a2a;
+    background-color: #05095C;
+    border: 1px solid #05095C;
 }
 
 QWidget#usuariosGestionView QPushButton[variant="secondary"] {
-    background-color: #efebe4;
-    color: #495d70;
-    border: 1px solid rgba(215, 205, 192, 0.95);
+    background-color: #9AB3E6;
+    color: #05095C;
+    border: 1px solid rgba(154, 179, 230, 0.95);
 }
 
 QWidget#usuariosGestionView QPushButton[variant="secondary"]:hover {
-    background-color: #f5f1eb;
+    background-color: #FFFFFF;
 }
 
 QWidget#usuariosGestionView QTableWidget {
-    background-color: #f7f2ea;
-    border: 1px solid rgba(220, 212, 201, 220);
+    background-color: #FFFFFF;
+    border: 1px solid rgba(154, 179, 230, 220);
     border-radius: 8px;
 }
+

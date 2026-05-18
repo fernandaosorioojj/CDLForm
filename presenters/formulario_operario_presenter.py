@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Capa presenter que conecta vistas PyQt con servicios de negocio.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -13,7 +18,9 @@ from services.forms.pregunta_service import PreguntaService
 from services.forms.respuesta_service import RespuestaService
 
 
+# Bloque CDLform: clase FormularioOperarioPresenter; agrupa estado y comportamiento de esta parte del flujo.
 class FormularioOperarioPresenter:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario_service: FormularioService | None = None,
@@ -24,12 +31,14 @@ class FormularioOperarioPresenter:
         self.pregunta_service = pregunta_service or PreguntaService()
         self.respuesta_service = respuesta_service or RespuestaService()
 
+    # Bloque CDLform: funcion/metodo normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo resolver_formulario_inicial; encapsula una operacion del flujo del modulo.
     def resolver_formulario_inicial(
         self,
         formulario: Formulario | None,
@@ -117,6 +126,7 @@ class FormularioOperarioPresenter:
 
         return self.formulario_service.obtener_siguiente_formulario_pendiente_operario()
 
+    # Bloque CDLform: funcion/metodo obtener_operario_inicial; encapsula una operacion del flujo del modulo.
     def obtener_operario_inicial(
         self,
         formulario: Formulario | None,
@@ -126,6 +136,7 @@ class FormularioOperarioPresenter:
             operario or (formulario.operario if formulario else "")
         )
 
+    # Bloque CDLform: funcion/metodo preparar_formulario; encapsula una operacion del flujo del modulo.
     def preparar_formulario(
         self,
         formulario: Formulario | None,
@@ -165,6 +176,7 @@ class FormularioOperarioPresenter:
 
         return formulario
 
+    # Bloque CDLform: funcion/metodo construir_contexto_preguntas; encapsula una operacion del flujo del modulo.
     def construir_contexto_preguntas(
         self,
         formulario: Formulario | None,
@@ -188,6 +200,7 @@ class FormularioOperarioPresenter:
             if valor not in (None, "")
         }
 
+    # Bloque CDLform: funcion/metodo obtener_preguntas_para_formulario; encapsula una operacion del flujo del modulo.
     def obtener_preguntas_para_formulario(
         self,
         formulario: Formulario | None,
@@ -216,6 +229,7 @@ class FormularioOperarioPresenter:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo obtener_opciones_pregunta; encapsula una operacion del flujo del modulo.
     def obtener_opciones_pregunta(
         self,
         pregunta: dict[str, Any],
@@ -271,6 +285,7 @@ class FormularioOperarioPresenter:
 
         return opciones
 
+    # Bloque CDLform: funcion/metodo pregunta_es_obligatoria; encapsula una operacion del flujo del modulo.
     def pregunta_es_obligatoria(self, pregunta: dict[str, Any]) -> bool:
         return bool(
             pregunta.get("obligatoria", False)
@@ -278,6 +293,7 @@ class FormularioOperarioPresenter:
             or pregunta.get("required", False)
         )
 
+    # Bloque CDLform: funcion/metodo validar_respuestas; encapsula una operacion del flujo del modulo.
     def validar_respuestas(
         self,
         respuestas_por_control: list[dict[str, Any]],
@@ -302,6 +318,7 @@ class FormularioOperarioPresenter:
 
         return True, ""
 
+    # Bloque CDLform: funcion/metodo guardar_formulario; encapsula una operacion del flujo del modulo.
     def guardar_formulario(
         self,
         formulario: Formulario,

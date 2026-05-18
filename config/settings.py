@@ -1,3 +1,8 @@
+"""Configuracion compartida de CDLform; centraliza rutas, logging y conexion a servicios externos.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import os
@@ -6,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+# Bloque CDLform: clase AppPaths; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class AppPaths:
     package_dir: Path
@@ -21,6 +27,7 @@ class AppPaths:
     app_log_file: Path
 
 
+# Bloque CDLform: clase AppSettings; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class AppSettings:
     app_name: str
@@ -33,6 +40,7 @@ class AppSettings:
     paths: AppPaths
 
 
+# Bloque CDLform: funcion/metodo _resolve_package_dir; encapsula una operacion del flujo del modulo.
 def _resolve_package_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
@@ -40,6 +48,7 @@ def _resolve_package_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+# Bloque CDLform: funcion/metodo _resolve_data_dir; encapsula una operacion del flujo del modulo.
 def _resolve_data_dir(app_name: str) -> Path:
     override = os.getenv("CDLFORM_DATA_DIR", "").strip()
     if override:
@@ -52,6 +61,7 @@ def _resolve_data_dir(app_name: str) -> Path:
     return (_resolve_package_dir() / ".local").resolve()
 
 
+# Bloque CDLform: funcion/metodo _build_paths; encapsula una operacion del flujo del modulo.
 def _build_paths() -> AppPaths:
     app_name = "CDLform"
     package_dir = _resolve_package_dir()
@@ -74,6 +84,7 @@ def _build_paths() -> AppPaths:
     )
 
 
+# Bloque CDLform: funcion/metodo _build_settings; encapsula una operacion del flujo del modulo.
 def _build_settings() -> AppSettings:
     environment = os.getenv("CDLFORM_ENV", "development").strip().lower() or "development"
     log_level = os.getenv("CDLFORM_LOG_LEVEL", "INFO").strip().upper() or "INFO"

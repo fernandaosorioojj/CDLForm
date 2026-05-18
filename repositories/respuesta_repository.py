@@ -1,3 +1,8 @@
+"""Acceso a datos SQL Server para entidades del dominio CDLform.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,28 +11,41 @@ from typing import Any
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 from models.respuesta import Respuesta
 from repositories.base_repository import BaseRepository
 
 
+# FLUJO ACTUAL:
+# Sin file_path, este repositorio usa SQL Server para respuestas de formularios.
+#
+# LEGACY:
+# Si se instancia manualmente con file_path, usa JSON. Esa ruta no es parte
+# del flujo actual de envio/cierre de formularios.
+# Bloque CDLform: clase RespuestaRepository; agrupa estado y comportamiento de esta parte del flujo.
 class RespuestaRepository:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, file_path: Path | None = None) -> None:
         self.file_path = Path(file_path) if file_path else None
         self._json_repository = BaseRepository(self.file_path) if self.file_path else None
 
+    # Bloque CDLform: funcion/metodo _usar_json; encapsula una operacion del flujo del modulo.
     def _usar_json(self) -> bool:
+        # Ruta legacy: solo se activa si alguien entrega file_path explicitamente.
         return self._json_repository is not None
 
+    # Bloque CDLform: funcion/metodo _connect; encapsula una operacion del flujo del modulo.
     def _connect(self) -> pyodbc.Connection:
-        return pyodbc.connect(build_connection_string())
+        return get_sql_connection()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _serializar_fecha; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_fecha(valor: Any) -> str:
         if valor is None:
@@ -36,6 +54,7 @@ class RespuestaRepository:
             return valor.isoformat(timespec="seconds")
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _fecha_sql; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _fecha_sql(valor: Any) -> Any:
         texto = str(valor or "").strip()
@@ -43,12 +62,14 @@ class RespuestaRepository:
             return None
         return texto.replace("T", " ")
 
+    # Bloque CDLform: funcion/metodo _numero_decimal; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _numero_decimal(valor: Any) -> Any:
         if valor is None or str(valor).strip() == "":
             return None
         return valor
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _rows_to_dicts(
         cursor: pyodbc.Cursor,
@@ -57,9 +78,11 @@ class RespuestaRepository:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo _from_dict; encapsula una operacion del flujo del modulo.
     def _from_dict(self, data: dict) -> Respuesta:
         return Respuesta.from_dict(data)
 
+    # Bloque CDLform: funcion/metodo _from_row; encapsula una operacion del flujo del modulo.
     def _from_row(self, row: dict[str, Any]) -> Respuesta:
         numero = row.get("respuesta_numero")
         if numero is not None:
@@ -84,9 +107,11 @@ class RespuestaRepository:
             fecha_creacion=self._serializar_fecha(row.get("fecha_creacion")),
         )
 
+    # Bloque CDLform: funcion/metodo _get_entity_id; encapsula una operacion del flujo del modulo.
     def _get_entity_id(self, entity: Respuesta) -> str:
         return entity.id_respuesta
 
+    # Bloque CDLform: funcion/metodo list_all; encapsula una operacion del flujo del modulo.
     def list_all(self) -> list[Respuesta]:
         if self._usar_json():
             registros = self._json_repository.get_all()
@@ -111,6 +136,7 @@ class RespuestaRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return [self._from_row(row) for row in rows]
 
+    # Bloque CDLform: funcion/metodo get_by_id; encapsula una operacion del flujo del modulo.
     def get_by_id(self, id_respuesta: str) -> Respuesta | None:
         id_normalizado = self._normalizar_texto(id_respuesta)
         if not id_normalizado:
@@ -141,6 +167,7 @@ class RespuestaRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._from_row(rows[0]) if rows else None
 
+    # Bloque CDLform: funcion/metodo add_respuesta; encapsula una operacion del flujo del modulo.
     def add_respuesta(self, respuesta: Respuesta) -> Respuesta:
         if self._usar_json():
             self._json_repository.add(respuesta.to_dict())
@@ -176,6 +203,7 @@ class RespuestaRepository:
             conn.commit()
             return respuesta
 
+    # Bloque CDLform: funcion/metodo update; encapsula una operacion del flujo del modulo.
     def update(self, respuesta: Respuesta) -> Respuesta:
         if self._usar_json():
             self._json_repository.update_by_id(
@@ -213,6 +241,7 @@ class RespuestaRepository:
             conn.commit()
             return respuesta
 
+    # Bloque CDLform: funcion/metodo delete_by_formulario; encapsula una operacion del flujo del modulo.
     def delete_by_formulario(self, id_formulario: str) -> int:
         id_normalizado = self._normalizar_texto(id_formulario)
         if not id_normalizado:
@@ -245,6 +274,7 @@ class RespuestaRepository:
             conn.commit()
             return int(eliminadas or 0)
 
+    # Bloque CDLform: funcion/metodo get_respuestas_por_formulario; encapsula una operacion del flujo del modulo.
     def get_respuestas_por_formulario(self, id_formulario: str) -> list[Respuesta]:
         id_normalizado = self._normalizar_texto(id_formulario)
         if not id_normalizado:
@@ -277,6 +307,7 @@ class RespuestaRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return [self._from_row(row) for row in rows]
 
+    # Bloque CDLform: funcion/metodo get_respuestas_por_pregunta; encapsula una operacion del flujo del modulo.
     def get_respuestas_por_pregunta(self, id_pregunta: str) -> list[Respuesta]:
         id_normalizado = self._normalizar_texto(id_pregunta)
         if not id_normalizado:

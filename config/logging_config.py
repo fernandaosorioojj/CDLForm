@@ -1,3 +1,8 @@
+"""Configuracion compartida de CDLform; centraliza rutas, logging y conexion a servicios externos.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -7,6 +12,7 @@ from pathlib import Path
 from config.settings import SETTINGS
 
 
+# Bloque CDLform: funcion/metodo configure_logging; encapsula una operacion del flujo del modulo.
 def configure_logging() -> None:
     logs_dir: Path = SETTINGS.paths.logs_dir
     logs_dir.mkdir(parents=True, exist_ok=True)

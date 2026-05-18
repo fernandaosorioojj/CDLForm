@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,10 +29,12 @@ from styles.common import apply_view_style
 from ui.detalle_formulario import DetalleFormularioView
 
 
+# Bloque CDLform: clase AccionesCorrectivasView; agrupa estado y comportamiento de esta parte del flujo.
 class AccionesCorrectivasView(QWidget):
     registros_por_pagina = 100
     qss_files = ("base.qss", "acciones_correctivas.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         reporte_service: ReporteService | None = None,
@@ -52,6 +59,7 @@ class AccionesCorrectivasView(QWidget):
         apply_view_style(self, *self.qss_files)
         self.cargar_acciones()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(24, 24, 24, 24)
@@ -203,6 +211,7 @@ class AccionesCorrectivasView(QWidget):
 
         layout_principal.addWidget(panel_tabla, 1)
 
+    # Bloque CDLform: funcion/metodo _cargar_combo_con_todos; encapsula una operacion del flujo del modulo.
     def _cargar_combo_con_todos(
         self,
         combo: QComboBox,
@@ -215,10 +224,12 @@ class AccionesCorrectivasView(QWidget):
             if valor_limpio:
                 combo.addItem(valor_limpio, valor_limpio)
 
+    # Bloque CDLform: funcion/metodo cargar_acciones_desde_inicio; encapsula una operacion del flujo del modulo.
     def cargar_acciones_desde_inicio(self, *_args) -> None:
         self.pagina_actual = 0
         self.cargar_acciones()
 
+    # Bloque CDLform: funcion/metodo cargar_acciones; encapsula una operacion del flujo del modulo.
     def cargar_acciones(self, *_args) -> None:
         try:
             self.acciones = self.reporte_service.listar_acciones_correctivas(
@@ -231,21 +242,25 @@ class AccionesCorrectivasView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo cargar_supervisores; encapsula una operacion del flujo del modulo.
     def cargar_supervisores(self) -> None:
         self.incluir_supervisores_sql = True
         self.cargar_acciones_desde_inicio()
 
+    # Bloque CDLform: funcion/metodo _obtener_acciones_pagina; encapsula una operacion del flujo del modulo.
     def _obtener_acciones_pagina(self) -> list[dict[str, Any]]:
         inicio = self.pagina_actual * self.registros_por_pagina
         fin = inicio + self.registros_por_pagina
         return self.acciones_filtradas[inicio:fin]
 
+    # Bloque CDLform: funcion/metodo _total_paginas; encapsula una operacion del flujo del modulo.
     def _total_paginas(self) -> int:
         total = len(self.acciones_filtradas)
         if total == 0:
             return 1
         return (total - 1) // self.registros_por_pagina + 1
 
+    # Bloque CDLform: funcion/metodo _actualizar_paginacion; encapsula una operacion del flujo del modulo.
     def _actualizar_paginacion(self) -> None:
         total = len(self.acciones_filtradas)
         if total == 0:
@@ -262,6 +277,7 @@ class AccionesCorrectivasView(QWidget):
         self.btn_anterior.setEnabled(self.pagina_actual > 0)
         self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
 
+    # Bloque CDLform: funcion/metodo pagina_anterior; encapsula una operacion del flujo del modulo.
     def pagina_anterior(self) -> None:
         if self.pagina_actual <= 0:
             return
@@ -269,6 +285,7 @@ class AccionesCorrectivasView(QWidget):
         self._cargar_tabla(self._obtener_acciones_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo pagina_siguiente; encapsula una operacion del flujo del modulo.
     def pagina_siguiente(self) -> None:
         if self.pagina_actual >= self._total_paginas() - 1:
             return
@@ -276,6 +293,7 @@ class AccionesCorrectivasView(QWidget):
         self._cargar_tabla(self._obtener_acciones_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo _filtrar_acciones; encapsula una operacion del flujo del modulo.
     def _filtrar_acciones(
         self,
         acciones: list[dict[str, Any]],
@@ -319,6 +337,7 @@ class AccionesCorrectivasView(QWidget):
 
         return filtradas
 
+    # Bloque CDLform: funcion/metodo _cargar_tabla; encapsula una operacion del flujo del modulo.
     def _cargar_tabla(self, acciones: list[dict[str, Any]]) -> None:
         self.tabla_acciones.setRowCount(0)
 
@@ -339,6 +358,7 @@ class AccionesCorrectivasView(QWidget):
             self._set_item(row, 10, accion.get("opcion") or accion.get("id_opcion"))
             self._set_item(row, 11, accion.get("accion_correctiva"))
 
+    # Bloque CDLform: funcion/metodo _obtener_accion_seleccionada; encapsula una operacion del flujo del modulo.
     def _obtener_accion_seleccionada(self) -> dict[str, Any] | None:
         fila = self.tabla_acciones.currentRow()
         if fila < 0:
@@ -351,6 +371,7 @@ class AccionesCorrectivasView(QWidget):
         accion = item.data(Qt.UserRole)
         return accion if isinstance(accion, dict) else None
 
+    # Bloque CDLform: funcion/metodo abrir_detalle_formulario; encapsula una operacion del flujo del modulo.
     def abrir_detalle_formulario(self, *_args) -> None:
         accion = self._obtener_accion_seleccionada()
         if not accion:
@@ -378,6 +399,7 @@ class AccionesCorrectivasView(QWidget):
         )
         dialogo.exec_()
 
+    # Bloque CDLform: funcion/metodo _set_item; encapsula una operacion del flujo del modulo.
     def _set_item(
         self,
         row: int,

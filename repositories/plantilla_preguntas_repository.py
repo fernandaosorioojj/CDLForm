@@ -1,3 +1,8 @@
+"""Acceso a datos SQL Server para entidades del dominio CDLform.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,39 +11,54 @@ from typing import Any
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 from models.plantilla_preguntas import PlantillaPreguntaItem, PlantillaPreguntas
 from repositories.base_repository import BaseRepository
 from utils.json_manager import JsonManager
 
 
+# FLUJO ACTUAL:
+# Sin file_path, este repositorio usa SQL Server para plantillas y sus items.
+#
+# LEGACY:
+# Si se instancia manualmente con file_path, usa JSON. Esa ruta no participa
+# en el flujo vigente de gestion, operario ni MQTT/watchdog.
+# Bloque CDLform: clase PlantillaPreguntasRepository; agrupa estado y comportamiento de esta parte del flujo.
 class PlantillaPreguntasRepository:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, file_path: Path | None = None) -> None:
         self.file_path = Path(file_path) if file_path else None
         self._json_repository = BaseRepository(self.file_path) if self.file_path else None
 
+    # Bloque CDLform: funcion/metodo _usar_json; encapsula una operacion del flujo del modulo.
     def _usar_json(self) -> bool:
+        # Ruta legacy: solo se activa si alguien entrega file_path explicitamente.
         return self._json_repository is not None
 
+    # Bloque CDLform: funcion/metodo _connect; encapsula una operacion del flujo del modulo.
     def _connect(self) -> pyodbc.Connection:
-        return pyodbc.connect(build_connection_string())
+        return get_sql_connection()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _normalizar_contexto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_contexto(valor: Any) -> str:
         return PlantillaPreguntasRepository._normalizar_texto(valor).upper()
 
+    # Bloque CDLform: funcion/metodo _normalizar_bool; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_bool(valor: Any, default: bool = True) -> bool:
         if valor is None:
             return default
         return bool(valor)
 
+    # Bloque CDLform: funcion/metodo _normalizar_int; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_int(valor: Any, default: int = 1) -> int:
         try:
@@ -46,6 +66,7 @@ class PlantillaPreguntasRepository:
         except (TypeError, ValueError):
             return default
 
+    # Bloque CDLform: funcion/metodo _serializar_fecha; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_fecha(valor: Any) -> str:
         if valor is None:
@@ -54,6 +75,7 @@ class PlantillaPreguntasRepository:
             return valor.isoformat(timespec="seconds")
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _fecha_sql; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _fecha_sql(valor: Any) -> Any:
         texto = str(valor or "").strip()
@@ -61,6 +83,7 @@ class PlantillaPreguntasRepository:
             return None
         return texto
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _rows_to_dicts(
         cursor: pyodbc.Cursor,
@@ -69,6 +92,7 @@ class PlantillaPreguntasRepository:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo _obtener_items_por_plantillas; encapsula una operacion del flujo del modulo.
     def _obtener_items_por_plantillas(
         self,
         conn: pyodbc.Connection,
@@ -104,6 +128,7 @@ class PlantillaPreguntasRepository:
 
         return items_por_plantilla
 
+    # Bloque CDLform: funcion/metodo _mapear_plantillas; encapsula una operacion del flujo del modulo.
     def _mapear_plantillas(
         self,
         conn: pyodbc.Connection,
@@ -137,6 +162,7 @@ class PlantillaPreguntasRepository:
 
         return plantillas
 
+    # Bloque CDLform: funcion/metodo listar_plantillas; encapsula una operacion del flujo del modulo.
     def listar_plantillas(self) -> list[PlantillaPreguntas]:
         if self._usar_json():
             return [
@@ -163,6 +189,7 @@ class PlantillaPreguntasRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._mapear_plantillas(conn, rows)
 
+    # Bloque CDLform: funcion/metodo obtener_por_id; encapsula una operacion del flujo del modulo.
     def obtener_por_id(self, id_plantilla: str) -> PlantillaPreguntas | None:
         if self._usar_json():
             id_normalizado = str(id_plantilla).strip()
@@ -195,6 +222,7 @@ class PlantillaPreguntasRepository:
             plantillas = self._mapear_plantillas(conn, rows)
             return plantillas[0] if plantillas else None
 
+    # Bloque CDLform: funcion/metodo obtener_activa; encapsula una operacion del flujo del modulo.
     def obtener_activa(
         self,
         cod_recurso: str,
@@ -242,6 +270,7 @@ class PlantillaPreguntasRepository:
             plantillas = self._mapear_plantillas(conn, rows)
             return plantillas[0] if plantillas else None
 
+    # Bloque CDLform: funcion/metodo listar_por_contexto; encapsula una operacion del flujo del modulo.
     def listar_por_contexto(
         self,
         cod_recurso: str,
@@ -282,6 +311,7 @@ class PlantillaPreguntasRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._mapear_plantillas(conn, rows)
 
+    # Bloque CDLform: funcion/metodo guardar; encapsula una operacion del flujo del modulo.
     def guardar(self, plantilla: PlantillaPreguntas) -> PlantillaPreguntas:
         if self._usar_json():
             plantillas = self.listar_plantillas()
@@ -303,6 +333,7 @@ class PlantillaPreguntasRepository:
 
         return plantilla
 
+    # Bloque CDLform: funcion/metodo _guardar_cabecera; encapsula una operacion del flujo del modulo.
     def _guardar_cabecera(
         self,
         cursor: pyodbc.Cursor,
@@ -362,6 +393,7 @@ class PlantillaPreguntasRepository:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo _sincronizar_items; encapsula una operacion del flujo del modulo.
     def _sincronizar_items(
         self,
         cursor: pyodbc.Cursor,
@@ -401,6 +433,7 @@ class PlantillaPreguntasRepository:
                 ),
             )
 
+    # Bloque CDLform: funcion/metodo _guardar_todas; encapsula una operacion del flujo del modulo.
     def _guardar_todas(self, plantillas: list[PlantillaPreguntas]) -> None:
         if not self.file_path:
             raise RuntimeError("No hay archivo JSON configurado para guardar.")

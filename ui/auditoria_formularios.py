@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt
@@ -22,10 +27,12 @@ from styles.common import apply_view_style
 from ui.detalle_plantilla_preguntas import DetallePlantillaPreguntasView
 
 
+# Bloque CDLform: clase AuditoriaFormulariosView; agrupa estado y comportamiento de esta parte del flujo.
 class AuditoriaFormulariosView(QWidget):
     registros_por_pagina = 100
     qss_files = ("base.qss", "auditoria_formularios.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         plantilla_service: PlantillaPreguntasService | None = None,
@@ -45,6 +52,7 @@ class AuditoriaFormulariosView(QWidget):
         apply_view_style(self, *self.qss_files)
         self.cargar_plantillas()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(24, 24, 24, 24)
@@ -170,10 +178,12 @@ class AuditoriaFormulariosView(QWidget):
 
         layout_principal.addWidget(panel_tabla, 1)
 
+    # Bloque CDLform: funcion/metodo cargar_plantillas_desde_inicio; encapsula una operacion del flujo del modulo.
     def cargar_plantillas_desde_inicio(self, *_args) -> None:
         self.pagina_actual = 0
         self.cargar_plantillas()
 
+    # Bloque CDLform: funcion/metodo cargar_plantillas; encapsula una operacion del flujo del modulo.
     def cargar_plantillas(self, *_args) -> None:
         try:
             self.plantillas = self.plantilla_service.repository.listar_plantillas()
@@ -191,17 +201,20 @@ class AuditoriaFormulariosView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo _obtener_plantillas_pagina; encapsula una operacion del flujo del modulo.
     def _obtener_plantillas_pagina(self) -> list[PlantillaPreguntas]:
         inicio = self.pagina_actual * self.registros_por_pagina
         fin = inicio + self.registros_por_pagina
         return self.plantillas_filtradas[inicio:fin]
 
+    # Bloque CDLform: funcion/metodo _total_paginas; encapsula una operacion del flujo del modulo.
     def _total_paginas(self) -> int:
         total = len(self.plantillas_filtradas)
         if total == 0:
             return 1
         return (total - 1) // self.registros_por_pagina + 1
 
+    # Bloque CDLform: funcion/metodo _actualizar_paginacion; encapsula una operacion del flujo del modulo.
     def _actualizar_paginacion(self) -> None:
         total = len(self.plantillas_filtradas)
         if total == 0:
@@ -216,6 +229,7 @@ class AuditoriaFormulariosView(QWidget):
         self.btn_anterior.setEnabled(self.pagina_actual > 0)
         self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
 
+    # Bloque CDLform: funcion/metodo pagina_anterior; encapsula una operacion del flujo del modulo.
     def pagina_anterior(self) -> None:
         if self.pagina_actual <= 0:
             return
@@ -223,6 +237,7 @@ class AuditoriaFormulariosView(QWidget):
         self._cargar_tabla(self._obtener_plantillas_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo pagina_siguiente; encapsula una operacion del flujo del modulo.
     def pagina_siguiente(self) -> None:
         if self.pagina_actual >= self._total_paginas() - 1:
             return
@@ -230,6 +245,7 @@ class AuditoriaFormulariosView(QWidget):
         self._cargar_tabla(self._obtener_plantillas_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo _filtrar_plantillas; encapsula una operacion del flujo del modulo.
     def _filtrar_plantillas(
         self,
         plantillas: list[PlantillaPreguntas],
@@ -260,6 +276,7 @@ class AuditoriaFormulariosView(QWidget):
 
         return resultado
 
+    # Bloque CDLform: funcion/metodo _cargar_tabla; encapsula una operacion del flujo del modulo.
     def _cargar_tabla(self, plantillas: list[PlantillaPreguntas]) -> None:
         self.tabla_plantillas.setRowCount(0)
 
@@ -276,6 +293,7 @@ class AuditoriaFormulariosView(QWidget):
             self._set_item(row, 6, plantilla.fecha_creacion or "-")
             self._set_item(row, 7, plantilla.fecha_desactivacion or "-")
 
+    # Bloque CDLform: funcion/metodo abrir_detalle; encapsula una operacion del flujo del modulo.
     def abrir_detalle(self, *_args) -> None:
         id_plantilla = self._obtener_id_plantilla_seleccionada()
         if not id_plantilla:
@@ -301,6 +319,7 @@ class AuditoriaFormulariosView(QWidget):
         )
         dialogo.exec_()
 
+    # Bloque CDLform: funcion/metodo _obtener_id_plantilla_seleccionada; encapsula una operacion del flujo del modulo.
     def _obtener_id_plantilla_seleccionada(self) -> str:
         fila = self.tabla_plantillas.currentRow()
         if fila < 0:
@@ -312,6 +331,7 @@ class AuditoriaFormulariosView(QWidget):
 
         return str(item.data(Qt.UserRole) or "").strip()
 
+    # Bloque CDLform: funcion/metodo _set_item; encapsula una operacion del flujo del modulo.
     def _set_item(
         self,
         row: int,

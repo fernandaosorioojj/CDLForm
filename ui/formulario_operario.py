@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -33,7 +38,9 @@ from services.forms.respuesta_service import RespuestaService
 from styles.common import apply_view_style
 
 
+# Bloque CDLform: clase AccionCorrectivaDialog; agrupa estado y comportamiento de esta parte del flujo.
 class AccionCorrectivaDialog(QDialog):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, accion_correctiva: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Accion correctiva requerida")
@@ -91,7 +98,9 @@ class AccionCorrectivaDialog(QDialog):
         apply_view_style(self, "base.qss", "dialogs.qss", "formulario_operario.qss")
 
 
+# Bloque CDLform: clase ConfirmacionEnvioDialog; agrupa estado y comportamiento de esta parte del flujo.
 class ConfirmacionEnvioDialog(QDialog):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Confirmacion de envio")
@@ -149,13 +158,16 @@ class ConfirmacionEnvioDialog(QDialog):
         layout.addWidget(tarjeta)
         apply_view_style(self, "base.qss", "dialogs.qss", "formulario_operario.qss")
 
+    # Bloque CDLform: funcion/metodo _actualizar_estado_confirmar; encapsula una operacion del flujo del modulo.
     def _actualizar_estado_confirmar(self, checked: bool) -> None:
         self.btn_confirmar.setEnabled(bool(checked))
 
 
+# Bloque CDLform: clase FormularioOperarioView; agrupa estado y comportamiento de esta parte del flujo.
 class FormularioOperarioView(QWidget):
     qss_files = ("base.qss", "formulario_operario.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario: Formulario | None = None,
@@ -198,10 +210,12 @@ class FormularioOperarioView(QWidget):
         self._cargar_formulario()
         self._cargar_preguntas()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         return FormularioOperarioPresenter.normalizar_texto(valor)
 
+    # Bloque CDLform: funcion/metodo _configurar_ui; encapsula una operacion del flujo del modulo.
     def _configurar_ui(self) -> None:
         self.layout_principal = QVBoxLayout(self)
         self.layout_principal.setContentsMargins(28, 24, 28, 24)
@@ -291,6 +305,7 @@ class FormularioOperarioView(QWidget):
         self.layout_botones.addWidget(self.btn_cancelar)
         self.layout_principal.addLayout(self.layout_botones)
 
+    # Bloque CDLform: funcion/metodo _agregar_campo_info; encapsula una operacion del flujo del modulo.
     def _agregar_campo_info(
         self,
         fila: int,
@@ -304,6 +319,7 @@ class FormularioOperarioView(QWidget):
         self.layout_info.addWidget(label, fila, columna)
         self.layout_info.addWidget(valor, fila, columna + 1)
 
+    # Bloque CDLform: funcion/metodo _cargar_formulario; encapsula una operacion del flujo del modulo.
     def _cargar_formulario(self) -> None:
         if not self.formulario:
             QMessageBox.information(
@@ -339,6 +355,7 @@ class FormularioOperarioView(QWidget):
             self.formulario.observacion_general or ""
         )
 
+    # Bloque CDLform: funcion/metodo _cargar_preguntas; encapsula una operacion del flujo del modulo.
     def _cargar_preguntas(self) -> None:
         while self.layout_preguntas.count():
             item = self.layout_preguntas.takeAt(0)
@@ -366,12 +383,14 @@ class FormularioOperarioView(QWidget):
 
         self.layout_preguntas.addStretch()
 
+    # Bloque CDLform: funcion/metodo _obtener_preguntas_para_formulario; encapsula una operacion del flujo del modulo.
     def _obtener_preguntas_para_formulario(self) -> list[dict[str, Any]]:
         return self.presenter.obtener_preguntas_para_formulario(
             self.formulario,
             self.operario_seleccionado,
         )
 
+    # Bloque CDLform: funcion/metodo _crear_bloque_pregunta; encapsula una operacion del flujo del modulo.
     def _crear_bloque_pregunta(
         self, indice: int, pregunta: dict[str, Any]
     ) -> QWidget:
@@ -420,6 +439,7 @@ class FormularioOperarioView(QWidget):
 
         return frame
 
+    # Bloque CDLform: funcion/metodo _crear_control_respuesta; encapsula una operacion del flujo del modulo.
     def _crear_control_respuesta(self, pregunta: dict[str, Any]) -> dict[str, Any]:
         tipo = self._normalizar_texto(
             pregunta.get("tipo")
@@ -517,17 +537,21 @@ class FormularioOperarioView(QWidget):
         widget = QLineEdit()
         return {"tipo_control": "texto", "widget": widget}
 
+    # Bloque CDLform: funcion/metodo _obtener_opciones_pregunta; encapsula una operacion del flujo del modulo.
     def _obtener_opciones_pregunta(
         self, pregunta: dict[str, Any]
     ) -> list[dict[str, str]]:
         return self.presenter.obtener_opciones_pregunta(pregunta)
 
+    # Bloque CDLform: funcion/metodo _pregunta_es_obligatoria; encapsula una operacion del flujo del modulo.
     def _pregunta_es_obligatoria(self, pregunta: dict[str, Any]) -> bool:
         return self.presenter.pregunta_es_obligatoria(pregunta)
 
+    # Bloque CDLform: funcion/metodo _clave_popup_accion; encapsula una operacion del flujo del modulo.
     def _clave_popup_accion(self, id_pregunta: str, id_opcion: str) -> str:
         return f"{id_pregunta}::{id_opcion}"
 
+    # Bloque CDLform: funcion/metodo _mostrar_accion_correctiva; encapsula una operacion del flujo del modulo.
     def _mostrar_accion_correctiva(
         self, id_pregunta: str, opcion: dict[str, str]
     ) -> None:
@@ -544,6 +568,7 @@ class FormularioOperarioView(QWidget):
         dialog = AccionCorrectivaDialog(accion, self)
         dialog.exec_()
 
+    # Bloque CDLform: funcion/metodo _actualizar_label_accion_correctiva; encapsula una operacion del flujo del modulo.
     def _actualizar_label_accion_correctiva(
         self, label: QLabel, acciones: list[str]
     ) -> None:
@@ -556,6 +581,7 @@ class FormularioOperarioView(QWidget):
         label.setText("Accion correctiva: " + " | ".join(acciones_normalizadas))
         label.show()
 
+    # Bloque CDLform: funcion/metodo _on_combo_changed; encapsula una operacion del flujo del modulo.
     def _on_combo_changed(self, combo: QComboBox, label: QLabel) -> None:
         opcion = combo.currentData()
         if not isinstance(opcion, dict):
@@ -575,6 +601,7 @@ class FormularioOperarioView(QWidget):
         id_pregunta = self._normalizar_texto(control["pregunta"].get("id_pregunta"))
         self._mostrar_accion_correctiva(id_pregunta, opcion)
 
+    # Bloque CDLform: funcion/metodo _on_checkbox_changed; encapsula una operacion del flujo del modulo.
     def _on_checkbox_changed(
         self,
         checkbox: QCheckBox,
@@ -601,6 +628,7 @@ class FormularioOperarioView(QWidget):
         id_pregunta = self._normalizar_texto(control["pregunta"].get("id_pregunta"))
         self._mostrar_accion_correctiva(id_pregunta, opcion)
 
+    # Bloque CDLform: funcion/metodo _buscar_control_por_widget; encapsula una operacion del flujo del modulo.
     def _buscar_control_por_widget(
         self, widget: QWidget | None
     ) -> dict[str, Any] | None:
@@ -609,6 +637,7 @@ class FormularioOperarioView(QWidget):
                 return control
         return None
 
+    # Bloque CDLform: funcion/metodo _extraer_respuestas_control; encapsula una operacion del flujo del modulo.
     def _extraer_respuestas_control(
         self, control: dict[str, Any]
     ) -> list[dict[str, Any]]:
@@ -706,6 +735,7 @@ class FormularioOperarioView(QWidget):
             }
         ]
 
+    # Bloque CDLform: funcion/metodo _validar_respuestas; encapsula una operacion del flujo del modulo.
     def _validar_respuestas(self) -> tuple[bool, str]:
         return self.presenter.validar_respuestas(
             [
@@ -717,10 +747,12 @@ class FormularioOperarioView(QWidget):
             ]
         )
 
+    # Bloque CDLform: funcion/metodo _confirmar_envio; encapsula una operacion del flujo del modulo.
     def _confirmar_envio(self) -> bool:
         dialog = ConfirmacionEnvioDialog(self)
         return dialog.exec_() == QDialog.Accepted
 
+    # Bloque CDLform: funcion/metodo _enviar_formulario; encapsula una operacion del flujo del modulo.
     def _enviar_formulario(self) -> None:
         if not self.formulario:
             QMessageBox.warning(self, "Formulario", "No hay un formulario cargado.")

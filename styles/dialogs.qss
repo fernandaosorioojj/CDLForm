@@ -1,4 +1,4 @@
-QDialog#accionCorrectivaDialog,
+﻿QDialog#accionCorrectivaDialog,
 QDialog#confirmacionEnvioDialog {
     background-color: $bg_app;
 }
@@ -39,7 +39,7 @@ QDialog#accionCorrectivaDialog QFrame#accionCorrectivaBox QLabel {
 }
 
 QDialog#confirmacionEnvioDialog QCheckBox#confirmacionCheck {
-    background-color: #f7fbf8;
+    background-color: #FFFFFF;
     border: 1px solid $border;
     border-radius: ${radius_sm}px;
     color: $text_primary;
@@ -59,3 +59,4 @@ QDialog#confirmacionEnvioDialog QCheckBox#confirmacionCheck::indicator:checked {
     background-color: $bg_button;
     border: 1px solid $bg_button;
 }
+

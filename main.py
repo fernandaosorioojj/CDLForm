@@ -1,6 +1,12 @@
+"""Punto de entrada de CDLform. Decide entre modo gestion normal y modo automatico de operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -12,10 +18,12 @@ from ui.login import LoginView
 from utils.style_loader import load_qss_files
 
 
+# Bloque CDLform: funcion/metodo cargar_estilos; encapsula una operacion del flujo del modulo.
 def cargar_estilos(app: QApplication) -> None:
     app.setStyleSheet(load_qss_files("base.qss"))
 
 
+# Bloque CDLform: funcion/metodo parse_args; encapsula una operacion del flujo del modulo.
 def parse_args():
     parser = argparse.ArgumentParser(description="CDLform")
 
@@ -44,10 +52,12 @@ def parse_args():
     return parser.parse_args()
 
 
+# Bloque CDLform: funcion/metodo validar_argumentos_modo_auto; encapsula una operacion del flujo del modulo.
 def validar_argumentos_modo_auto(args) -> list[str]:
     return []
 
 
+# Bloque CDLform: funcion/metodo construir_mensaje_sin_formulario; encapsula una operacion del flujo del modulo.
 def construir_mensaje_sin_formulario(resultado: dict) -> str:
     contexto = resultado.get("contexto", {})
     recursos = contexto.get("cod_recursos", [])
@@ -81,8 +91,14 @@ def construir_mensaje_sin_formulario(resultado: dict) -> str:
     return "\n".join(lineas)
 
 
+# Bloque CDLform: funcion/metodo main; encapsula una operacion del flujo del modulo.
 def main() -> None:
     args = parse_args()
+    if not os.getenv("CDLFORM_SQL_PROFILE", "").strip():
+        os.environ["CDLFORM_SQL_PROFILE"] = (
+            "gestion" if args.modo == "normal" else "operario"
+        )
+
     app = QApplication(sys.argv)
     cargar_estilos(app)
     app.formulario_launcher = AppLauncher()
@@ -143,5 +159,6 @@ def main() -> None:
     sys.exit(1)
 
 
+# Bloque CDLform: punto de ejecucion directa del modulo desde consola.
 if __name__ == "__main__":
     main()

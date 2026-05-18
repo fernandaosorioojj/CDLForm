@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt
@@ -28,9 +33,11 @@ from services.forms.pregunta_service import PreguntaService
 from styles.common import apply_view_style
 
 
+# Bloque CDLform: clase AdminPreguntasView; agrupa estado y comportamiento de esta parte del flujo.
 class AdminPreguntasView(QWidget):
     qss_files = ("base.qss", "admin_preguntas.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self) -> None:
         super().__init__()
 
@@ -49,6 +56,7 @@ class AdminPreguntasView(QWidget):
         apply_view_style(self, *self.qss_files)
         self.cargar_preguntas()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_raiz = QVBoxLayout(self)
         layout_raiz.setContentsMargins(24, 24, 24, 24)
@@ -381,6 +389,7 @@ class AdminPreguntasView(QWidget):
         self._actualizar_estado_opciones()
         self._ir_a_paso(0)
 
+    # Bloque CDLform: funcion/metodo _crear_fase_flujo; encapsula una operacion del flujo del modulo.
     def _crear_fase_flujo(self, contenido: QWidget) -> QWidget:
         fase = QWidget()
         layout = QVBoxLayout(fase)
@@ -390,6 +399,7 @@ class AdminPreguntasView(QWidget):
         layout.addStretch()
         return fase
 
+    # Bloque CDLform: funcion/metodo _crear_lista_multiseleccion; encapsula una operacion del flujo del modulo.
     def _crear_lista_multiseleccion(self, valores: list[str]) -> QListWidget:
         lista = QListWidget()
         lista.setSelectionMode(QAbstractItemView.MultiSelection)
@@ -402,6 +412,7 @@ class AdminPreguntasView(QWidget):
 
         return lista
 
+    # Bloque CDLform: funcion/metodo _crear_bloque_lista; encapsula una operacion del flujo del modulo.
     def _crear_bloque_lista(self, titulo: str, lista: QListWidget) -> QWidget:
         contenedor = QFrame()
         contenedor.setProperty("card", "true")
@@ -418,6 +429,7 @@ class AdminPreguntasView(QWidget):
         layout.addWidget(lista)
         return contenedor
 
+    # Bloque CDLform: funcion/metodo cargar_preguntas; encapsula una operacion del flujo del modulo.
     def cargar_preguntas(self) -> None:
         self.lista_preguntas.clear()
         preguntas = self.presenter.listar_preguntas()
@@ -428,6 +440,7 @@ class AdminPreguntasView(QWidget):
             item.setData(Qt.UserRole, pregunta)
             self.lista_preguntas.addItem(item)
 
+    # Bloque CDLform: funcion/metodo filtrar_preguntas; encapsula una operacion del flujo del modulo.
     def filtrar_preguntas(self) -> None:
         texto_busqueda = self.input_busqueda.text().strip().lower()
 
@@ -442,6 +455,7 @@ class AdminPreguntasView(QWidget):
             )
             item.setHidden(not coincide)
 
+    # Bloque CDLform: funcion/metodo cargar_pregunta_seleccionada; encapsula una operacion del flujo del modulo.
     def cargar_pregunta_seleccionada(self, item: QListWidgetItem) -> None:
         pregunta = item.data(Qt.UserRole)
         self.id_pregunta_en_edicion = pregunta.get("id_pregunta")
@@ -464,6 +478,7 @@ class AdminPreguntasView(QWidget):
         self._actualizar_estado_opciones()
         self._ir_a_paso(0)
 
+    # Bloque CDLform: funcion/metodo guardar_pregunta; encapsula una operacion del flujo del modulo.
     def guardar_pregunta(self) -> None:
         if self.paso_actual < self.stack_fases.count() - 1:
             self.paso_siguiente()
@@ -483,6 +498,7 @@ class AdminPreguntasView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo eliminar_pregunta; encapsula una operacion del flujo del modulo.
     def eliminar_pregunta(self) -> None:
         if not self.id_pregunta_en_edicion:
             QMessageBox.warning(self, "Atención", "Selecciona una pregunta primero.")
@@ -507,6 +523,7 @@ class AdminPreguntasView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo limpiar_formulario; encapsula una operacion del flujo del modulo.
     def limpiar_formulario(self) -> None:
         self.id_pregunta_en_edicion = None
         self.input_texto.clear()
@@ -525,14 +542,17 @@ class AdminPreguntasView(QWidget):
         self._actualizar_estado_opciones()
         self._ir_a_paso(0)
 
+    # Bloque CDLform: funcion/metodo paso_anterior; encapsula una operacion del flujo del modulo.
     def paso_anterior(self) -> None:
         self._ir_a_paso(self.paso_actual - 1)
 
+    # Bloque CDLform: funcion/metodo paso_siguiente; encapsula una operacion del flujo del modulo.
     def paso_siguiente(self) -> None:
         if not self._validar_paso_actual():
             return
         self._ir_a_paso(self.paso_actual + 1)
 
+    # Bloque CDLform: funcion/metodo _ir_a_paso; encapsula una operacion del flujo del modulo.
     def _ir_a_paso(self, indice: int) -> None:
         if not hasattr(self, "stack_fases"):
             return
@@ -543,6 +563,7 @@ class AdminPreguntasView(QWidget):
         self._actualizar_resumen_confirmacion()
         self._actualizar_navegacion_fases()
 
+    # Bloque CDLform: funcion/metodo _validar_paso_actual; encapsula una operacion del flujo del modulo.
     def _validar_paso_actual(self) -> bool:
         try:
             if self.paso_actual == 0 and not self.input_texto.text().strip():
@@ -556,6 +577,7 @@ class AdminPreguntasView(QWidget):
 
         return True
 
+    # Bloque CDLform: funcion/metodo _actualizar_navegacion_fases; encapsula una operacion del flujo del modulo.
     def _actualizar_navegacion_fases(self) -> None:
         total_pasos = self.stack_fases.count()
         es_ultimo_paso = self.paso_actual == total_pasos - 1
@@ -571,6 +593,7 @@ class AdminPreguntasView(QWidget):
             etiqueta.style().unpolish(etiqueta)
             etiqueta.style().polish(etiqueta)
 
+    # Bloque CDLform: funcion/metodo _actualizar_resumen_confirmacion; encapsula una operacion del flujo del modulo.
     def _actualizar_resumen_confirmacion(self) -> None:
         if not hasattr(self, "label_resumen_confirmacion"):
             return
@@ -598,6 +621,7 @@ class AdminPreguntasView(QWidget):
             f"{cantidad_opciones}</p>"
         )
 
+    # Bloque CDLform: funcion/metodo agregar_opcion; encapsula una operacion del flujo del modulo.
     def agregar_opcion(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
 
@@ -625,6 +649,7 @@ class AdminPreguntasView(QWidget):
         self.input_opcion_valor.setFocus()
         self._actualizar_resumen_confirmacion()
 
+    # Bloque CDLform: funcion/metodo eliminar_opcion_seleccionada; encapsula una operacion del flujo del modulo.
     def eliminar_opcion_seleccionada(self) -> None:
         item = self.lista_opciones.currentItem()
         if item is None:
@@ -634,12 +659,14 @@ class AdminPreguntasView(QWidget):
         self.lista_opciones.takeItem(self.lista_opciones.row(item))
         self._actualizar_resumen_confirmacion()
 
+    # Bloque CDLform: funcion/metodo limpiar_opciones; encapsula una operacion del flujo del modulo.
     def limpiar_opciones(self) -> None:
         self.lista_opciones.clear()
         self.input_opcion_valor.clear()
         self.input_opcion_accion.clear()
         self._actualizar_resumen_confirmacion()
 
+    # Bloque CDLform: funcion/metodo _actualizar_estado_opciones; encapsula una operacion del flujo del modulo.
     def _actualizar_estado_opciones(self) -> None:
         tipo = self.combo_tipo.currentText().strip().lower()
         requiere_opciones = self.presenter.requiere_opciones(tipo)
@@ -674,6 +701,7 @@ class AdminPreguntasView(QWidget):
         self.btn_limpiar_opciones.setEnabled(True)
         self._actualizar_resumen_confirmacion()
 
+    # Bloque CDLform: funcion/metodo _construir_payload_desde_formulario; encapsula una operacion del flujo del modulo.
     def _construir_payload_desde_formulario(self) -> dict:
         return self.presenter.construir_payload_pregunta(
             texto=self.input_texto.text().strip(),
@@ -685,6 +713,7 @@ class AdminPreguntasView(QWidget):
             opciones_respuesta=self._construir_opciones_respuesta(),
         )
 
+    # Bloque CDLform: funcion/metodo _construir_filtros_contexto; encapsula una operacion del flujo del modulo.
     def _construir_filtros_contexto(self) -> dict[str, list[str]]:
         cod_setor = self._obtener_valores_seleccionados(self.lista_cod_setor)
         cod_recurso = self._obtener_valores_seleccionados(self.lista_cod_recurso)
@@ -695,12 +724,14 @@ class AdminPreguntasView(QWidget):
             turno,
         )
 
+    # Bloque CDLform: funcion/metodo _construir_opciones_respuesta; encapsula una operacion del flujo del modulo.
     def _construir_opciones_respuesta(self) -> list[dict]:
         return self.presenter.construir_opciones_respuesta(
             self.combo_tipo.currentText().strip().lower(),
             self._obtener_opciones_actuales(),
         )
 
+    # Bloque CDLform: funcion/metodo _obtener_valores_seleccionados; encapsula una operacion del flujo del modulo.
     def _obtener_valores_seleccionados(self, lista: QListWidget) -> list[str]:
         valores: list[str] = []
         for item in lista.selectedItems():
@@ -709,6 +740,7 @@ class AdminPreguntasView(QWidget):
                 valores.append(texto)
         return valores
 
+    # Bloque CDLform: funcion/metodo _seleccionar_valores_lista; encapsula una operacion del flujo del modulo.
     def _seleccionar_valores_lista(self, lista: QListWidget, valores: list[str]) -> None:
         valores_normalizados = {str(valor).strip().upper() for valor in valores}
 
@@ -716,11 +748,13 @@ class AdminPreguntasView(QWidget):
             item = lista.item(i)
             item.setSelected(item.text().strip().upper() in valores_normalizados)
 
+    # Bloque CDLform: funcion/metodo _limpiar_seleccion_lista; encapsula una operacion del flujo del modulo.
     def _limpiar_seleccion_lista(self, lista: QListWidget) -> None:
         for i in range(lista.count()):
             item = lista.item(i)
             item.setSelected(False)
 
+    # Bloque CDLform: funcion/metodo _agregar_item_opcion; encapsula una operacion del flujo del modulo.
     def _agregar_item_opcion(self, opcion: dict) -> None:
         valor = str(opcion.get("valor", "")).strip()
         accion_correctiva = str(opcion.get("accion_correctiva", "")).strip()
@@ -740,6 +774,7 @@ class AdminPreguntasView(QWidget):
         )
         self.lista_opciones.addItem(item)
 
+    # Bloque CDLform: funcion/metodo _cargar_opciones_en_lista; encapsula una operacion del flujo del modulo.
     def _cargar_opciones_en_lista(self, opciones: list[dict]) -> None:
         self.lista_opciones.clear()
 
@@ -749,6 +784,7 @@ class AdminPreguntasView(QWidget):
 
             self._agregar_item_opcion(opcion)
 
+    # Bloque CDLform: funcion/metodo _obtener_opciones_actuales; encapsula una operacion del flujo del modulo.
     def _obtener_opciones_actuales(self) -> list[dict]:
         opciones: list[dict] = []
 
@@ -759,12 +795,14 @@ class AdminPreguntasView(QWidget):
 
         return opciones
 
+    # Bloque CDLform: funcion/metodo _existe_valor_opcion; encapsula una operacion del flujo del modulo.
     def _existe_valor_opcion(self, valor: str) -> bool:
         return self.presenter.existe_valor_opcion(
             valor,
             self._obtener_opciones_actuales(),
         )
 
+    # Bloque CDLform: funcion/metodo _resumen_filtros_contexto; encapsula una operacion del flujo del modulo.
     def _resumen_filtros_contexto(self, filtros: dict) -> str:
         return self.presenter.resumen_filtros_contexto(filtros)
 

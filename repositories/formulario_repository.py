@@ -1,3 +1,8 @@
+"""Acceso a datos SQL Server para entidades del dominio CDLform.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -6,29 +11,43 @@ from typing import Any
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 from models.formulario import Formulario
 from repositories.base_repository import BaseRepository
 from utils.json_manager import JsonManager
 
 
+# FLUJO ACTUAL:
+# Sin file_path, este repositorio usa SQL Server. Esa es la ruta vigente para
+# gestion, operario, MQTT/watchdog y fallback por tarea programada.
+#
+# LEGACY:
+# Si se instancia manualmente con file_path, activa una persistencia JSON antigua.
+# Esa ruta no se usa en el flujo actual y se conserva solo por compatibilidad.
+# Bloque CDLform: clase FormularioRepository; agrupa estado y comportamiento de esta parte del flujo.
 class FormularioRepository:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, file_path: Path | None = None) -> None:
         self.file_path = Path(file_path) if file_path else None
         self._json_repository = BaseRepository(self.file_path) if self.file_path else None
 
+    # Bloque CDLform: funcion/metodo _usar_json; encapsula una operacion del flujo del modulo.
     def _usar_json(self) -> bool:
+        # Ruta legacy: solo se activa si alguien entrega file_path explicitamente.
         return self._json_repository is not None
 
+    # Bloque CDLform: funcion/metodo _connect; encapsula una operacion del flujo del modulo.
     def _connect(self) -> pyodbc.Connection:
-        return pyodbc.connect(build_connection_string())
+        return get_sql_connection()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _normalizar_id_apontamento; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_id_apontamento(valor: Any) -> str:
         texto = str(valor or "").strip()
@@ -44,6 +63,7 @@ class FormularioRepository:
 
         return texto
 
+    # Bloque CDLform: funcion/metodo _serializar_fecha; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_fecha(valor: Any) -> str:
         if valor is None:
@@ -54,6 +74,7 @@ class FormularioRepository:
             return valor.isoformat()
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _fecha_sql; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _fecha_sql(valor: Any) -> Any:
         texto = str(valor or "").strip()
@@ -61,6 +82,7 @@ class FormularioRepository:
             return None
         return texto.replace("T", " ")
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _rows_to_dicts(
         cursor: pyodbc.Cursor,
@@ -69,6 +91,7 @@ class FormularioRepository:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo _leer_todos_crudos; encapsula una operacion del flujo del modulo.
     def _leer_todos_crudos(self) -> list[dict[str, Any]]:
         if self._usar_json():
             return self._json_repository.get_all()
@@ -103,6 +126,7 @@ class FormularioRepository:
             cursor.execute(sql)
             return self._rows_to_dicts(cursor, cursor.fetchall())
 
+    # Bloque CDLform: funcion/metodo _guardar_todos; encapsula una operacion del flujo del modulo.
     def _guardar_todos(self, formularios: list[Formulario]) -> None:
         if not self.file_path:
             raise RuntimeError("No hay archivo JSON configurado para guardar.")
@@ -112,6 +136,7 @@ class FormularioRepository:
             [formulario.to_dict() for formulario in formularios],
         )
 
+    # Bloque CDLform: funcion/metodo _formulario_desde_row; encapsula una operacion del flujo del modulo.
     def _formulario_desde_row(self, row: dict[str, Any]) -> Formulario:
         operario = self._normalizar_texto(row.get("operario_formulario"))
         if not operario:
@@ -152,6 +177,7 @@ class FormularioRepository:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo listar_formularios; encapsula una operacion del flujo del modulo.
     def listar_formularios(self) -> list[Formulario]:
         if self._usar_json():
             return [
@@ -164,6 +190,7 @@ class FormularioRepository:
             for item in self._leer_todos_crudos()
         ]
 
+    # Bloque CDLform: funcion/metodo obtener_por_id; encapsula una operacion del flujo del modulo.
     def obtener_por_id(self, id_formulario: str) -> Formulario | None:
         id_normalizado = str(id_formulario).strip()
         if not id_normalizado:
@@ -207,6 +234,7 @@ class FormularioRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._formulario_desde_row(rows[0]) if rows else None
 
+    # Bloque CDLform: funcion/metodo obtener_por_id_apontamento; encapsula una operacion del flujo del modulo.
     def obtener_por_id_apontamento(self, id_apontamento: str) -> Formulario | None:
         id_normalizado = self._normalizar_id_apontamento(id_apontamento)
 
@@ -248,6 +276,7 @@ class FormularioRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._formulario_desde_row(rows[0]) if rows else None
 
+    # Bloque CDLform: funcion/metodo listar_por_estado; encapsula una operacion del flujo del modulo.
     def listar_por_estado(self, estado: str) -> list[Formulario]:
         estado_normalizado = str(estado).strip()
         if not estado_normalizado:
@@ -292,6 +321,7 @@ class FormularioRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return [self._formulario_desde_row(row) for row in rows]
 
+    # Bloque CDLform: funcion/metodo guardar; encapsula una operacion del flujo del modulo.
     def guardar(self, formulario: Formulario) -> Formulario:
         if self._usar_json():
             formularios = self.listar_formularios()
@@ -313,6 +343,7 @@ class FormularioRepository:
 
         return formulario
 
+    # Bloque CDLform: funcion/metodo add_formulario; encapsula una operacion del flujo del modulo.
     def add_formulario(self, formulario: Formulario) -> Formulario:
         if self.obtener_por_id(formulario.id_formulario):
             raise ValueError(
@@ -320,6 +351,7 @@ class FormularioRepository:
             )
         return self.guardar(formulario)
 
+    # Bloque CDLform: funcion/metodo actualizar_formulario; encapsula una operacion del flujo del modulo.
     def actualizar_formulario(
         self,
         id_formulario: str,
@@ -332,6 +364,7 @@ class FormularioRepository:
         formulario.actualizar(cambios)
         return self.guardar(formulario)
 
+    # Bloque CDLform: funcion/metodo _guardar_sql; encapsula una operacion del flujo del modulo.
     def _guardar_sql(
         self,
         cursor: pyodbc.Cursor,

@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,9 +28,11 @@ from presenters.usuarios_gestion_presenter import UsuariosGestionPresenter
 from styles.common import apply_view_style
 
 
+# Bloque CDLform: clase UsuariosGestionView; agrupa estado y comportamiento de esta parte del flujo.
 class UsuariosGestionView(QWidget):
     qss_files = ("base.qss", "usuarios_gestion.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         presenter: UsuariosGestionPresenter | None = None,
@@ -43,6 +50,7 @@ class UsuariosGestionView(QWidget):
         apply_view_style(self, *self.qss_files)
         self.cargar_usuarios()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(24, 24, 24, 24)
@@ -192,12 +200,14 @@ class UsuariosGestionView(QWidget):
         contenido.addWidget(panel_tabla, 1)
         layout_principal.addLayout(contenido, 1)
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo cargar_usuarios; encapsula una operacion del flujo del modulo.
     def cargar_usuarios(self) -> None:
         try:
             usuarios = self.presenter.listar_usuarios()
@@ -206,6 +216,7 @@ class UsuariosGestionView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo _cargar_tabla; encapsula una operacion del flujo del modulo.
     def _cargar_tabla(self, usuarios: list[dict[str, Any]]) -> None:
         self.tabla_usuarios.setRowCount(0)
 
@@ -219,6 +230,7 @@ class UsuariosGestionView(QWidget):
             self._set_item(row, 4, usuario.get("fecha_creacion"))
             self._set_item(row, 5, usuario.get("fecha_actualizacion"))
 
+    # Bloque CDLform: funcion/metodo cargar_seleccion; encapsula una operacion del flujo del modulo.
     def cargar_seleccion(self) -> None:
         usuario = self._obtener_usuario_seleccionado()
         self.usuario_seleccionado = usuario.get("usuario", "") if usuario else ""
@@ -228,6 +240,7 @@ class UsuariosGestionView(QWidget):
         self.input_password.clear()
         self.input_password_confirmacion.clear()
 
+    # Bloque CDLform: funcion/metodo guardar_usuario; encapsula una operacion del flujo del modulo.
     def guardar_usuario(self) -> None:
         try:
             usuario = self.input_usuario.text().strip()
@@ -244,6 +257,7 @@ class UsuariosGestionView(QWidget):
         except Exception as exc:
             QMessageBox.warning(self, "Usuarios", str(exc))
 
+    # Bloque CDLform: funcion/metodo actualizar_rol; encapsula una operacion del flujo del modulo.
     def actualizar_rol(self) -> None:
         try:
             usuario = self.input_usuario.text().strip() or self.usuario_seleccionado
@@ -256,6 +270,7 @@ class UsuariosGestionView(QWidget):
         except Exception as exc:
             QMessageBox.warning(self, "Usuarios", str(exc))
 
+    # Bloque CDLform: funcion/metodo cambiar_password; encapsula una operacion del flujo del modulo.
     def cambiar_password(self) -> None:
         try:
             usuario = self.input_usuario.text().strip() or self.usuario_seleccionado
@@ -268,6 +283,7 @@ class UsuariosGestionView(QWidget):
         except Exception as exc:
             QMessageBox.warning(self, "Usuarios", str(exc))
 
+    # Bloque CDLform: funcion/metodo actualizar_activo; encapsula una operacion del flujo del modulo.
     def actualizar_activo(self, activo: bool) -> None:
         try:
             usuario = self.input_usuario.text().strip() or self.usuario_seleccionado
@@ -277,6 +293,7 @@ class UsuariosGestionView(QWidget):
         except Exception as exc:
             QMessageBox.warning(self, "Usuarios", str(exc))
 
+    # Bloque CDLform: funcion/metodo limpiar_formulario; encapsula una operacion del flujo del modulo.
     def limpiar_formulario(self) -> None:
         self.usuario_seleccionado = ""
         self.input_usuario.clear()
@@ -286,6 +303,7 @@ class UsuariosGestionView(QWidget):
         self.check_activo.setChecked(True)
         self.tabla_usuarios.clearSelection()
 
+    # Bloque CDLform: funcion/metodo _seleccionar_rol; encapsula una operacion del flujo del modulo.
     def _seleccionar_rol(self, rol: Any) -> None:
         rol_normalizado = self._normalizar_texto(rol).lower() or "gestion"
         for indice in range(self.combo_rol.count()):
@@ -294,6 +312,7 @@ class UsuariosGestionView(QWidget):
                 return
         self.combo_rol.setCurrentIndex(1)
 
+    # Bloque CDLform: funcion/metodo _obtener_password_validado; encapsula una operacion del flujo del modulo.
     def _obtener_password_validado(self) -> str:
         password = self.input_password.text()
         confirmacion = self.input_password_confirmacion.text()
@@ -301,6 +320,7 @@ class UsuariosGestionView(QWidget):
             raise ValueError("Las contrasenas no coinciden.")
         return password
 
+    # Bloque CDLform: funcion/metodo _obtener_usuario_seleccionado; encapsula una operacion del flujo del modulo.
     def _obtener_usuario_seleccionado(self) -> dict[str, Any] | None:
         fila = self.tabla_usuarios.currentRow()
         if fila < 0:
@@ -313,6 +333,7 @@ class UsuariosGestionView(QWidget):
         data = item.data(Qt.UserRole)
         return data if isinstance(data, dict) else None
 
+    # Bloque CDLform: funcion/metodo _set_item; encapsula una operacion del flujo del modulo.
     def _set_item(
         self,
         row: int,

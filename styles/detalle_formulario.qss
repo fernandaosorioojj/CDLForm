@@ -1,8 +1,9 @@
-QDialog#detalleFormularioView {
+﻿QDialog#detalleFormularioView {
     background-color: $bg_app;
 }
 
 QDialog#detalleFormularioView QTableWidget {
     min-height: 320px;
 }
+
 

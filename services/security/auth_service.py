@@ -1,3 +1,8 @@
+"""Servicios de autenticacion, usuarios y hashes de acceso gestion.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import json
@@ -17,7 +22,9 @@ ROL_ADMIN = "admin"
 ROL_GESTION = "gestion"
 
 
+# Bloque CDLform: clase AuthService; agrupa estado y comportamiento de esta parte del flujo.
 class AuthService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         config_path: Path | None = None,
@@ -35,18 +42,21 @@ class AuthService:
             usuario_gestion_repository or UsuarioGestionRepository()
         )
 
+    # Bloque CDLform: funcion/metodo _resolver_config_path; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _resolver_config_path(path_local: Path, path_bundled: Path) -> Path:
         if path_local.exists():
             return path_local
         return path_bundled
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: object) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo normalizar_rol; encapsula una operacion del flujo del modulo.
     @classmethod
     def normalizar_rol(cls, valor: object) -> str:
         rol = cls._normalizar_texto(valor).lower()
@@ -54,6 +64,7 @@ class AuthService:
             return rol
         return ROL_GESTION
 
+    # Bloque CDLform: funcion/metodo generar_password_hash; encapsula una operacion del flujo del modulo.
     @staticmethod
     def generar_password_hash(password: str) -> str:
         password_limpio = str(password or "")
@@ -69,6 +80,7 @@ class AuthService:
         ).hex()
         return f"{HASH_ALGORITHM}${HASH_ITERATIONS}${salt}${digest}"
 
+    # Bloque CDLform: funcion/metodo _validar_password_hash; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _validar_password_hash(password: str, password_hash: str) -> bool:
         partes = str(password_hash or "").split("$")
@@ -92,7 +104,11 @@ class AuthService:
         ).hex()
         return hmac.compare_digest(digest, digest_esperado)
 
+    # Bloque CDLform: funcion/metodo _leer_credenciales_desde_entorno; encapsula una operacion del flujo del modulo.
     def _leer_credenciales_desde_entorno(self) -> dict[str, str] | None:
+        # FALLBACK VIGENTE:
+        # Solo se usa si SQL no entrega usuario activo. No es la fuente principal
+        # de credenciales en el flujo actual de gestion.
         usuario = self._normalizar_texto(os.getenv("CDLFORM_GESTION_USER"))
         password_hash = self._normalizar_texto(
             os.getenv("CDLFORM_GESTION_PASSWORD_HASH")
@@ -113,10 +129,14 @@ class AuthService:
 
         return None
 
+    # Bloque CDLform: funcion/metodo _leer_credenciales_desde_archivo; encapsula una operacion del flujo del modulo.
     def _leer_credenciales_desde_archivo(
         self,
         config_path: Path,
     ) -> dict[str, str] | None:
+        # FALLBACK VIGENTE:
+        # Lee gestion_login.json/admin_login.json para continuidad, pero la ruta
+        # objetivo en produccion es usuarios_gestion en SQL Server.
         if not config_path.exists():
             return None
 
@@ -142,6 +162,7 @@ class AuthService:
             "'usuario' y 'password_hash'."
         )
 
+    # Bloque CDLform: funcion/metodo obtener_credenciales_gestion; encapsula una operacion del flujo del modulo.
     def obtener_credenciales_gestion(self) -> dict[str, str]:
         credenciales_entorno = self._leer_credenciales_desde_entorno()
         if credenciales_entorno:
@@ -165,18 +186,26 @@ class AuthService:
             f"{self.config_path}."
         )
 
+    # Bloque CDLform: funcion/metodo obtener_credenciales_gestion_sql; encapsula una operacion del flujo del modulo.
     def obtener_credenciales_gestion_sql(
         self,
         usuario: str,
     ) -> dict[str, str] | None:
+        # FLUJO ACTUAL:
+        # SQL Server es la fuente principal de autenticacion de gestion.
         try:
             return self.usuario_gestion_repository.obtener_usuario_activo(usuario)
         except Exception:
             return None
 
+    # Bloque CDLform: funcion/metodo obtener_credenciales_admin; encapsula una operacion del flujo del modulo.
     def obtener_credenciales_admin(self) -> dict[str, str]:
+        # LEGACY:
+        # Se conserva por compatibilidad con codigo antiguo que distinguia admin
+        # de gestion por archivo. Hoy ambos pasan por obtener_credenciales_gestion().
         return self.obtener_credenciales_gestion()
 
+    # Bloque CDLform: funcion/metodo autenticar_usuario; encapsula una operacion del flujo del modulo.
     def autenticar_usuario(self, usuario: str, password: str) -> dict[str, str] | None:
         usuario_ingresado = self._normalizar_texto(usuario)
         password_ingresado = self._normalizar_texto(password)
@@ -216,12 +245,16 @@ class AuthService:
 
         return None
 
+    # Bloque CDLform: funcion/metodo _sincronizar_credenciales_fallback_a_sql; encapsula una operacion del flujo del modulo.
     def _sincronizar_credenciales_fallback_a_sql(
         self,
         usuario: str,
         password_hash: str,
         rol: str,
     ) -> None:
+        # MIGRACION SUAVE:
+        # Si el fallback JSON/env funciono, intenta dejar el usuario en SQL para
+        # que el siguiente inicio use la ruta principal.
         try:
             self.usuario_gestion_repository.guardar_usuario(
                 usuario=usuario,
@@ -232,5 +265,6 @@ class AuthService:
         except Exception:
             return
 
+    # Bloque CDLform: funcion/metodo validar_login; encapsula una operacion del flujo del modulo.
     def validar_login(self, usuario: str, password: str) -> bool:
         return self.autenticar_usuario(usuario, password) is not None

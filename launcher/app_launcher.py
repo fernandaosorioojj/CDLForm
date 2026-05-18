@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Coordinacion de apertura de ventanas y formularios pendientes en el cliente operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 import inspect
 from typing import Any, Callable
@@ -11,7 +16,9 @@ from services.forms.respuesta_service import RespuestaService
 from ui.formulario_operario import FormularioOperarioView
 
 
+# Bloque CDLform: clase AppLauncher; agrupa estado y comportamiento de esta parte del flujo.
 class AppLauncher:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario_service: FormularioService | None = None,
@@ -23,9 +30,11 @@ class AppLauncher:
         self.respuesta_service = respuesta_service or RespuestaService()
         self._ventanas_abiertas: list[Any] = []
 
+    # Bloque CDLform: funcion/metodo tiene_ventanas_abiertas; encapsula una operacion del flujo del modulo.
     def tiene_ventanas_abiertas(self) -> bool:
         return bool(self._ventanas_abiertas)
 
+    # Bloque CDLform: funcion/metodo _obtener_o_crear_app; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _obtener_o_crear_app() -> tuple[QApplication, bool]:
         app = QApplication.instance()
@@ -34,6 +43,7 @@ class AppLauncher:
 
         return QApplication([]), True
 
+    # Bloque CDLform: funcion/metodo _mostrar_view; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _mostrar_view(view: Any) -> None:
         if hasattr(view, "showMaximized"):
@@ -46,12 +56,14 @@ class AppLauncher:
 
         raise ValueError("La vista no tiene mÃ©todos show ni showMaximized.")
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _obtener_valor_formulario; encapsula una operacion del flujo del modulo.
     @classmethod
     def _obtener_valor_formulario(
         cls,
@@ -63,6 +75,7 @@ class AppLauncher:
             return formulario.get(clave, default)
         return getattr(formulario, clave, default)
 
+    # Bloque CDLform: funcion/metodo _obtener_operario_formulario; encapsula una operacion del flujo del modulo.
     @classmethod
     def _obtener_operario_formulario(cls, formulario: Any) -> str:
         return cls._normalizar_texto(
@@ -70,6 +83,7 @@ class AppLauncher:
             or cls._obtener_valor_formulario(formulario, "operador")
         )
 
+    # Bloque CDLform: funcion/metodo _instanciar_formulario_operario_view; encapsula una operacion del flujo del modulo.
     def _instanciar_formulario_operario_view(
         self,
         formulario: Any,
@@ -117,6 +131,7 @@ class AppLauncher:
             f"Errores detectados: {' | '.join(errores)}"
         )
 
+    # Bloque CDLform: funcion/metodo abrir_formulario_pendiente_operario; encapsula una operacion del flujo del modulo.
     def abrir_formulario_pendiente_operario(
         self,
         formulario: dict[str, Any],
@@ -149,6 +164,7 @@ class AppLauncher:
             "formulario": formulario,
         }
 
+    # Bloque CDLform: funcion/metodo _liberar_ventana; encapsula una operacion del flujo del modulo.
     def _liberar_ventana(self, ventana: Any) -> None:
         if ventana in self._ventanas_abiertas:
             self._ventanas_abiertas.remove(ventana)

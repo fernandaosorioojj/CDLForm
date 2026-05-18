@@ -1,3 +1,8 @@
+"""Servicios de negocio para formularios, preguntas, plantillas y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -9,10 +14,13 @@ from repositories.respuesta_repository import RespuestaRepository
 from utils.id_generator import generate_id
 
 
+# Bloque CDLform: clase RespuestaService; agrupa estado y comportamiento de esta parte del flujo.
 class RespuestaService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, respuesta_repository: Optional[RespuestaRepository] = None):
         self.respuesta_repository = respuesta_repository or RespuestaRepository()
 
+    # Bloque CDLform: funcion/metodo crear_respuesta; encapsula una operacion del flujo del modulo.
     def crear_respuesta(
         self,
         id_formulario: str,
@@ -61,6 +69,7 @@ class RespuestaService:
         self.respuesta_repository.add_respuesta(respuesta)
         return respuesta
 
+    # Bloque CDLform: funcion/metodo guardar_respuestas_formulario; encapsula una operacion del flujo del modulo.
     def guardar_respuestas_formulario(
         self,
         id_formulario: str,
@@ -90,6 +99,7 @@ class RespuestaService:
 
         return respuestas_creadas
 
+    # Bloque CDLform: funcion/metodo obtener_respuesta_por_id; encapsula una operacion del flujo del modulo.
     def obtener_respuesta_por_id(self, id_respuesta: str) -> Respuesta:
         if not id_respuesta or not id_respuesta.strip():
             raise ValidationError("El id_respuesta es obligatorio.")
@@ -100,21 +110,25 @@ class RespuestaService:
 
         return respuesta
 
+    # Bloque CDLform: funcion/metodo listar_respuestas; encapsula una operacion del flujo del modulo.
     def listar_respuestas(self) -> list[Respuesta]:
         return self.respuesta_repository.list_all()
 
+    # Bloque CDLform: funcion/metodo listar_respuestas_por_formulario; encapsula una operacion del flujo del modulo.
     def listar_respuestas_por_formulario(self, id_formulario: str) -> list[Respuesta]:
         if not id_formulario or not id_formulario.strip():
             raise ValidationError("El id_formulario es obligatorio.")
 
         return self.respuesta_repository.get_respuestas_por_formulario(id_formulario.strip())
 
+    # Bloque CDLform: funcion/metodo listar_respuestas_por_pregunta; encapsula una operacion del flujo del modulo.
     def listar_respuestas_por_pregunta(self, id_pregunta: str) -> list[Respuesta]:
         if not id_pregunta or not id_pregunta.strip():
             raise ValidationError("El id_pregunta es obligatorio.")
 
         return self.respuesta_repository.get_respuestas_por_pregunta(id_pregunta.strip())
 
+    # Bloque CDLform: funcion/metodo actualizar_respuesta; encapsula una operacion del flujo del modulo.
     def actualizar_respuesta(
         self,
         id_respuesta: str,
@@ -158,6 +172,7 @@ class RespuestaService:
         self.respuesta_repository.update(respuesta_actualizada)
         return respuesta_actualizada
 
+    # Bloque CDLform: funcion/metodo _validar_datos_obligatorios; encapsula una operacion del flujo del modulo.
     def _validar_datos_obligatorios(
         self,
         id_formulario: str,
@@ -169,6 +184,7 @@ class RespuestaService:
         if not id_pregunta or not str(id_pregunta).strip():
             raise ValidationError("El id_pregunta es obligatorio.")
 
+    # Bloque CDLform: funcion/metodo _validar_contenido_respuesta; encapsula una operacion del flujo del modulo.
     def _validar_contenido_respuesta(
         self,
         respuesta_texto: Optional[str],

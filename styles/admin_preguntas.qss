@@ -1,10 +1,10 @@
-QWidget#adminPreguntasView {
-    background-color: #D1CDC2;
+﻿QWidget#adminPreguntasView {
+    background-color: #FFFFFF;
 }
 
 QWidget#adminPreguntasView QFrame#adminTopPanel {
-    background-color: #171717;
-    border: 1px solid rgba(34, 34, 34, 220);
+    background-color: #05095C;
+    border: 1px solid rgba(5, 9, 92, 220);
     border-radius: 18px;
 }
 
@@ -14,69 +14,69 @@ QWidget#adminPreguntasView QFrame#adminHeader {
 }
 
 QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="title"] {
-    color: #f7f2ea;
+    color: #FFFFFF;
     font-size: 30px;
 }
 
 QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="subtitle"] {
-    color: rgba(247, 242, 234, 0.72);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 15px;
 }
 
 QWidget#adminPreguntasView QFrame#adminHeader QLabel[role="eyebrow"] {
-    color: rgba(247, 242, 234, 0.56);
+    color: rgba(255, 255, 255, 0.56);
 }
 
 QWidget#adminPreguntasView QFrame#adminSidebar {
-    background-color: #171717;
-    border: 1px solid rgba(34, 34, 34, 220);
+    background-color: #05095C;
+    border: 1px solid rgba(5, 9, 92, 220);
     border-radius: 18px;
 }
 
 QWidget#adminPreguntasView QFrame[card="true"] {
     padding: 12px;
     background-color: rgba(255, 255, 255, 244);
-    border: 1px solid rgba(220, 212, 201, 232);
+    border: 1px solid rgba(154, 179, 230, 232);
     border-radius: 18px;
 }
 
 QWidget#adminPreguntasView QFrame#adminSidebar[card="true"] {
-    background-color: #171717;
-    border: 1px solid rgba(34, 34, 34, 220);
+    background-color: #05095C;
+    border: 1px solid rgba(5, 9, 92, 220);
 }
 
 QWidget#adminPreguntasView QLabel[role="title"] {
-    color: #2c4c62;
+    color: #05095C;
 }
 
 QWidget#adminPreguntasView QLabel[role="subtitle"] {
-    color: #677887;
+    color: #8F8F8F;
 }
 
 QWidget#adminPreguntasView QLabel#adminSidebarLabel {
-    color: #d1cdc2;
+    color: #FFFFFF;
 }
 
 QWidget#adminPreguntasView QLabel#adminPasoFlujo {
-    background-color: #efebe4;
-    border: 1px solid rgba(215, 205, 192, 0.95);
+    background-color: #FFFFFF;
+    border: 1px solid rgba(154, 179, 230, 0.95);
     border-radius: 8px;
-    color: #495d70;
+    color: #05095C;
     font-weight: 700;
     padding: 8px 10px;
 }
 
 QWidget#adminPreguntasView QLabel#adminPasoFlujo[estado="actual"] {
-    background-color: #171717;
-    border-color: #171717;
-    color: #f7f2ea;
+    background-color: #05095C;
+    border-color: #05095C;
+    color: #FFFFFF;
 }
 
 QWidget#adminPreguntasView QLabel#adminResumenConfirmacion {
-    background-color: #f7f2ea;
-    border: 1px solid rgba(220, 212, 201, 220);
+    background-color: #FFFFFF;
+    border: 1px solid rgba(154, 179, 230, 220);
     border-radius: 8px;
-    color: #2f2a26;
+    color: #05095C;
     font-size: 18px;
     font-weight: 500;
     line-height: 1.45;
@@ -85,25 +85,25 @@ QWidget#adminPreguntasView QLabel#adminResumenConfirmacion {
 }
 
 QWidget#adminPreguntasView QPushButton {
-    background-color: #171717;
-    color: #f7f2ea;
-    border: 1px solid #171717;
+    background-color: #05095C;
+    color: #FFFFFF;
+    border: 1px solid #05095C;
 }
 
 QWidget#adminPreguntasView QPushButton:hover {
-    background-color: #2a2a2a;
-    border: 1px solid #2a2a2a;
+    background-color: #05095C;
+    border: 1px solid #05095C;
 }
 
 QWidget#adminPreguntasView QPushButton[variant="secondary"] {
-    background-color: #efebe4;
-    color: #495d70;
-    border: 1px solid rgba(215, 205, 192, 0.95);
+    background-color: #9AB3E6;
+    color: #05095C;
+    border: 1px solid rgba(154, 179, 230, 0.95);
 }
 
 QWidget#adminPreguntasView QPushButton[variant="secondary"]:hover {
-    background-color: #f5f1eb;
-    border: 1px solid rgba(215, 205, 192, 1);
+    background-color: #FFFFFF;
+    border: 1px solid rgba(154, 179, 230, 1);
 }
 
 QWidget#adminPreguntasView QScrollArea {
@@ -114,7 +114,7 @@ QWidget#adminPreguntasView QFrame#bloqueBasicoPregunta,
 QWidget#adminPreguntasView QFrame#bloqueContextoPregunta,
 QWidget#adminPreguntasView QFrame#panelOpcionesPregunta {
     background-color: rgba(255, 255, 255, 250);
-    border: 1px solid rgba(220, 212, 201, 220);
+    border: 1px solid rgba(154, 179, 230, 220);
     border-radius: ${radius_lg}px;
 }
 
@@ -132,14 +132,14 @@ QWidget#adminPreguntasView QFrame[compactCard="true"] QLabel[role="section"] {
 }
 
 QWidget#adminPreguntasView QLineEdit#adminSidebarSearch {
-    background-color: #d1cdc2;
-    color: #2f2a26;
-    border: 1px solid rgba(209, 205, 194, 0.96);
+    background-color: #FFFFFF;
+    color: #05095C;
+    border: 1px solid rgba(154, 179, 230, 0.96);
     border-radius: 8px;
 }
 
 QWidget#adminPreguntasView QLineEdit#adminSidebarSearch:focus {
-    border: 1px solid rgba(209, 205, 194, 1);
+    border: 1px solid rgba(154, 179, 230, 1);
 }
 
 QWidget#adminPreguntasView QListWidget {
@@ -149,9 +149,9 @@ QWidget#adminPreguntasView QListWidget {
 }
 
 QWidget#adminPreguntasView QListWidget#adminSidebarList {
-    background-color: #d1cdc2;
-    color: #2f2a26;
-    border: 1px solid rgba(209, 205, 194, 0.96);
+    background-color: #FFFFFF;
+    color: #05095C;
+    border: 1px solid rgba(154, 179, 230, 0.96);
     border-radius: 10px;
 }
 
@@ -161,7 +161,7 @@ QWidget#adminPreguntasView QListWidget::item {
 }
 
 QWidget#adminPreguntasView QListWidget#adminSidebarList::item {
-    border-bottom: 1px solid rgba(180, 173, 160, 0.9);
+    border-bottom: 1px solid rgba(143, 143, 143, 0.9);
     padding: 10px 8px;
 }
 
@@ -171,13 +171,13 @@ QWidget#adminPreguntasView QListWidget::item:hover {
 }
 
 QWidget#adminPreguntasView QListWidget#adminSidebarList::item:hover {
-    background-color: rgba(245, 240, 232, 0.96);
-    color: #171717;
+    background-color: rgba(255, 255, 255, 0.96);
+    color: #05095C;
 }
 
 QWidget#adminPreguntasView QListWidget#adminSidebarList::item:selected {
-    background-color: rgba(23, 23, 23, 0.9);
-    color: #f7f2ea;
+    background-color: rgba(5, 9, 92, 0.9);
+    color: #FFFFFF;
 }
 
 QWidget#adminPreguntasView QWidget#estadoPregunta {
@@ -213,3 +213,4 @@ QWidget#adminPreguntasView QWidget#estadoPregunta QCheckBox[chip="true"]::indica
     background-color: $bg_button;
     border: 1px solid $bg_button;
 }
+

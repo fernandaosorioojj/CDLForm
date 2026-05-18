@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Orquestadores de flujos operativos, cola SQL y apertura de formularios.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
@@ -8,9 +13,11 @@ from services.forms.formulario_service import FormularioService
 from models.formulario import ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO
 
 
+# Bloque CDLform: clase ApontamentoProcesadoService; agrupa estado y comportamiento de esta parte del flujo.
 class ApontamentoProcesadoService:
     MENSAJE_SIN_PLANTILLA_ACTIVA = "No existe una plantilla activa de preguntas para "
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         apontamento_query_service: ApontamentoQueryService | None = None,
@@ -21,15 +28,27 @@ class ApontamentoProcesadoService:
         )
         self.formulario_service = formulario_service or FormularioService()
 
+    # Bloque CDLform: funcion/metodo _ensure_storage; encapsula una operacion del flujo del modulo.
     def _ensure_storage(self) -> None:
+        # LEGACY / NO FLUJO ACTUAL:
+        # Antes podia existir una cola local JSON de apontamientos procesados.
+        # Hoy la verdad esta en SQL: eventos_op_pendientes + formularios_operario.
         return None
 
+    # Bloque CDLform: funcion/metodo _leer_registros; encapsula una operacion del flujo del modulo.
     def _leer_registros(self) -> list[dict[str, Any]]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # No hay almacenamiento local vigente; se mantiene para no romper llamadas
+        # tecnicas antiguas, pero no alimenta el modo automatico.
         return []
 
+    # Bloque CDLform: funcion/metodo _guardar_registros; encapsula una operacion del flujo del modulo.
     def _guardar_registros(self, registros: list[dict[str, Any]]) -> None:
+        # LEGACY / NO FLUJO ACTUAL:
+        # No persiste nada. El procesamiento vigente marca estados en SQL.
         return None
 
+    # Bloque CDLform: funcion/metodo _normalizar_id_apontamento; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_id_apontamento(valor: Any) -> str:
         if valor is None:
@@ -56,16 +75,19 @@ class ApontamentoProcesadoService:
 
         return texto
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _es_error_sin_plantilla_activa; encapsula una operacion del flujo del modulo.
     @classmethod
     def _es_error_sin_plantilla_activa(cls, exc: Exception) -> bool:
         return cls.MENSAJE_SIN_PLANTILLA_ACTIVA in str(exc)
 
+    # Bloque CDLform: funcion/metodo _formulario_puede_abrirse; encapsula una operacion del flujo del modulo.
     def _formulario_puede_abrirse(self, formulario: dict[str, Any] | None) -> bool:
         if not formulario:
             return False
@@ -73,6 +95,7 @@ class ApontamentoProcesadoService:
         estado = self._normalizar_texto(formulario.get("estado"))
         return estado in {ESTADO_EN_APERTURA, ESTADO_PENDIENTE_OPERARIO}
 
+    # Bloque CDLform: funcion/metodo _serializar_valor; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_valor(valor: Any) -> Any:
         if valor is None:
@@ -89,9 +112,11 @@ class ApontamentoProcesadoService:
 
         return valor
 
+    # Bloque CDLform: funcion/metodo listar_registros_procesados; encapsula una operacion del flujo del modulo.
     def listar_registros_procesados(self) -> list[dict[str, Any]]:
         return self._leer_registros()
 
+    # Bloque CDLform: funcion/metodo listar_ids_procesados; encapsula una operacion del flujo del modulo.
     def listar_ids_procesados(self) -> set[str]:
         ids: set[str] = set()
 
@@ -105,16 +130,21 @@ class ApontamentoProcesadoService:
 
         return ids
 
+    # Bloque CDLform: funcion/metodo fue_procesado; encapsula una operacion del flujo del modulo.
     def fue_procesado(self, id_apontamento: Any) -> bool:
         id_normalizado = self._normalizar_id_apontamento(id_apontamento)
         return id_normalizado in self.listar_ids_procesados()
 
+    # Bloque CDLform: funcion/metodo listar_apontamientos_pendientes_estacion_actual; encapsula una operacion del flujo del modulo.
     def listar_apontamientos_pendientes_estacion_actual(
         self,
         limit: int = 50,
         solo_finalizados: bool = True,
         solo_con_num_ordem: bool = True,
     ) -> dict[str, Any]:
+        # EMERGENCIA MANUAL:
+        # Consulta directa a Apontamentos. No se usa desde main.py --modo auto,
+        # MQTT ni watchdog; el flujo vigente consume eventos_op_pendientes.
         contexto = self.apontamento_query_service.obtener_contexto_estacion_actual()
         apontamentos = self.apontamento_query_service.listar_apontamentos_estacion_actual(
             limit=limit,
@@ -154,6 +184,7 @@ class ApontamentoProcesadoService:
             "apontamientos_omitidos_sin_num_ordem": omitidos_sin_num_ordem,
         }
 
+    # Bloque CDLform: funcion/metodo registrar_apontamento_procesado; encapsula una operacion del flujo del modulo.
     def registrar_apontamento_procesado(
         self,
         apontamento: dict[str, Any],
@@ -162,6 +193,9 @@ class ApontamentoProcesadoService:
         id_formulario: str | None = None,
         observacion: str | None = None,
     ) -> dict[str, Any]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # Construye registros de una cola local antigua. Como _guardar_registros()
+        # ya no persiste, no debe usarse como mecanismo productivo.
         registros = self._leer_registros()
 
         id_apontamento = self._normalizar_id_apontamento(
@@ -186,6 +220,7 @@ class ApontamentoProcesadoService:
         self._guardar_registros(registros)
         return registro
 
+    # Bloque CDLform: funcion/metodo _construir_registro_apontamento; encapsula una operacion del flujo del modulo.
     def _construir_registro_apontamento(
         self,
         apontamento: dict[str, Any],
@@ -233,6 +268,7 @@ class ApontamentoProcesadoService:
             "fecha_registro": datetime.now().isoformat(timespec="seconds"),
         }
 
+    # Bloque CDLform: funcion/metodo registrar_apontamientos_procesados; encapsula una operacion del flujo del modulo.
     def registrar_apontamientos_procesados(
         self,
         apontamientos: list[dict[str, Any]],
@@ -251,6 +287,7 @@ class ApontamentoProcesadoService:
 
         return registros_guardados
 
+    # Bloque CDLform: funcion/metodo _evento_cola_a_apontamento; encapsula una operacion del flujo del modulo.
     def _evento_cola_a_apontamento(
         self,
         evento: dict[str, Any],
@@ -270,6 +307,7 @@ class ApontamentoProcesadoService:
             "HoraFim": evento.get("hora_fim"),
         }
 
+    # Bloque CDLform: funcion/metodo actualizar_estado_apontamento; encapsula una operacion del flujo del modulo.
     def actualizar_estado_apontamento(
         self,
         id_apontamento: Any,
@@ -302,6 +340,7 @@ class ApontamentoProcesadoService:
             f"No existe un apuntamiento procesado con IdApontamento {id_normalizado}."
         )
 
+    # Bloque CDLform: funcion/metodo listar_registros_pendientes_formulario; encapsula una operacion del flujo del modulo.
     def listar_registros_pendientes_formulario(
         self,
         limit: int = 50,
@@ -320,10 +359,14 @@ class ApontamentoProcesadoService:
 
         return registros
 
+    # Bloque CDLform: funcion/metodo crear_formularios_desde_registros_pendientes; encapsula una operacion del flujo del modulo.
     def crear_formularios_desde_registros_pendientes(
         self,
         limit: int = 50,
     ) -> dict[str, Any]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # Dependia de registros locales leidos por _leer_registros(). El flujo
+        # actual crea formularios directamente desde eventos_op_pendientes.
         pendientes = self.listar_registros_pendientes_formulario(limit=limit)
 
         formularios_creados: list[dict[str, Any]] = []
@@ -382,11 +425,15 @@ class ApontamentoProcesadoService:
             "errores": errores,
         }
 
+    # Bloque CDLform: funcion/metodo sincronizar_y_crear_formularios_desde_cola_sql; encapsula una operacion del flujo del modulo.
     def sincronizar_y_crear_formularios_desde_cola_sql(
         self,
         limit_consulta: int = 50,
         solo_con_num_ordem: bool = True,
     ) -> dict[str, Any]:
+        # FLUJO ACTUAL:
+        # Esta es la ruta usada por main.py --modo auto, listener MQTT y fallback
+        # por tarea programada. Consume dbo.eventos_op_pendientes.
         contexto = self.apontamento_query_service.obtener_contexto_estacion_actual()
         cod_recursos = list(contexto.get("cod_recursos", []))
         eventos = self.apontamento_query_service.listar_eventos_op_pendientes(
@@ -506,6 +553,7 @@ class ApontamentoProcesadoService:
             "errores": errores,
         }
 
+    # Bloque CDLform: funcion/metodo sincronizar_y_crear_formularios_estacion_actual; encapsula una operacion del flujo del modulo.
     def sincronizar_y_crear_formularios_estacion_actual(
         self,
         limit_consulta: int = 50,
@@ -513,6 +561,9 @@ class ApontamentoProcesadoService:
         solo_finalizados: bool = True,
         solo_con_num_ordem: bool = True,
     ) -> dict[str, Any]:
+        # EMERGENCIA MANUAL / NO FLUJO ACTUAL:
+        # Ruta historica desde dbo.Apontamentos. No conectarla como fallback
+        # automatico sin revalidar persistencia y duplicados.
         resultado_consulta = self.listar_apontamientos_pendientes_estacion_actual(
             limit=limit_consulta,
             solo_finalizados=solo_finalizados,

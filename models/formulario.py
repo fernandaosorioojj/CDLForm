@@ -1,3 +1,8 @@
+"""Modelos de dominio usados para transportar formularios, preguntas, opciones y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -15,12 +20,14 @@ MAPA_ESTADOS_LEGACY = {
 }
 
 
+# Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
 def _normalizar_texto(valor: Any) -> str:
     if valor is None:
         return ""
     return str(valor).strip()
 
 
+# Bloque CDLform: funcion/metodo _serializar_valor; encapsula una operacion del flujo del modulo.
 def _serializar_valor(valor: Any) -> Any:
     if valor is None:
         return None
@@ -34,6 +41,7 @@ def _serializar_valor(valor: Any) -> Any:
     return valor
 
 
+# Bloque CDLform: funcion/metodo _normalizar_estado; encapsula una operacion del flujo del modulo.
 def _normalizar_estado(valor: Any) -> str:
     estado = _normalizar_texto(valor)
     if not estado:
@@ -41,6 +49,7 @@ def _normalizar_estado(valor: Any) -> str:
     return MAPA_ESTADOS_LEGACY.get(estado, estado)
 
 
+# Bloque CDLform: clase Formulario; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass
 class Formulario:
     id_formulario: str
@@ -66,6 +75,7 @@ class Formulario:
     id_plantilla_preguntas: str = ""
     version_plantilla_preguntas: int = 0
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         self.id_formulario = _normalizar_texto(self.id_formulario)
         self.identificador = _normalizar_texto(self.identificador)
@@ -93,6 +103,7 @@ class Formulario:
         self.turno = _serializar_valor(self.turno)
         self.hora_fim = _serializar_valor(self.hora_fim)
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Formulario":
         return cls(
@@ -122,6 +133,7 @@ class Formulario:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> dict[str, Any]:
         return {
             "id_formulario": self.id_formulario,
@@ -148,11 +160,13 @@ class Formulario:
             "version_plantilla_preguntas": self.version_plantilla_preguntas,
         }
 
+    # Bloque CDLform: funcion/metodo actualizar; encapsula una operacion del flujo del modulo.
     def actualizar(self, cambios: dict[str, Any]) -> None:
         for clave, valor in cambios.items():
             if hasattr(self, clave):
                 setattr(self, clave, valor)
         self.__post_init__()
 
+    # Bloque CDLform: funcion/metodo get; encapsula una operacion del flujo del modulo.
     def get(self, clave: str, default: Any = None) -> Any:
         return getattr(self, clave, default)

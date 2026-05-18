@@ -1,20 +1,28 @@
+"""Modelos de dominio usados para transportar formularios, preguntas, opciones y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
 
+# Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
 def _normalizar_texto(valor: Any) -> str:
     if valor is None:
         return ""
     return str(valor).strip()
 
 
+# Bloque CDLform: clase PlantillaPreguntaItem; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class PlantillaPreguntaItem:
     id_pregunta: str
     orden: int = 1
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         id_pregunta = _normalizar_texto(self.id_pregunta)
         if not id_pregunta:
@@ -27,12 +35,14 @@ class PlantillaPreguntaItem:
 
         object.__setattr__(self, "id_pregunta", id_pregunta)
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> dict[str, Any]:
         return {
             "id_pregunta": self.id_pregunta,
             "orden": self.orden,
         }
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PlantillaPreguntaItem":
         return cls(
@@ -41,6 +51,7 @@ class PlantillaPreguntaItem:
         )
 
 
+# Bloque CDLform: clase PlantillaPreguntas; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class PlantillaPreguntas:
     id_plantilla: str
@@ -53,6 +64,7 @@ class PlantillaPreguntas:
     fecha_desactivacion: str = ""
     items: list[PlantillaPreguntaItem] = field(default_factory=list)
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         id_plantilla = _normalizar_texto(self.id_plantilla)
         cod_recurso = _normalizar_texto(self.cod_recurso).upper()
@@ -103,6 +115,7 @@ class PlantillaPreguntas:
         )
         object.__setattr__(self, "items", items_normalizados)
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> dict[str, Any]:
         return {
             "id_plantilla": self.id_plantilla,
@@ -116,6 +129,7 @@ class PlantillaPreguntas:
             "items": [item.to_dict() for item in self.items],
         }
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PlantillaPreguntas":
         return cls(

@@ -1,3 +1,8 @@
+"""Utilidades transversales de fechas, IDs, assets, JSON y estilos.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from string import Template
@@ -6,6 +11,7 @@ from config.settings import SETTINGS
 from styles.theme import THEME
 
 
+# Bloque CDLform: funcion/metodo _theme_mapping; encapsula una operacion del flujo del modulo.
 def _theme_mapping() -> dict[str, object]:
     return {
         "bg_app": THEME.bg_app,
@@ -40,6 +46,7 @@ def _theme_mapping() -> dict[str, object]:
     }
 
 
+# Bloque CDLform: funcion/metodo load_qss_files; encapsula una operacion del flujo del modulo.
 def load_qss_files(*filenames: str) -> str:
     styles_dir = SETTINGS.paths.styles_dir
     partes: list[str] = []

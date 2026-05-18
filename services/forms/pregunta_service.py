@@ -1,3 +1,8 @@
+"""Servicios de negocio para formularios, preguntas, plantillas y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -12,7 +17,9 @@ from services.jobtrack.catalogo_contexto_service import CatalogoContextoService
 from utils.id_generator import generate_id
 
 
+# Bloque CDLform: clase PreguntaService; agrupa estado y comportamiento de esta parte del flujo.
 class PreguntaService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         repository: PreguntaRepository | None = None,
@@ -25,6 +32,7 @@ class PreguntaService:
             catalogo_contexto_service or CatalogoContextoService()
         )
 
+    # Bloque CDLform: funcion/metodo listar_preguntas; encapsula una operacion del flujo del modulo.
     def listar_preguntas(self, solo_activas: bool = False) -> list[dict]:
         preguntas = self.repository.get_all()
 
@@ -40,9 +48,11 @@ class PreguntaService:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo obtener_pregunta; encapsula una operacion del flujo del modulo.
     def obtener_pregunta(self, id_pregunta: str) -> dict | None:
         return self.repository.find_by_id(id_pregunta)
 
+    # Bloque CDLform: funcion/metodo crear_pregunta; encapsula una operacion del flujo del modulo.
     def crear_pregunta(
         self,
         texto: str,
@@ -81,6 +91,7 @@ class PreguntaService:
         self._sincronizar_plantillas_por_preguntas([pregunta_dict])
         return pregunta_dict
 
+    # Bloque CDLform: funcion/metodo actualizar_pregunta; encapsula una operacion del flujo del modulo.
     def actualizar_pregunta(
         self,
         id_pregunta: str,
@@ -140,6 +151,7 @@ class PreguntaService:
         )
         return True
 
+    # Bloque CDLform: funcion/metodo desactivar_pregunta; encapsula una operacion del flujo del modulo.
     def desactivar_pregunta(self, id_pregunta: str) -> bool:
         pregunta_actual = self.repository.find_by_id(id_pregunta)
         if not pregunta_actual:
@@ -156,9 +168,11 @@ class PreguntaService:
             self._sincronizar_plantillas_por_preguntas([pregunta_actualizada])
         return actualizado
 
+    # Bloque CDLform: funcion/metodo eliminar_pregunta; encapsula una operacion del flujo del modulo.
     def eliminar_pregunta(self, id_pregunta: str) -> bool:
         return self.desactivar_pregunta(id_pregunta)
 
+    # Bloque CDLform: funcion/metodo listar_preguntas_para_contexto; encapsula una operacion del flujo del modulo.
     def listar_preguntas_para_contexto(self, contexto: dict) -> list[dict]:
         contexto_normalizado = self._normalizar_contexto(contexto)
         if not contexto_normalizado:
@@ -182,6 +196,7 @@ class PreguntaService:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo listar_preguntas_para_plantilla; encapsula una operacion del flujo del modulo.
     def listar_preguntas_para_plantilla(self, id_plantilla: str) -> list[dict]:
         plantilla = self.plantilla_service.repository.obtener_por_id(id_plantilla)
         if not plantilla:
@@ -200,6 +215,7 @@ class PreguntaService:
 
         return resultado
 
+    # Bloque CDLform: funcion/metodo asegurar_plantilla_para_contexto; encapsula una operacion del flujo del modulo.
     def asegurar_plantilla_para_contexto(
         self,
         cod_recurso: str,
@@ -221,6 +237,7 @@ class PreguntaService:
             preguntas=preguntas,
         )
 
+    # Bloque CDLform: funcion/metodo _cumple_filtros; encapsula una operacion del flujo del modulo.
     def _cumple_filtros(self, contexto: dict, filtros: dict) -> bool:
         if not filtros:
             return True
@@ -248,6 +265,7 @@ class PreguntaService:
 
         return True
 
+    # Bloque CDLform: funcion/metodo _normalizar_contexto; encapsula una operacion del flujo del modulo.
     def _normalizar_contexto(self, contexto: dict) -> dict:
         contexto_normalizado: dict[str, str] = {}
 
@@ -260,6 +278,7 @@ class PreguntaService:
 
         return contexto_normalizado
 
+    # Bloque CDLform: funcion/metodo _normalizar_clave_filtro; encapsula una operacion del flujo del modulo.
     def _normalizar_clave_filtro(self, clave: str) -> str:
         clave_limpia = str(clave).strip().lower()
 
@@ -277,9 +296,11 @@ class PreguntaService:
 
         return aliases.get(clave_limpia, clave_limpia)
 
+    # Bloque CDLform: funcion/metodo _normalizar_valor; encapsula una operacion del flujo del modulo.
     def _normalizar_valor(self, valor: Any) -> str:
         return str(valor).strip().upper()
 
+    # Bloque CDLform: funcion/metodo _normalizar_opciones_respuesta; encapsula una operacion del flujo del modulo.
     def _normalizar_opciones_respuesta(
         self,
         tipo: TipoPregunta,
@@ -328,6 +349,7 @@ class PreguntaService:
 
         return opciones_normalizadas
 
+    # Bloque CDLform: funcion/metodo _parse_tipo; encapsula una operacion del flujo del modulo.
     def _parse_tipo(self, tipo: str | TipoPregunta) -> TipoPregunta:
         if isinstance(tipo, TipoPregunta):
             return tipo
@@ -350,6 +372,7 @@ class PreguntaService:
 
         return mapa[tipo_limpio]
 
+    # Bloque CDLform: funcion/metodo _sincronizar_plantillas_por_preguntas; encapsula una operacion del flujo del modulo.
     def _sincronizar_plantillas_por_preguntas(
         self,
         preguntas_afectadas: list[dict[str, Any]],
@@ -382,6 +405,7 @@ class PreguntaService:
                 preguntas=preguntas_contexto,
             )
 
+    # Bloque CDLform: funcion/metodo _contextos_plantilla_para_pregunta; encapsula una operacion del flujo del modulo.
     def _contextos_plantilla_para_pregunta(
         self,
         pregunta: dict[str, Any],
@@ -406,6 +430,7 @@ class PreguntaService:
 
         return self._expandir_contextos_desde_catalogos(filtros)
 
+    # Bloque CDLform: funcion/metodo _expandir_contextos_desde_catalogos; encapsula una operacion del flujo del modulo.
     def _expandir_contextos_desde_catalogos(
         self,
         filtros: dict[str, Any],
@@ -432,6 +457,7 @@ class PreguntaService:
 
         return set(product(cod_recursos, cod_setores))
 
+    # Bloque CDLform: funcion/metodo _obtener_contextos_disponibles; encapsula una operacion del flujo del modulo.
     def _obtener_contextos_disponibles(self) -> list[dict[str, str]]:
         contextos = self.catalogo_contexto_service.listar_contextos_recurso_setor()
         if not contextos:
@@ -460,6 +486,7 @@ class PreguntaService:
 
         return resultado
 
+    # Bloque CDLform: funcion/metodo _normalizar_lista_filtro; encapsula una operacion del flujo del modulo.
     def _normalizar_lista_filtro(self, valores: Any) -> list[str]:
         if valores is None:
             return []

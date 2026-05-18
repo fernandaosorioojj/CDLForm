@@ -1,3 +1,8 @@
+"""Acceso a datos SQL Server para entidades del dominio CDLform.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import json
@@ -7,32 +12,46 @@ from typing import Any, Optional
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 from repositories.base_repository import BaseRepository
 
 
+# FLUJO ACTUAL:
+# Sin file_path, este repositorio usa SQL Server para preguntas y opciones.
+#
+# LEGACY:
+# Si se instancia manualmente con file_path, usa JSON. Esa ruta no forma parte
+# del flujo vigente de gestion ni del formulario operario.
+# Bloque CDLform: clase PreguntaRepository; agrupa estado y comportamiento de esta parte del flujo.
 class PreguntaRepository:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, file_path: Path | None = None) -> None:
         self._json_repository = BaseRepository(file_path) if file_path else None
 
+    # Bloque CDLform: funcion/metodo _usar_json; encapsula una operacion del flujo del modulo.
     def _usar_json(self) -> bool:
+        # Ruta legacy: solo se activa si alguien entrega file_path explicitamente.
         return self._json_repository is not None
 
+    # Bloque CDLform: funcion/metodo _connect; encapsula una operacion del flujo del modulo.
     def _connect(self) -> pyodbc.Connection:
-        return pyodbc.connect(build_connection_string())
+        return get_sql_connection()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _normalizar_bool; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_bool(valor: Any, default: bool = True) -> bool:
         if valor is None:
             return default
         return bool(valor)
 
+    # Bloque CDLform: funcion/metodo _normalizar_int; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_int(valor: Any, default: int = 1) -> int:
         try:
@@ -40,6 +59,7 @@ class PreguntaRepository:
         except (TypeError, ValueError):
             return default
 
+    # Bloque CDLform: funcion/metodo _serializar_fecha; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_fecha(valor: Any) -> str:
         if valor is None:
@@ -48,6 +68,7 @@ class PreguntaRepository:
             return valor.isoformat(timespec="seconds")
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _fecha_sql; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _fecha_sql(valor: Any) -> Any:
         texto = str(valor or "").strip()
@@ -55,12 +76,14 @@ class PreguntaRepository:
             return None
         return texto
 
+    # Bloque CDLform: funcion/metodo _filtros_a_json; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _filtros_a_json(filtros: Any) -> str | None:
         if not filtros:
             return None
         return json.dumps(filtros, ensure_ascii=False)
 
+    # Bloque CDLform: funcion/metodo _filtros_desde_json; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _filtros_desde_json(valor: Any) -> dict:
         texto = str(valor or "").strip()
@@ -72,6 +95,7 @@ class PreguntaRepository:
             return {}
         return data if isinstance(data, dict) else {}
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     def _rows_to_dicts(
         self,
         cursor: pyodbc.Cursor,
@@ -80,6 +104,7 @@ class PreguntaRepository:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo _obtener_opciones_por_preguntas; encapsula una operacion del flujo del modulo.
     def _obtener_opciones_por_preguntas(
         self,
         conn: pyodbc.Connection,
@@ -128,6 +153,7 @@ class PreguntaRepository:
 
         return opciones_por_pregunta
 
+    # Bloque CDLform: funcion/metodo _mapear_preguntas; encapsula una operacion del flujo del modulo.
     def _mapear_preguntas(
         self,
         conn: pyodbc.Connection,
@@ -177,6 +203,7 @@ class PreguntaRepository:
 
         return preguntas
 
+    # Bloque CDLform: funcion/metodo get_all; encapsula una operacion del flujo del modulo.
     def get_all(self) -> list[dict[str, Any]]:
         if self._usar_json():
             return self._json_repository.get_all()
@@ -205,9 +232,11 @@ class PreguntaRepository:
             rows = self._rows_to_dicts(cursor, cursor.fetchall())
             return self._mapear_preguntas(conn, rows)
 
+    # Bloque CDLform: funcion/metodo obtener_todas; encapsula una operacion del flujo del modulo.
     def obtener_todas(self) -> list[dict[str, Any]]:
         return self.get_all()
 
+    # Bloque CDLform: funcion/metodo find_by_id; encapsula una operacion del flujo del modulo.
     def find_by_id(self, item_id: str) -> Optional[dict[str, Any]]:
         if self._usar_json():
             return self._json_repository.find_by_id(item_id)
@@ -241,9 +270,11 @@ class PreguntaRepository:
             preguntas = self._mapear_preguntas(conn, rows)
             return preguntas[0] if preguntas else None
 
+    # Bloque CDLform: funcion/metodo obtener_por_id; encapsula una operacion del flujo del modulo.
     def obtener_por_id(self, id_pregunta: str) -> Optional[dict[str, Any]]:
         return self.find_by_id(id_pregunta)
 
+    # Bloque CDLform: funcion/metodo add; encapsula una operacion del flujo del modulo.
     def add(self, item: dict[str, Any]) -> dict[str, Any]:
         if self._usar_json():
             self._json_repository.add(item)
@@ -296,10 +327,12 @@ class PreguntaRepository:
 
         return item
 
+    # Bloque CDLform: funcion/metodo crear; encapsula una operacion del flujo del modulo.
     def crear(self, pregunta: dict[str, Any]) -> dict[str, Any]:
         self.add(pregunta)
         return pregunta
 
+    # Bloque CDLform: funcion/metodo update_by_id; encapsula una operacion del flujo del modulo.
     def update_by_id(self, item_id: str, new_data: dict[str, Any]) -> bool:
         if self._usar_json():
             return self._json_repository.update_by_id(item_id, new_data)
@@ -354,12 +387,14 @@ class PreguntaRepository:
             conn.commit()
             return True
 
+    # Bloque CDLform: funcion/metodo actualizar; encapsula una operacion del flujo del modulo.
     def actualizar(self, id_pregunta: str, data: dict[str, Any]) -> Optional[dict]:
         actualizado = self.update_by_id(id_pregunta, data)
         if not actualizado:
             return None
         return self.find_by_id(id_pregunta)
 
+    # Bloque CDLform: funcion/metodo delete_by_id; encapsula una operacion del flujo del modulo.
     def delete_by_id(self, item_id: str) -> bool:
         if self._usar_json():
             return self._json_repository.delete_by_id(item_id)
@@ -382,9 +417,11 @@ class PreguntaRepository:
             conn.commit()
             return eliminado
 
+    # Bloque CDLform: funcion/metodo eliminar; encapsula una operacion del flujo del modulo.
     def eliminar(self, id_pregunta: str) -> bool:
         return self.delete_by_id(id_pregunta)
 
+    # Bloque CDLform: funcion/metodo _guardar_opciones; encapsula una operacion del flujo del modulo.
     def _guardar_opciones(
         self,
         cursor: pyodbc.Cursor,
@@ -427,6 +464,7 @@ class PreguntaRepository:
                 ),
             )
 
+    # Bloque CDLform: funcion/metodo _sincronizar_opciones; encapsula una operacion del flujo del modulo.
     def _sincronizar_opciones(
         self,
         cursor: pyodbc.Cursor,

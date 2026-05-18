@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt
@@ -16,9 +21,11 @@ from services.forms.pregunta_service import PreguntaService
 from styles.common import apply_view_style
 
 
+# Bloque CDLform: clase DetallePlantillaPreguntasView; agrupa estado y comportamiento de esta parte del flujo.
 class DetallePlantillaPreguntasView(QDialog):
     qss_files = ("base.qss", "dialogs.qss", "detalle_plantilla_preguntas.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         plantilla: PlantillaPreguntas,
@@ -40,6 +47,7 @@ class DetallePlantillaPreguntasView(QDialog):
         apply_view_style(self, *self.qss_files)
         self._cargar_preguntas()
 
+    # Bloque CDLform: funcion/metodo _configurar_ui; encapsula una operacion del flujo del modulo.
     def _configurar_ui(self) -> None:
         layout = QVBoxLayout(self)
 
@@ -107,6 +115,7 @@ class DetallePlantillaPreguntasView(QDialog):
         self.tabla_preguntas.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.tabla_preguntas)
 
+    # Bloque CDLform: funcion/metodo _agregar_campo_info; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _agregar_campo_info(
         layout: QGridLayout,
@@ -123,6 +132,7 @@ class DetallePlantillaPreguntasView(QDialog):
         layout.addWidget(label, fila, columna)
         layout.addWidget(value_label, fila, columna + 1)
 
+    # Bloque CDLform: funcion/metodo _cargar_preguntas; encapsula una operacion del flujo del modulo.
     def _cargar_preguntas(self) -> None:
         preguntas_por_id = {
             pregunta.get("id_pregunta"): pregunta
@@ -153,11 +163,13 @@ class DetallePlantillaPreguntasView(QDialog):
 
         self.tabla_preguntas.resizeColumnsToContents()
 
+    # Bloque CDLform: funcion/metodo _set_item; encapsula una operacion del flujo del modulo.
     def _set_item(self, row: int, column: int, value) -> None:
         item = QTableWidgetItem("" if value is None else str(value))
         item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.tabla_preguntas.setItem(row, column, item)
 
+    # Bloque CDLform: funcion/metodo _formatear_opciones; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _formatear_opciones(pregunta: dict) -> str:
         opciones = []

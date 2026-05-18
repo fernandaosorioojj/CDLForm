@@ -1,0 +1,26 @@
+{
+  "server": "SERVIDOR_SQL\\INSTANCIA",
+  "database": "NOMBRE_BASE_DATOS",
+  "driver": "ODBC Driver 18 for SQL Server",
+  "encrypt": "no",
+  "trust_server_certificate": "yes",
+  "username": "usuario_sql_compatibilidad",
+  "password": "password_sql_compatibilidad",
+  "profiles": {
+    "operario": {
+      "username": "cdlform_operario",
+      "password": "password_operario",
+      "app_name": "CDLform Operario"
+    },
+    "gestion": {
+      "username": "cdlform_gestion",
+      "password": "password_gestion",
+      "app_name": "CDLform Gestion"
+    },
+    "watchdog": {
+      "username": "cdlform_watchdog",
+      "password": "password_watchdog",
+      "app_name": "CDLform Watchdog"
+    }
+  }
+}

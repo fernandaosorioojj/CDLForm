@@ -1,3 +1,8 @@
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -21,14 +26,17 @@ from widgets.asset_image import AssetImage
 from widgets.base_window import BaseWindow
 
 
+# Bloque CDLform: clase DashboardKpiWorker; agrupa estado y comportamiento de esta parte del flujo.
 class DashboardKpiWorker(QObject):
     finished = pyqtSignal(dict)
     failed = pyqtSignal(str)
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, presenter: DashboardGestionPresenter) -> None:
         super().__init__()
         self.presenter = presenter
 
+    # Bloque CDLform: funcion/metodo run; encapsula una operacion del flujo del modulo.
     def run(self) -> None:
         try:
             self.finished.emit(self.presenter.obtener_metricas_dashboard())
@@ -36,7 +44,9 @@ class DashboardKpiWorker(QObject):
             self.failed.emit(str(exc))
 
 
+# Bloque CDLform: clase DashboardMetricChip; agrupa estado y comportamiento de esta parte del flujo.
 class DashboardMetricChip(QFrame):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, title: str, value: str = "--", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("dashboardMetricChip")
@@ -69,21 +79,26 @@ class DashboardMetricChip(QFrame):
         layout.addLayout(header)
         layout.addWidget(self.value_label)
 
+    # Bloque CDLform: funcion/metodo set_value; encapsula una operacion del flujo del modulo.
     def set_value(self, value: str) -> None:
         self.value_label.setText(value)
 
 
+# Bloque CDLform: clase MiniBarChart; agrupa estado y comportamiento de esta parte del flujo.
 class MiniBarChart(QWidget):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._series: list[dict[str, object]] = []
         self.setMinimumHeight(180)
         self.setObjectName("dashboardBarChart")
 
+    # Bloque CDLform: funcion/metodo set_series; encapsula una operacion del flujo del modulo.
     def set_series(self, series: list[dict[str, object]]) -> None:
         self._series = series
         self.update()
 
+    # Bloque CDLform: funcion/metodo paintEvent; encapsula una operacion del flujo del modulo.
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
 
@@ -98,13 +113,13 @@ class MiniBarChart(QWidget):
         value_height = 24
         chart_rect = rect.adjusted(0, value_height, 0, -label_height)
 
-        painter.setPen(QPen(QColor(110, 133, 154, 58), 1))
+        painter.setPen(QPen(QColor(154, 179, 230, 90), 1))
         for step in range(1, 4):
             y = chart_rect.bottom() - int(chart_rect.height() * (step / 4))
             painter.drawLine(chart_rect.left(), y, chart_rect.right(), y)
 
         if not self._series:
-            painter.setPen(QColor(92, 109, 126, 195))
+            painter.setPen(QColor(143, 143, 143, 220))
             painter.drawText(rect, Qt.AlignCenter, "Sin datos")
             return
 
@@ -126,7 +141,7 @@ class MiniBarChart(QWidget):
         for index, item in enumerate(self._series):
             value = int(item.get("value", 0) or 0)
             label = str(item.get("label", ""))
-            color = QColor(str(item.get("color", "#B5D7F4")))
+            color = QColor(str(item.get("color", "#9AB3E6")))
 
             bar_height = int((value / max_value) * max(28, chart_rect.height() - 10))
             x = start_x + index * (bar_width + spacing)
@@ -140,11 +155,11 @@ class MiniBarChart(QWidget):
             painter.drawRoundedRect(x, y, bar_width, bar_height, 8, 8)
 
             painter.setFont(value_font)
-            painter.setPen(QColor(70, 88, 106, 235))
+            painter.setPen(QColor(5, 9, 92, 235))
             painter.drawText(x - 6, y - 18, bar_width + 12, 16, Qt.AlignCenter, str(value))
 
             painter.setFont(label_font)
-            painter.setPen(QColor(92, 109, 126, 220))
+            painter.setPen(QColor(143, 143, 143, 220))
             painter.drawText(
                 x - 10,
                 chart_rect.bottom() + 8,
@@ -155,7 +170,9 @@ class MiniBarChart(QWidget):
             )
 
 
+# Bloque CDLform: clase DashboardChartPanel; agrupa estado y comportamiento de esta parte del flujo.
 class DashboardChartPanel(QFrame):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         *,
@@ -169,7 +186,7 @@ class DashboardChartPanel(QFrame):
         sombra = QGraphicsDropShadowEffect(self)
         sombra.setBlurRadius(30)
         sombra.setOffset(0, 12)
-        sombra.setColor(QColor(72, 86, 102, 48))
+        sombra.setColor(QColor(5, 9, 92, 48))
         self.setGraphicsEffect(sombra)
 
         layout = QVBoxLayout(self)
@@ -204,13 +221,16 @@ class DashboardChartPanel(QFrame):
         layout.addWidget(subtitle_label)
         layout.addWidget(self.chart)
 
+    # Bloque CDLform: funcion/metodo set_series; encapsula una operacion del flujo del modulo.
     def set_series(self, series: list[dict[str, object]]) -> None:
         self.chart.set_series(series)
 
 
+# Bloque CDLform: clase DashboardGestionView; agrupa estado y comportamiento de esta parte del flujo.
 class DashboardGestionView(BaseWindow):
     qss_files = ("base.qss", "dashboard_gestion.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, usuario: str = "", rol: str = "gestion") -> None:
         super().__init__()
 
@@ -243,6 +263,7 @@ class DashboardGestionView(BaseWindow):
         self._aplicar_kpis_demo()
         QTimer.singleShot(250, self._cargar_kpis_dashboard_async)
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         root = QHBoxLayout(self)
         root.setContentsMargins(24, 20, 24, 20)
@@ -251,6 +272,7 @@ class DashboardGestionView(BaseWindow):
         root.addWidget(self._build_side_panel())
         root.addLayout(self._build_center_column(), 1)
 
+    # Bloque CDLform: funcion/metodo _build_nav_rail; encapsula una operacion del flujo del modulo.
     def _build_nav_rail(self) -> QFrame:
         rail = QFrame()
         rail.setObjectName("dashboardNavRail")
@@ -286,6 +308,7 @@ class DashboardGestionView(BaseWindow):
 
         return rail
 
+    # Bloque CDLform: funcion/metodo _build_center_column; encapsula una operacion del flujo del modulo.
     def _build_center_column(self) -> QVBoxLayout:
         center = QVBoxLayout()
         center.setSpacing(18)
@@ -322,6 +345,7 @@ class DashboardGestionView(BaseWindow):
 
         return center
 
+    # Bloque CDLform: funcion/metodo _obtener_saludo_dashboard; encapsula una operacion del flujo del modulo.
     def _obtener_saludo_dashboard(self) -> str:
         hora = datetime.now().hour
         nombre = self.usuario or "equipo"
@@ -332,6 +356,7 @@ class DashboardGestionView(BaseWindow):
             return f"Buenas tardes, {nombre}"
         return f"Buenas noches, {nombre}"
 
+    # Bloque CDLform: funcion/metodo _aplicar_kpis_demo; encapsula una operacion del flujo del modulo.
     def _aplicar_kpis_demo(
         self,
         *,
@@ -346,6 +371,7 @@ class DashboardGestionView(BaseWindow):
         if self.metric_completados is not None:
             self.metric_completados.set_value(str(completados))
 
+    # Bloque CDLform: funcion/metodo _aplicar_kpis_dashboard; encapsula una operacion del flujo del modulo.
     def _aplicar_kpis_dashboard(self, metricas: dict) -> None:
         kpis = metricas.get("kpis", {})
         if self.metric_acciones is not None:
@@ -359,17 +385,17 @@ class DashboardGestionView(BaseWindow):
 
         if self.chart_formularios is not None:
             estado_colors = {
-                "Pendiente": "#B5D7F4",
-                "Apertura": "#D8C7E8",
-                "En progreso": "#E6D7C6",
-                "Completado": "#C6D4E5",
-                "Cancelado": "#E8D8E5",
+                "Pendiente": "#9AB3E6",
+                "Apertura": "#E8D34F",
+                "En progreso": "#E8D34F",
+                "Completado": "#05095C",
+                "Cancelado": "#8F8F8F",
             }
             formularios_serie = [
                 {
                     "label": item.get("label", ""),
                     "value": item.get("value", 0),
-                    "color": estado_colors.get(str(item.get("label")), "#B5D7F4"),
+                    "color": estado_colors.get(str(item.get("label")), "#9AB3E6"),
                 }
                 for item in metricas.get("formularios_hoy", [])
             ]
@@ -377,13 +403,13 @@ class DashboardGestionView(BaseWindow):
 
         if self.chart_acciones is not None:
             acciones_colors = [
-                "#B5D7F4",
-                "#D8C7E8",
-                "#E6D7C6",
-                "#D8E1EE",
-                "#F0D9E8",
-                "#C6D4E5",
-                "#D8D1C6",
+                "#9AB3E6",
+                "#E8D34F",
+                "#05095C",
+                "#8F8F8F",
+                "#9AB3E6",
+                "#E8D34F",
+                "#8F8F8F",
             ]
             acciones_serie = [
                 {
@@ -400,10 +426,12 @@ class DashboardGestionView(BaseWindow):
                 f"Ultima actualizacion: {datetime.now().strftime('%H:%M:%S')}"
             )
 
+    # Bloque CDLform: funcion/metodo _cargar_kpis_dashboard; encapsula una operacion del flujo del modulo.
     def _cargar_kpis_dashboard(self) -> None:
         metricas = self.presenter.obtener_metricas_dashboard()
         self._aplicar_kpis_dashboard(metricas)
 
+    # Bloque CDLform: funcion/metodo _cargar_kpis_dashboard_async; encapsula una operacion del flujo del modulo.
     def _cargar_kpis_dashboard_async(self) -> None:
         if self._kpi_thread is not None and self._kpi_thread.isRunning():
             return
@@ -427,6 +455,7 @@ class DashboardGestionView(BaseWindow):
 
         self._kpi_thread.start()
 
+    # Bloque CDLform: funcion/metodo _manejar_error_kpis_dashboard; encapsula una operacion del flujo del modulo.
     def _manejar_error_kpis_dashboard(self, _error: str) -> None:
         self._aplicar_kpis_demo()
         if self.status_text is not None:
@@ -434,10 +463,12 @@ class DashboardGestionView(BaseWindow):
                 "No fue posible actualizar los KPI."
             )
 
+    # Bloque CDLform: funcion/metodo _finalizar_carga_kpis_dashboard; encapsula una operacion del flujo del modulo.
     def _finalizar_carga_kpis_dashboard(self) -> None:
         self._kpi_worker = None
         self._kpi_thread = None
 
+    # Bloque CDLform: funcion/metodo _build_hero_card; encapsula una operacion del flujo del modulo.
     def _build_hero_card(self) -> QFrame:
         hero = QFrame()
         hero.setObjectName("dashboardHero")
@@ -491,6 +522,7 @@ class DashboardGestionView(BaseWindow):
 
         return hero
 
+    # Bloque CDLform: funcion/metodo _build_side_panel; encapsula una operacion del flujo del modulo.
     def _build_side_panel(self) -> QFrame:
         panel = QFrame()
         panel.setObjectName("dashboardSidePanel")
@@ -572,6 +604,7 @@ class DashboardGestionView(BaseWindow):
 
         return panel
 
+    # Bloque CDLform: funcion/metodo _crear_boton_nav; encapsula una operacion del flujo del modulo.
     def _crear_boton_nav(self, texto: str, icono: str, activo: bool) -> QPushButton:
         boton = QPushButton(texto)
         boton.setObjectName("dashboardNavButton")
@@ -593,9 +626,11 @@ class DashboardGestionView(BaseWindow):
 
         return boton
 
+    # Bloque CDLform: funcion/metodo _es_admin; encapsula una operacion del flujo del modulo.
     def _es_admin(self) -> bool:
         return self.rol == "admin"
 
+    # Bloque CDLform: funcion/metodo abrir_admin_preguntas; encapsula una operacion del flujo del modulo.
     def abrir_admin_preguntas(self) -> None:
         try:
             self.admin_preguntas_view = self.presenter.crear_admin_preguntas_view()
@@ -607,6 +642,7 @@ class DashboardGestionView(BaseWindow):
                 f"No fue posible abrir la administracion de preguntas.\n\n{exc}",
             )
 
+    # Bloque CDLform: funcion/metodo abrir_reportes; encapsula una operacion del flujo del modulo.
     def abrir_reportes(self) -> None:
         try:
             self.reportes_view = self.presenter.crear_reportes_view()
@@ -618,6 +654,7 @@ class DashboardGestionView(BaseWindow):
                 f"No fue posible abrir el modulo de reportes.\n\n{exc}",
             )
 
+    # Bloque CDLform: funcion/metodo abrir_auditoria_formularios; encapsula una operacion del flujo del modulo.
     def abrir_auditoria_formularios(self) -> None:
         try:
             self.auditoria_formularios_view = (
@@ -631,6 +668,7 @@ class DashboardGestionView(BaseWindow):
                 f"No fue posible abrir la auditoria de formularios.\n\n{exc}",
             )
 
+    # Bloque CDLform: funcion/metodo abrir_acciones_correctivas; encapsula una operacion del flujo del modulo.
     def abrir_acciones_correctivas(self) -> None:
         try:
             self.acciones_correctivas_view = (
@@ -644,6 +682,7 @@ class DashboardGestionView(BaseWindow):
                 f"No fue posible abrir las acciones correctivas.\n\n{exc}",
             )
 
+    # Bloque CDLform: funcion/metodo abrir_usuarios_gestion; encapsula una operacion del flujo del modulo.
     def abrir_usuarios_gestion(self) -> None:
         if not self._es_admin():
             QMessageBox.warning(
@@ -665,6 +704,7 @@ class DashboardGestionView(BaseWindow):
                 f"No fue posible abrir la administracion de usuarios.\n\n{exc}",
             )
 
+    # Bloque CDLform: funcion/metodo cerrar_sesion; encapsula una operacion del flujo del modulo.
     def cerrar_sesion(self) -> None:
         from ui.login import LoginView
 

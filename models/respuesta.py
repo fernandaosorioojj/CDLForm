@@ -1,9 +1,15 @@
+"""Modelos de dominio usados para transportar formularios, preguntas, opciones y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
 
+# Bloque CDLform: clase Respuesta; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass
 class Respuesta:
     id_respuesta: str
@@ -15,6 +21,7 @@ class Respuesta:
     accion_correctiva_aplicada: Optional[str] = None
     fecha_creacion: str = ""
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         self.id_respuesta = str(self.id_respuesta).strip()
         self.id_formulario = str(self.id_formulario).strip()
@@ -41,6 +48,7 @@ class Respuesta:
         if not self.id_pregunta:
             raise ValueError("id_pregunta es obligatorio.")
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id_respuesta": self.id_respuesta,
@@ -53,6 +61,7 @@ class Respuesta:
             "fecha_creacion": self.fecha_creacion,
         }
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Respuesta":
         if not isinstance(data, dict):

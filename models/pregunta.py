@@ -1,3 +1,8 @@
+"""Modelos de dominio usados para transportar formularios, preguntas, opciones y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +13,7 @@ from core.validators import require_bool, require_non_empty_string
 from models.opcion_pregunta import OpcionPregunta
 
 
+# Bloque CDLform: clase Pregunta; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class Pregunta:
     id_pregunta: str
@@ -26,6 +32,7 @@ class Pregunta:
     filtros_contexto: dict[str, list[str]] = field(default_factory=dict)
     opciones_respuesta: list[OpcionPregunta] = field(default_factory=list)
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         object.__setattr__(
             self,
@@ -151,6 +158,7 @@ class Pregunta:
                     "las preguntas de tipo texto o numero no deben tener opciones_respuesta"
                 )
 
+    # Bloque CDLform: funcion/metodo _normalizar_clave_filtro; encapsula una operacion del flujo del modulo.
     def _normalizar_clave_filtro(self, clave: str) -> str:
         clave_limpia = clave.strip().lower()
 
@@ -166,6 +174,7 @@ class Pregunta:
 
         return aliases.get(clave_limpia, clave_limpia)
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> dict:
         return {
             "id_pregunta": self.id_pregunta,
@@ -184,6 +193,7 @@ class Pregunta:
             "opciones_respuesta": [op.to_dict() for op in self.opciones_respuesta],
         }
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Pregunta":
         return cls(

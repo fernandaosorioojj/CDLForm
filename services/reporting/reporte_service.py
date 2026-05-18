@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Servicios que preparan datos para reportes y auditorias de gestion.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import Any
@@ -11,7 +16,9 @@ from services.forms.respuesta_service import RespuestaService
 from services.jobtrack.apontamento_query_service import ApontamentoQueryService
 
 
+# Bloque CDLform: clase ReporteService; agrupa estado y comportamiento de esta parte del flujo.
 class ReporteService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario_service: FormularioService | None = None,
@@ -30,13 +37,16 @@ class ReporteService:
             apontamento_query_service or ApontamentoQueryService()
         )
 
+    # Bloque CDLform: funcion/metodo _formulario_a_dict; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _formulario_a_dict(formulario: Formulario) -> dict[str, Any]:
         return formulario.to_dict()
 
+    # Bloque CDLform: funcion/metodo listar_formularios; encapsula una operacion del flujo del modulo.
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_service.listar_formularios()
 
+    # Bloque CDLform: funcion/metodo obtener_serie_acciones_correctivas_ultimos_7_dias; encapsula una operacion del flujo del modulo.
     def obtener_serie_acciones_correctivas_ultimos_7_dias(self) -> list[dict[str, Any]]:
         hoy = datetime.now().date()
         inicio = hoy - timedelta(days=6)
@@ -64,6 +74,7 @@ class ReporteService:
             for fecha in sorted(conteos.keys())
         ]
 
+    # Bloque CDLform: funcion/metodo obtener_serie_formularios_hoy_por_estado; encapsula una operacion del flujo del modulo.
     def obtener_serie_formularios_hoy_por_estado(self) -> list[dict[str, Any]]:
         hoy = datetime.now().date()
         formularios_hoy: list[Formulario] = []
@@ -120,6 +131,7 @@ class ReporteService:
         )
         return serie
 
+    # Bloque CDLform: funcion/metodo obtener_metricas_dashboard; encapsula una operacion del flujo del modulo.
     def obtener_metricas_dashboard(self) -> dict[str, Any]:
         acciones_semana = self.obtener_serie_acciones_correctivas_ultimos_7_dias()
         formularios_hoy = self.obtener_serie_formularios_hoy_por_estado()
@@ -138,18 +150,22 @@ class ReporteService:
             },
         }
 
+    # Bloque CDLform: funcion/metodo listar_formularios_completados; encapsula una operacion del flujo del modulo.
     def listar_formularios_completados(self) -> list[Formulario]:
         return self.formulario_service.listar_formularios_por_estado("completado")
 
+    # Bloque CDLform: funcion/metodo obtener_formulario; encapsula una operacion del flujo del modulo.
     def obtener_formulario(self, id_formulario: str) -> Formulario | None:
         return self.formulario_service.obtener_formulario_por_id(id_formulario)
 
+    # Bloque CDLform: funcion/metodo obtener_respuestas_de_formulario; encapsula una operacion del flujo del modulo.
     def obtener_respuestas_de_formulario(self, id_formulario: str) -> list[dict]:
         respuestas = self.respuesta_service.listar_respuestas_por_formulario(
             id_formulario
         )
         return [respuesta.to_dict() for respuesta in respuestas]
 
+    # Bloque CDLform: funcion/metodo obtener_preguntas_de_formulario; encapsula una operacion del flujo del modulo.
     def obtener_preguntas_de_formulario(self, formulario: Formulario) -> list[dict]:
         if formulario.id_plantilla_preguntas:
             return self.pregunta_service.listar_preguntas_para_plantilla(
@@ -158,6 +174,7 @@ class ReporteService:
 
         return []
 
+    # Bloque CDLform: funcion/metodo obtener_detalle_auditoria_formulario; encapsula una operacion del flujo del modulo.
     def obtener_detalle_auditoria_formulario(
         self,
         formulario: Formulario,
@@ -210,6 +227,7 @@ class ReporteService:
 
         return filas
 
+    # Bloque CDLform: funcion/metodo obtener_metadata_plantilla_formulario; encapsula una operacion del flujo del modulo.
     def obtener_metadata_plantilla_formulario(
         self,
         formulario: Formulario,
@@ -233,6 +251,7 @@ class ReporteService:
             "cantidad_preguntas": len(plantilla.items),
         }
 
+    # Bloque CDLform: funcion/metodo resolver_version_plantilla_formulario; encapsula una operacion del flujo del modulo.
     def resolver_version_plantilla_formulario(self, formulario: Formulario) -> str:
         if formulario.version_plantilla_preguntas:
             return str(formulario.version_plantilla_preguntas)
@@ -243,6 +262,7 @@ class ReporteService:
 
         return "Sin plantilla"
 
+    # Bloque CDLform: funcion/metodo construir_resumen_auditoria_formulario; encapsula una operacion del flujo del modulo.
     def construir_resumen_auditoria_formulario(
         self,
         formulario: Formulario,
@@ -272,6 +292,7 @@ class ReporteService:
             "estado": formulario.estado,
         }
 
+    # Bloque CDLform: funcion/metodo listar_acciones_correctivas; encapsula una operacion del flujo del modulo.
     def listar_acciones_correctivas(
         self,
         incluir_supervisor_sql: bool = False,
@@ -341,6 +362,7 @@ class ReporteService:
             reverse=True,
         )
 
+    # Bloque CDLform: funcion/metodo _obtener_supervisores_formularios; encapsula una operacion del flujo del modulo.
     def _obtener_supervisores_formularios(
         self,
         formularios: list[Formulario],
@@ -358,6 +380,7 @@ class ReporteService:
         except Exception:
             return {}
 
+    # Bloque CDLform: funcion/metodo generar_reporte; encapsula una operacion del flujo del modulo.
     def generar_reporte(
         self,
         estado: str | None = None,
@@ -386,6 +409,7 @@ class ReporteService:
             for formulario in formularios_ordenados
         ]
 
+    # Bloque CDLform: funcion/metodo _construir_fila_auditoria; encapsula una operacion del flujo del modulo.
     def _construir_fila_auditoria(
         self,
         pregunta: dict[str, Any],
@@ -413,6 +437,7 @@ class ReporteService:
             ).strip(),
         }
 
+    # Bloque CDLform: funcion/metodo _buscar_opcion; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _buscar_opcion(
         pregunta: dict[str, Any],
@@ -429,6 +454,7 @@ class ReporteService:
 
         return None
 
+    # Bloque CDLform: funcion/metodo _clave_plantilla_desde_formulario; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _clave_plantilla_desde_formulario(formulario: Formulario) -> str:
         cod_setor = str(formulario.cod_setor or formulario.area or "").strip().upper()
@@ -441,6 +467,7 @@ class ReporteService:
 
         return f"TPL-{cod_setor}-{cod_recurso}"
 
+    # Bloque CDLform: funcion/metodo _formatear_respuesta; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _formatear_respuesta(respuesta: dict[str, Any]) -> str:
         respuesta_texto = respuesta.get("respuesta_texto")
@@ -454,6 +481,7 @@ class ReporteService:
 
         return "-"
 
+    # Bloque CDLform: funcion/metodo _formatear_opciones_disponibles; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _formatear_opciones_disponibles(pregunta: dict[str, Any]) -> str:
         opciones = []
@@ -466,6 +494,7 @@ class ReporteService:
 
         return ", ".join(opciones)
 
+    # Bloque CDLform: funcion/metodo _resolver_fecha_respuesta_operario; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _resolver_fecha_respuesta_operario(
         formulario: Formulario,
@@ -481,6 +510,7 @@ class ReporteService:
 
         return formulario.fecha_actualizacion or formulario.fecha_creacion or ""
 
+    # Bloque CDLform: funcion/metodo _resolver_fecha_dashboard; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _resolver_fecha_dashboard(*valores: Any) -> datetime | None:
         for valor in valores:
@@ -489,6 +519,7 @@ class ReporteService:
                 return fecha
         return None
 
+    # Bloque CDLform: funcion/metodo _coerce_datetime; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _coerce_datetime(valor: Any) -> datetime | None:
         texto = str(valor or "").strip()

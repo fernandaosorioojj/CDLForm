@@ -1,4 +1,4 @@
-QWidget {
+﻿QWidget {
     background-color: $bg_app;
     color: $text_on_app;
     font-family: "$font_family";
@@ -66,7 +66,7 @@ QFrame[visualPanel="true"] QLabel {
 }
 
 QFrame[visualPanel="true"] QLabel[role="subtitle"] {
-    color: #7a86a0;
+    color: #8F8F8F;
 }
 
 QLabel[assetImage="true"] {
@@ -101,7 +101,7 @@ QFrame[visualPanel="true"] QLabel[role="section"] {
 
 QFrame[card="true"] QFrame[visualPanel="true"] QLabel[role="subtitle"],
 QFrame[visualPanel="true"] QLabel[role="subtitle"] {
-    color: #7a86a0;
+    color: #8F8F8F;
 }
 
 QFrame[card="true"] QLabel[role="field-label"] {
@@ -139,7 +139,7 @@ QPlainTextEdit:focus,
 QComboBox:focus,
 QSpinBox:focus {
     border: 2px solid $focus;
-    background-color: #F9FBFF;
+    background-color: #FFFFFF;
 }
 
 QComboBox {
@@ -190,8 +190,8 @@ QPushButton:hover {
 }
 
 QPushButton:pressed {
-    background-color: #C5C5C5;
-    border: 1px solid #C5C5C5;
+    background-color: #9AB3E6;
+    border: 1px solid #9AB3E6;
 }
 
 QPushButton:disabled {
@@ -203,7 +203,7 @@ QPushButton:disabled {
 QPushButton[variant="secondary"] {
     background-color: $bg_button_secondary;
     color: $text_heading;
-    border: 1px solid #D3D9DF;
+    border: 1px solid #9AB3E6;
 }
 
 QPushButton[variant="secondary"]:hover {
@@ -214,7 +214,7 @@ QPushButton[variant="secondary"]:hover {
 QPushButton[variant="success"] {
     background-color: $bg_button_success;
     border: 1px solid $bg_button_success;
-    color: #4F6278;
+    color: #05095C;
 }
 
 QPushButton[variant="success"]:hover {
@@ -243,7 +243,7 @@ QListWidget {
     color: $text_primary;
     outline: 0;
     gridline-color: $border;
-    alternate-background-color: #F7F9FC;
+    alternate-background-color: #FFFFFF;
 }
 
 QHeaderView::section {
@@ -286,3 +286,4 @@ QScrollArea {
 QScrollArea > QWidget > QWidget {
     background-color: transparent;
 }
+

@@ -1,9 +1,16 @@
-﻿from __future__ import annotations
+"""Servicios para leer configuracion JobTrack, homologar estaciones y consultar SQL productivo.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
 
+# Bloque CDLform: clase CatalogoContextoService; agrupa estado y comportamiento de esta parte del flujo.
 class CatalogoContextoService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         apontamento_query_service=None,
@@ -14,6 +21,7 @@ class CatalogoContextoService:
         self._ultimo_error_catalogo_sql: Exception | None = None
         self._ultimo_error_homologacion_sql: Exception | None = None
 
+    # Bloque CDLform: funcion/metodo _obtener_apontamento_query_service; encapsula una operacion del flujo del modulo.
     def _obtener_apontamento_query_service(self):
         if self.apontamento_query_service is None:
             from services.jobtrack.apontamento_query_service import ApontamentoQueryService
@@ -24,6 +32,7 @@ class CatalogoContextoService:
 
         return self.apontamento_query_service
 
+    # Bloque CDLform: funcion/metodo _normalizar_lista; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_lista(valores: list[Any]) -> list[str]:
         normalizados: list[str] = []
@@ -35,6 +44,7 @@ class CatalogoContextoService:
 
         return normalizados
 
+    # Bloque CDLform: funcion/metodo _obtener_catalogo_desde_sql; encapsula una operacion del flujo del modulo.
     def _obtener_catalogo_desde_sql(self, nombre_metodo: str) -> list[str]:
         if not self.usar_sql_catalogos:
             return []
@@ -49,27 +59,33 @@ class CatalogoContextoService:
             self._ultimo_error_catalogo_sql = exc
             return []
 
+    # Bloque CDLform: funcion/metodo listar_cod_recursos; encapsula una operacion del flujo del modulo.
     def listar_cod_recursos(self) -> list[str]:
         return self._obtener_catalogo_desde_sql(
             "listar_cod_recursos_disponibles"
         )
 
+    # Bloque CDLform: funcion/metodo listar_cod_recurso; encapsula una operacion del flujo del modulo.
     def listar_cod_recurso(self) -> list[str]:
         return self.listar_cod_recursos()
 
+    # Bloque CDLform: funcion/metodo listar_cod_setores; encapsula una operacion del flujo del modulo.
     def listar_cod_setores(self) -> list[str]:
         return self._obtener_catalogo_desde_sql(
             "listar_cod_setores_disponibles"
         )
 
+    # Bloque CDLform: funcion/metodo listar_cod_setor; encapsula una operacion del flujo del modulo.
     def listar_cod_setor(self) -> list[str]:
         return self.listar_cod_setores()
 
+    # Bloque CDLform: funcion/metodo listar_turnos; encapsula una operacion del flujo del modulo.
     def listar_turnos(self) -> list[str]:
         return self._obtener_catalogo_desde_sql(
             "listar_turnos_disponibles"
         )
 
+    # Bloque CDLform: funcion/metodo listar_contextos_recurso_setor; encapsula una operacion del flujo del modulo.
     def listar_contextos_recurso_setor(self) -> list[dict[str, str]]:
         if not self.usar_sql_catalogos:
             return []
@@ -91,9 +107,14 @@ class CatalogoContextoService:
             self._ultimo_error_catalogo_sql = exc
             return []
 
+    # Bloque CDLform: funcion/metodo listar_tipos_trabajo; encapsula una operacion del flujo del modulo.
     def listar_tipos_trabajo(self) -> list[str]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # Placeholder conservado por compatibilidad con pantallas antiguas.
+        # Actualmente no hay catalogo real de tipo_trabajo.
         return []
 
+    # Bloque CDLform: funcion/metodo obtener_cod_recursos_por_estacion; encapsula una operacion del flujo del modulo.
     def obtener_cod_recursos_por_estacion(self, estacion: str) -> list[str]:
         estacion_normalizada = str(estacion).strip()
 
@@ -118,6 +139,7 @@ class CatalogoContextoService:
             "MetricsBetaProductivo.dbo.jbt_EstacaoXMaquinas."
         )
 
+    # Bloque CDLform: funcion/metodo _obtener_cod_recursos_estacion_desde_sql; encapsula una operacion del flujo del modulo.
     def _obtener_cod_recursos_estacion_desde_sql(
         self,
         estacion: str,
@@ -136,9 +158,11 @@ class CatalogoContextoService:
             self._ultimo_error_homologacion_sql = exc
             return []
 
+    # Bloque CDLform: funcion/metodo homologar_estacion_a_cod_recursos; encapsula una operacion del flujo del modulo.
     def homologar_estacion_a_cod_recursos(self, estacion: str) -> list[str]:
         return self.obtener_cod_recursos_por_estacion(estacion)
 
+    # Bloque CDLform: funcion/metodo resolver_contexto_desde_estacion; encapsula una operacion del flujo del modulo.
     def resolver_contexto_desde_estacion(self, estacion: str) -> dict[str, object]:
         estacion_normalizada = str(estacion).strip()
 
@@ -149,6 +173,7 @@ class CatalogoContextoService:
             ),
         }
 
+    # Bloque CDLform: funcion/metodo construir_placeholders_in; encapsula una operacion del flujo del modulo.
     @staticmethod
     def construir_placeholders_in(cantidad: int) -> str:
         if cantidad <= 0:

@@ -13,3 +13,5 @@ logs/*.log
 config/admin_login.json
 config/gestion_login.json
 config/sql_server.local.json
+config/mqtt.json
+config/mqtt_watchdog.json

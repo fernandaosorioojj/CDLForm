@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
@@ -19,9 +24,11 @@ from widgets.card_frame import CardFrame
 from widgets.asset_image import AssetImage
 
 
+# Bloque CDLform: clase LoginView; agrupa estado y comportamiento de esta parte del flujo.
 class LoginView(BaseWindow):
     qss_files = ("base.qss", "login.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self) -> None:
         super().__init__()
 
@@ -36,6 +43,7 @@ class LoginView(BaseWindow):
         self._init_ui()
         self.apply_styles()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setAlignment(Qt.AlignCenter)
@@ -122,6 +130,7 @@ class LoginView(BaseWindow):
         shell_layout.addWidget(contenedor, 1)
         layout_principal.addWidget(shell)
 
+    # Bloque CDLform: funcion/metodo iniciar_sesion; encapsula una operacion del flujo del modulo.
     def iniciar_sesion(self) -> None:
         usuario = self.input_usuario.text().strip()
         password = self.input_password.text().strip()

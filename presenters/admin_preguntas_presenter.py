@@ -1,23 +1,33 @@
-﻿from __future__ import annotations
+"""Capa presenter que conecta vistas PyQt con servicios de negocio.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
 from services.forms.pregunta_service import PreguntaService
 
 
+# Bloque CDLform: clase AdminPreguntasPresenter; agrupa estado y comportamiento de esta parte del flujo.
 class AdminPreguntasPresenter:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self, pregunta_service: PreguntaService | None = None) -> None:
         self.pregunta_service = pregunta_service or PreguntaService()
 
+    # Bloque CDLform: funcion/metodo normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo listar_preguntas; encapsula una operacion del flujo del modulo.
     def listar_preguntas(self) -> list[dict[str, Any]]:
         return self.pregunta_service.listar_preguntas(solo_activas=False)
 
+    # Bloque CDLform: funcion/metodo resumen_filtros_contexto; encapsula una operacion del flujo del modulo.
     def resumen_filtros_contexto(self, filtros: dict[str, Any]) -> str:
         if not isinstance(filtros, dict) or not filtros:
             return ""
@@ -42,6 +52,7 @@ class AdminPreguntasPresenter:
 
         return " | ".join(partes)
 
+    # Bloque CDLform: funcion/metodo construir_item_lista_pregunta; encapsula una operacion del flujo del modulo.
     def construir_item_lista_pregunta(self, pregunta: dict[str, Any]) -> str:
         texto = pregunta.get("texto", "")
         tipo = pregunta.get("tipo", "")
@@ -58,6 +69,7 @@ class AdminPreguntasPresenter:
             item_texto += f" | {resumen_filtros}"
         return item_texto
 
+    # Bloque CDLform: funcion/metodo coincide_filtro_busqueda; encapsula una operacion del flujo del modulo.
     def coincide_filtro_busqueda(
         self,
         pregunta: dict[str, Any],
@@ -83,6 +95,7 @@ class AdminPreguntasPresenter:
         )
         return texto_busqueda in universo_busqueda
 
+    # Bloque CDLform: funcion/metodo construir_filtros_contexto; encapsula una operacion del flujo del modulo.
     def construir_filtros_contexto(
         self,
         cod_setor: list[str],
@@ -98,6 +111,7 @@ class AdminPreguntasPresenter:
             filtros["turno"] = turno
         return filtros
 
+    # Bloque CDLform: funcion/metodo construir_opciones_respuesta; encapsula una operacion del flujo del modulo.
     def construir_opciones_respuesta(
         self,
         tipo: str,
@@ -131,6 +145,7 @@ class AdminPreguntasPresenter:
 
         return opciones
 
+    # Bloque CDLform: funcion/metodo construir_payload_pregunta; encapsula una operacion del flujo del modulo.
     def construir_payload_pregunta(
         self,
         *,
@@ -156,6 +171,7 @@ class AdminPreguntasPresenter:
             "opciones_respuesta": opciones_respuesta,
         }
 
+    # Bloque CDLform: funcion/metodo guardar_pregunta; encapsula una operacion del flujo del modulo.
     def guardar_pregunta(
         self,
         id_pregunta_en_edicion: str | None,
@@ -171,18 +187,21 @@ class AdminPreguntasPresenter:
         self.pregunta_service.crear_pregunta(**payload)
         return "Pregunta creada correctamente."
 
+    # Bloque CDLform: funcion/metodo eliminar_pregunta; encapsula una operacion del flujo del modulo.
     def eliminar_pregunta(self, id_pregunta: str | None) -> str:
         if not id_pregunta:
             raise ValueError("Selecciona una pregunta primero.")
         self.pregunta_service.eliminar_pregunta(id_pregunta)
         return "Pregunta desactivada correctamente para conservar el historial."
 
+    # Bloque CDLform: funcion/metodo requiere_opciones; encapsula una operacion del flujo del modulo.
     def requiere_opciones(self, tipo: str) -> bool:
         return self.normalizar_texto(tipo).lower() in {
             "seleccion_unica",
             "seleccion_multiple",
         }
 
+    # Bloque CDLform: funcion/metodo mensaje_opciones; encapsula una operacion del flujo del modulo.
     def mensaje_opciones(self, tipo: str) -> str:
         tipo_normalizado = self.normalizar_texto(tipo).lower()
 
@@ -200,6 +219,7 @@ class AdminPreguntasPresenter:
 
         return "Este tipo de pregunta no requiere opciones configurables."
 
+    # Bloque CDLform: funcion/metodo existe_valor_opcion; encapsula una operacion del flujo del modulo.
     def existe_valor_opcion(
         self,
         valor: str,
@@ -212,6 +232,7 @@ class AdminPreguntasPresenter:
                 return True
         return False
 
+    # Bloque CDLform: funcion/metodo construir_opcion_temporal; encapsula una operacion del flujo del modulo.
     def construir_opcion_temporal(
         self,
         valor: str,

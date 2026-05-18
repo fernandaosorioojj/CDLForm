@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -19,9 +24,11 @@ from services.reporting.reporte_service import ReporteService
 from styles.common import apply_view_style
 
 
+# Bloque CDLform: clase DetalleFormularioView; agrupa estado y comportamiento de esta parte del flujo.
 class DetalleFormularioView(QDialog):
     qss_files = ("base.qss", "dialogs.qss", "detalle_formulario.qss")
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario: Formulario,
@@ -43,6 +50,7 @@ class DetalleFormularioView(QDialog):
         apply_view_style(self, *self.qss_files)
         self._cargar_respuestas()
 
+    # Bloque CDLform: funcion/metodo _configurar_ui; encapsula una operacion del flujo del modulo.
     def _configurar_ui(self) -> None:
         layout = QVBoxLayout(self)
 
@@ -121,6 +129,7 @@ class DetalleFormularioView(QDialog):
 
         layout.addWidget(self.tabla_respuestas)
 
+    # Bloque CDLform: funcion/metodo _agregar_campo_info; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _agregar_campo_info(
         layout: QGridLayout,
@@ -137,11 +146,13 @@ class DetalleFormularioView(QDialog):
         layout.addWidget(label, fila, columna)
         layout.addWidget(value_label, fila, columna + 1)
 
+    # Bloque CDLform: funcion/metodo _valor_respuesta; encapsula una operacion del flujo del modulo.
     def _valor_respuesta(self, respuesta: Any, clave: str, default: Any = None) -> Any:
         if isinstance(respuesta, dict):
             return respuesta.get(clave, default)
         return getattr(respuesta, clave, default)
 
+    # Bloque CDLform: funcion/metodo _resolver_estado_plantilla; encapsula una operacion del flujo del modulo.
     def _resolver_estado_plantilla(self, metadata_plantilla: dict[str, Any]) -> str:
         if not self.formulario.id_plantilla_preguntas:
             return "Sin plantilla"
@@ -151,6 +162,7 @@ class DetalleFormularioView(QDialog):
 
         return "Activa actualmente" if metadata_plantilla.get("activa") else "Historica"
 
+    # Bloque CDLform: funcion/metodo _resolver_texto_pregunta; encapsula una operacion del flujo del modulo.
     def _resolver_texto_pregunta(self, id_pregunta: str) -> str:
         id_pregunta = str(id_pregunta).strip()
         if not id_pregunta:
@@ -205,6 +217,7 @@ class DetalleFormularioView(QDialog):
 
         return id_pregunta
 
+    # Bloque CDLform: funcion/metodo _formatear_respuesta; encapsula una operacion del flujo del modulo.
     def _formatear_respuesta(self, respuesta: Any) -> str:
         respuesta_texto = self._valor_respuesta(respuesta, "respuesta_texto")
         respuesta_numero = self._valor_respuesta(respuesta, "respuesta_numero")
@@ -217,6 +230,7 @@ class DetalleFormularioView(QDialog):
 
         return "-"
 
+    # Bloque CDLform: funcion/metodo _cargar_respuestas; encapsula una operacion del flujo del modulo.
     def _cargar_respuestas(self) -> None:
         respuestas = self.reporte_service.obtener_detalle_auditoria_formulario(
             self.formulario

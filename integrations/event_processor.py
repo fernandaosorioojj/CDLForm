@@ -1,3 +1,8 @@
+"""Puntos de integracion entre la aplicacion y procesos externos como cola SQL o MQTT.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -5,7 +10,9 @@ from typing import Any
 from services.workflows.apontamento_procesado_service import ApontamentoProcesadoService
 
 
+# Bloque CDLform: clase EventProcessor; agrupa estado y comportamiento de esta parte del flujo.
 class EventProcessor:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         apontamento_procesado_service: ApontamentoProcesadoService | None = None,
@@ -14,6 +21,7 @@ class EventProcessor:
             apontamento_procesado_service or ApontamentoProcesadoService()
         )
 
+    # Bloque CDLform: funcion/metodo procesar_evento_externo; encapsula una operacion del flujo del modulo.
     def procesar_evento_externo(
         self,
         evento: dict[str, Any] | None = None,
@@ -22,6 +30,7 @@ class EventProcessor:
             evento=evento,
         )
 
+    # Bloque CDLform: funcion/metodo procesar_ciclo_estacion_actual; encapsula una operacion del flujo del modulo.
     def procesar_ciclo_estacion_actual(
         self,
         evento: dict[str, Any] | None = None,

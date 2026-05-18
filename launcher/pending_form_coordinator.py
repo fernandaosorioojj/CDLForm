@@ -1,3 +1,8 @@
+"""Coordinacion de apertura de ventanas y formularios pendientes en el cliente operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -11,7 +16,9 @@ from services.workflows.disparador_service import DisparadorService
 LOGGER = logging.getLogger(__name__)
 
 
+# Bloque CDLform: clase PendingFormCoordinator; agrupa estado y comportamiento de esta parte del flujo.
 class PendingFormCoordinator(QObject):
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario_launcher: AppLauncher | None = None,
@@ -29,6 +36,7 @@ class PendingFormCoordinator(QObject):
         self._revisando = False
         self.ultimo_resultado: dict[str, Any] | None = None
 
+    # Bloque CDLform: funcion/metodo iniciar; encapsula una operacion del flujo del modulo.
     def iniciar(self, revisar_inmediatamente: bool = True) -> None:
         if not self._timer.isActive():
             self._timer.start()
@@ -36,10 +44,12 @@ class PendingFormCoordinator(QObject):
         if revisar_inmediatamente:
             QTimer.singleShot(0, self.revisar_pendientes)
 
+    # Bloque CDLform: funcion/metodo detener; encapsula una operacion del flujo del modulo.
     def detener(self) -> None:
         if self._timer.isActive():
             self._timer.stop()
 
+    # Bloque CDLform: funcion/metodo revisar_pendientes; encapsula una operacion del flujo del modulo.
     def revisar_pendientes(self) -> dict[str, Any]:
         if self._revisando:
             return self.ultimo_resultado or {

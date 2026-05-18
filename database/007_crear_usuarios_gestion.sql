@@ -1,3 +1,6 @@
+-- Comentario CDLform: script SQL de instalacion/migracion; revisar antes de ejecutar en una base real.
+-- No forma parte del flujo runtime diario de gestion, operario o MQTT.
+
 IF OBJECT_ID(N'[dbo].[usuarios_gestion]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[usuarios_gestion] (

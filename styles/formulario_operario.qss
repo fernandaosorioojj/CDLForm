@@ -1,4 +1,4 @@
-QWidget#formularioOperarioView {
+﻿QWidget#formularioOperarioView {
     background-color: $bg_app;
 }
 
@@ -63,7 +63,7 @@ QWidget#formularioOperarioView QCheckBox {
 }
 
 QWidget#formularioOperarioView QWidget#opcionesMultiples {
-    background-color: #f7fbf8;
+    background-color: #FFFFFF;
     border: 1px solid $border;
     border-radius: ${radius_lg}px;
 }
@@ -80,12 +80,12 @@ QWidget#formularioOperarioView QWidget#opcionesMultiples QCheckBox[optionChoice=
 
 QWidget#formularioOperarioView QWidget#opcionesMultiples QCheckBox[optionChoice="true"]:hover {
     border-color: $bg_button_secondary;
-    background-color: #f1faf6;
+    background-color: #FFFFFF;
 }
 
 QWidget#formularioOperarioView QWidget#opcionesMultiples QCheckBox[optionChoice="true"]:checked {
     border: 2px solid $bg_button;
-    background-color: #e9f8eb;
+    background-color: #FFFFFF;
     color: $text_heading;
 }
 
@@ -110,3 +110,4 @@ QWidget#formularioOperarioView QRadioButton {
 QWidget#formularioOperarioView QPushButton {
     min-width: 120px;
 }
+

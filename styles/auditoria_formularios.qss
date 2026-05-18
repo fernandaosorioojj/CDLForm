@@ -1,10 +1,10 @@
-QWidget#auditoriaFormulariosView {
-    background-color: #D1CDC2;
+﻿QWidget#auditoriaFormulariosView {
+    background-color: #FFFFFF;
 }
 
 QWidget#auditoriaFormulariosView QFrame#auditoriaTopPanel {
-    background-color: #171717;
-    border: 1px solid rgba(34, 34, 34, 220);
+    background-color: #05095C;
+    border: 1px solid rgba(5, 9, 92, 220);
     border-radius: 18px;
 }
 
@@ -14,65 +14,66 @@ QWidget#auditoriaFormulariosView QFrame#auditoriaHeader {
 }
 
 QWidget#auditoriaFormulariosView QFrame#auditoriaHeader QLabel[role="title"] {
-    color: #f7f2ea;
+    color: #FFFFFF;
     font-size: 30px;
 }
 
 QWidget#auditoriaFormulariosView QFrame#auditoriaHeader QLabel[role="subtitle"] {
-    color: rgba(247, 242, 234, 0.72);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 15px;
 }
 
 QWidget#auditoriaFormulariosView QFrame#auditoriaHeader QLabel[role="eyebrow"] {
-    color: rgba(247, 242, 234, 0.56);
+    color: rgba(255, 255, 255, 0.56);
 }
 
 QWidget#auditoriaFormulariosView QFrame[card="true"] {
     padding: 12px;
     background-color: rgba(255, 255, 255, 244);
-    border: 1px solid rgba(220, 212, 201, 232);
+    border: 1px solid rgba(154, 179, 230, 232);
     border-radius: 18px;
 }
 
 QWidget#auditoriaFormulariosView QLabel[role="title"] {
-    color: #2c4c62;
+    color: #05095C;
 }
 
 QWidget#auditoriaFormulariosView QLabel[role="subtitle"] {
-    color: #677887;
+    color: #8F8F8F;
 }
 
 QWidget#auditoriaFormulariosView QPushButton {
-    background-color: #171717;
-    color: #f7f2ea;
-    border: 1px solid #171717;
+    background-color: #05095C;
+    color: #FFFFFF;
+    border: 1px solid #05095C;
 }
 
 QWidget#auditoriaFormulariosView QPushButton:hover {
-    background-color: #2a2a2a;
-    border: 1px solid #2a2a2a;
+    background-color: #05095C;
+    border: 1px solid #05095C;
 }
 
 QWidget#auditoriaFormulariosView QPushButton[variant="secondary"] {
-    background-color: #efebe4;
-    color: #495d70;
-    border: 1px solid rgba(215, 205, 192, 0.95);
+    background-color: #9AB3E6;
+    color: #05095C;
+    border: 1px solid rgba(154, 179, 230, 0.95);
 }
 
 QWidget#auditoriaFormulariosView QPushButton[variant="secondary"]:hover {
-    background-color: #f5f1eb;
-    border: 1px solid rgba(215, 205, 192, 1);
+    background-color: #FFFFFF;
+    border: 1px solid rgba(154, 179, 230, 1);
 }
 
 QWidget#auditoriaFormulariosView QTableWidget {
     background-color: rgba(255, 255, 255, 252);
-    border: 1px solid rgba(220, 212, 201, 220);
+    border: 1px solid rgba(154, 179, 230, 220);
     border-radius: 14px;
 }
 
 QWidget#auditoriaFormulariosView QHeaderView::section {
-    background-color: #f2ede4;
-    color: #465b70;
-    border-bottom: 1px solid rgba(214, 206, 193, 0.95);
+    background-color: #9AB3E6;
+    color: #05095C;
+    border-bottom: 1px solid rgba(154, 179, 230, 0.95);
     padding: 10px 8px;
 }
+

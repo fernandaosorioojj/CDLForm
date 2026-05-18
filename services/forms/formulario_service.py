@@ -1,3 +1,8 @@
+"""Servicios de negocio para formularios, preguntas, plantillas y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -18,7 +23,9 @@ from services.forms.plantilla_preguntas_service import PlantillaPreguntasService
 from services.forms.pregunta_service import PreguntaService
 
 
+# Bloque CDLform: clase FormularioService; agrupa estado y comportamiento de esta parte del flujo.
 class FormularioService:
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         formulario_repository: FormularioRepository | None = None,
@@ -31,12 +38,14 @@ class FormularioService:
         )
         self.pregunta_service = pregunta_service or PreguntaService()
 
+    # Bloque CDLform: funcion/metodo _normalizar_texto; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_texto(valor: Any) -> str:
         if valor is None:
             return ""
         return str(valor).strip()
 
+    # Bloque CDLform: funcion/metodo _serializar_valor; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _serializar_valor(valor: Any) -> Any:
         if valor is None:
@@ -53,6 +62,7 @@ class FormularioService:
 
         return valor
 
+    # Bloque CDLform: funcion/metodo _normalizar_id_apontamento; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_id_apontamento(valor: Any) -> str:
         if valor is None:
@@ -79,6 +89,7 @@ class FormularioService:
 
         return texto
 
+    # Bloque CDLform: funcion/metodo _es_error_constraint_estado_en_progreso; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _es_error_constraint_estado_en_progreso(exc: Exception) -> bool:
         if not isinstance(exc, pyodbc.IntegrityError):
@@ -87,6 +98,7 @@ class FormularioService:
         mensaje = str(exc)
         return "CK_formularios_operario_estado" in mensaje
 
+    # Bloque CDLform: funcion/metodo _generar_id_formulario; encapsula una operacion del flujo del modulo.
     def _generar_id_formulario(self) -> str:
         formularios = self.formulario_repository.listar_formularios()
         maximo = 0
@@ -106,6 +118,7 @@ class FormularioService:
 
         return f"FORM-{maximo + 1:04d}"
 
+    # Bloque CDLform: funcion/metodo _obtener_fecha_formulario; encapsula una operacion del flujo del modulo.
     def _obtener_fecha_formulario(self, hora_fim: Any) -> str:
         if isinstance(hora_fim, datetime):
             return hora_fim.date().isoformat()
@@ -119,6 +132,7 @@ class FormularioService:
         except ValueError:
             return datetime.now().date().isoformat()
 
+    # Bloque CDLform: funcion/metodo _validar_formulario_nuevo_con_plantilla; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _validar_formulario_nuevo_con_plantilla(formulario: Formulario) -> None:
         if not formulario.id_formulario:
@@ -149,12 +163,15 @@ class FormularioService:
                 "No se puede crear un formulario sin version_plantilla_preguntas."
             )
 
+    # Bloque CDLform: funcion/metodo listar_formularios; encapsula una operacion del flujo del modulo.
     def listar_formularios(self) -> list[Formulario]:
         return self.formulario_repository.listar_formularios()
 
+    # Bloque CDLform: funcion/metodo listar_formularios_por_estado; encapsula una operacion del flujo del modulo.
     def listar_formularios_por_estado(self, estado: str) -> list[Formulario]:
         return self.formulario_repository.listar_por_estado(estado)
 
+    # Bloque CDLform: funcion/metodo listar_formularios_por_estados; encapsula una operacion del flujo del modulo.
     def listar_formularios_por_estados(self, estados: list[str]) -> list[Formulario]:
         estados_normalizados = {
             self._normalizar_texto(estado)
@@ -171,6 +188,7 @@ class FormularioService:
             if formulario.estado in estados_normalizados
         ]
 
+    # Bloque CDLform: funcion/metodo listar_formularios_pendientes_operario; encapsula una operacion del flujo del modulo.
     def listar_formularios_pendientes_operario(self) -> list[Formulario]:
         pendientes = self.listar_formularios_por_estados(
             [
@@ -187,15 +205,18 @@ class FormularioService:
             ),
         )
 
+    # Bloque CDLform: funcion/metodo obtener_siguiente_formulario_pendiente_operario; encapsula una operacion del flujo del modulo.
     def obtener_siguiente_formulario_pendiente_operario(self) -> Formulario | None:
         pendientes = self.listar_formularios_pendientes_operario()
         if not pendientes:
             return None
         return pendientes[0]
 
+    # Bloque CDLform: funcion/metodo obtener_formulario_por_id; encapsula una operacion del flujo del modulo.
     def obtener_formulario_por_id(self, id_formulario: str) -> Formulario | None:
         return self.formulario_repository.obtener_por_id(id_formulario)
 
+    # Bloque CDLform: funcion/metodo obtener_formulario_por_id_apontamento; encapsula una operacion del flujo del modulo.
     def obtener_formulario_por_id_apontamento(
         self,
         id_apontamento: Any,
@@ -203,14 +224,17 @@ class FormularioService:
         id_normalizado = self._normalizar_id_apontamento(id_apontamento)
         return self.formulario_repository.obtener_por_id_apontamento(id_normalizado)
 
+    # Bloque CDLform: funcion/metodo existe_formulario_para_apontamento; encapsula una operacion del flujo del modulo.
     def existe_formulario_para_apontamento(self, id_apontamento: Any) -> bool:
         return self.obtener_formulario_por_id_apontamento(id_apontamento) is not None
 
+    # Bloque CDLform: funcion/metodo guardar_formulario; encapsula una operacion del flujo del modulo.
     def guardar_formulario(self, formulario: Formulario) -> Formulario:
         if not self.formulario_repository.obtener_por_id(formulario.id_formulario):
             self._validar_formulario_nuevo_con_plantilla(formulario)
         return self.formulario_repository.guardar(formulario)
 
+    # Bloque CDLform: funcion/metodo crear_formulario_pendiente_desde_registro_apontamento; encapsula una operacion del flujo del modulo.
     def crear_formulario_pendiente_desde_registro_apontamento(
         self,
         registro: dict[str, Any],
@@ -313,6 +337,7 @@ class FormularioService:
             "formulario": guardado,
         }
 
+    # Bloque CDLform: funcion/metodo actualizar_estado_formulario; encapsula una operacion del flujo del modulo.
     def actualizar_estado_formulario(
         self,
         id_formulario: str,
@@ -333,6 +358,7 @@ class FormularioService:
 
         return self.formulario_repository.guardar(formulario)
 
+    # Bloque CDLform: funcion/metodo actualizar_campos_formulario; encapsula una operacion del flujo del modulo.
     def actualizar_campos_formulario(
         self,
         id_formulario: str,
@@ -347,10 +373,14 @@ class FormularioService:
 
         return self.formulario_repository.guardar(formulario)
 
+    # Bloque CDLform: funcion/metodo asignar_plantilla_activa_si_falta; encapsula una operacion del flujo del modulo.
     def asignar_plantilla_activa_si_falta(
         self,
         id_formulario: str,
     ) -> Formulario:
+        # SOPORTE / REPARACION MANUAL:
+        # No es parte del cierre normal del formulario operario. Sirve para
+        # recuperar formularios antiguos creados sin plantilla asignada.
         formulario = self.obtener_formulario_por_id(id_formulario)
         if not formulario:
             raise ValueError(f"No existe el formulario {id_formulario}.")
@@ -382,6 +412,7 @@ class FormularioService:
             },
         )
 
+    # Bloque CDLform: funcion/metodo asignar_operario; encapsula una operacion del flujo del modulo.
     def asignar_operario(
         self,
         id_formulario: str,
@@ -398,18 +429,21 @@ class FormularioService:
             },
         )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_en_apertura; encapsula una operacion del flujo del modulo.
     def marcar_formulario_en_apertura(self, id_formulario: str) -> Formulario:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
             estado=ESTADO_EN_APERTURA,
         )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_pendiente_operario; encapsula una operacion del flujo del modulo.
     def marcar_formulario_pendiente_operario(self, id_formulario: str) -> Formulario:
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
             estado=ESTADO_PENDIENTE_OPERARIO,
         )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_completado; encapsula una operacion del flujo del modulo.
     def marcar_formulario_completado(
         self,
         id_formulario: str,
@@ -421,6 +455,7 @@ class FormularioService:
             observacion_general=observacion_general,
         )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_cancelado; encapsula una operacion del flujo del modulo.
     def marcar_formulario_cancelado(
         self,
         id_formulario: str,
@@ -432,6 +467,7 @@ class FormularioService:
             observacion_general=observacion_general,
         )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_en_progreso; encapsula una operacion del flujo del modulo.
     def marcar_formulario_en_progreso(
         self,
         id_formulario: str,
@@ -447,18 +483,23 @@ class FormularioService:
             if not self._es_error_constraint_estado_en_progreso(exc):
                 raise
 
-            # Compatibilidad temporal para bases que aun no aceptan en_progreso.
+            # FALLBACK TEMPORAL:
+            # Compatibilidad para bases que aun no ejecutaron el script 006.
             return self.actualizar_estado_formulario(
                 id_formulario=id_formulario,
                 estado=ESTADO_PENDIENTE_OPERARIO,
                 observacion_general=observacion_general,
             )
 
+    # Bloque CDLform: funcion/metodo marcar_formulario_enviado; encapsula una operacion del flujo del modulo.
     def marcar_formulario_enviado(
         self,
         id_formulario: str,
         observacion_general: str | None = None,
     ) -> Formulario:
+        # LEGACY / ALIAS:
+        # Nombre antiguo conservado para compatibilidad. El flujo actual usa
+        # marcar_formulario_completado().
         return self.actualizar_estado_formulario(
             id_formulario=id_formulario,
             estado=ESTADO_COMPLETADO,

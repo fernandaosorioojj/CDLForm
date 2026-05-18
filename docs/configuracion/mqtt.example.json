@@ -1,0 +1,8 @@
+{
+  "broker_host": "172.16.10.247",
+  "broker_port": 1883,
+  "username": "",
+  "password": "",
+  "station_id": "auto",
+  "topic_prefix": "cdlform/estaciones"
+}

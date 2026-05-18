@@ -1,35 +1,44 @@
+"""Definiciones visuales compartidas por la interfaz PyQt.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from dataclasses import dataclass
 
 
+# Bloque CDLform: clase AppTheme; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class AppTheme:
-    bg_app: str = "#D1CDC2"
-    bg_card: str = "#ffffff"
+    bg_app: str = "#FFFFFF"
+    bg_card: str = "#FFFFFF"
     bg_input: str = "#FFFFFF"
-    bg_button: str = "#DEDEDE"
-    bg_button_hover: str = "#CFCFCF"
-    bg_button_secondary: str = "#DEDEDE"
-    bg_button_secondary_hover: str = "#CFCFCF"
-    bg_button_danger: str = "#d8574d"
-    bg_button_danger_hover: str = "#bd443b"
-    bg_button_success: str = "#B5E2FF"
-    bg_button_success_hover: str = "#A6D7F6"
-    bg_warning_soft: str = "#FCE3FF"
-    border_warning: str = "#D7C3E3"
+    bg_button: str = "#05095C"
+    bg_button_hover: str = "#9AB3E6"
+    bg_button_secondary: str = "#9AB3E6"
+    bg_button_secondary_hover: str = "#E8D34F"
+    bg_button_danger: str = "#8F8F8F"
+    bg_button_danger_hover: str = "#05095C"
+    bg_button_success: str = "#E8D34F"
+    bg_button_success_hover: str = "#9AB3E6"
+    bg_warning_soft: str = "#E8D34F"
+    border_warning: str = "#E8D34F"
 
-    text_primary: str = "#33485D"
-    text_secondary: str = "#6C7A8C"
-    text_heading: str = "#44586F"
-    text_on_app: str = "#33485D"
-    text_on_app_accent: str = "#6C7A8C"
-    text_on_button: str = "#4F6278"
-    border: str = "#D9E4EF"
-    border_input: str = "#CCD9E6"
-    focus: str = "#B5E2FF"
-    gradient_start: str = "#D1CDC2"
-    gradient_mid: str = "#D1CDC2"
-    gradient_end: str = "#D1CDC2"
-    gradient_accent: str = "#D1CDC2"
+    text_primary: str = "#05095C"
+    text_secondary: str = "#8F8F8F"
+    text_heading: str = "#05095C"
+    text_on_app: str = "#05095C"
+    text_on_app_accent: str = "#8F8F8F"
+    text_on_button: str = "#FFFFFF"
+    border: str = "#9AB3E6"
+    border_input: str = "#9AB3E6"
+    focus: str = "#E8D34F"
+    # LEGACY / NO FLUJO VISUAL ACTUAL:
+    # Valores conservados para compatibilidad con QSS antiguos. El tema vigente
+    # usa fondo blanco y no aplica gradientes.
+    gradient_start: str = "#FFFFFF"
+    gradient_mid: str = "#FFFFFF"
+    gradient_end: str = "#FFFFFF"
+    gradient_accent: str = "#E8D34F"
 
     radius_sm: int = 8
     radius_md: int = 8

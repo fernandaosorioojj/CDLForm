@@ -1,3 +1,8 @@
+"""Modelos de dominio usados para transportar formularios, preguntas, opciones y respuestas.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,6 +10,7 @@ from dataclasses import dataclass
 from core.validators import require_non_empty_string
 
 
+# Bloque CDLform: clase OpcionPregunta; agrupa estado y comportamiento de esta parte del flujo.
 @dataclass(frozen=True)
 class OpcionPregunta:
     valor: str
@@ -14,6 +20,7 @@ class OpcionPregunta:
     version: int = 1
     clave_opcion: str = ""
 
+    # Bloque CDLform: funcion/metodo __post_init__; encapsula una operacion del flujo del modulo.
     def __post_init__(self) -> None:
         object.__setattr__(
             self,
@@ -44,6 +51,7 @@ class OpcionPregunta:
         if self.version <= 0:
             raise ValueError("version debe ser mayor que 0")
 
+    # Bloque CDLform: funcion/metodo to_dict; encapsula una operacion del flujo del modulo.
     def to_dict(self) -> dict:
         return {
             "id_opcion": self.id_opcion,
@@ -54,6 +62,7 @@ class OpcionPregunta:
             "clave_opcion": self.clave_opcion,
         }
 
+    # Bloque CDLform: funcion/metodo from_dict; encapsula una operacion del flujo del modulo.
     @classmethod
     def from_dict(cls, data: dict) -> "OpcionPregunta":
         return cls(

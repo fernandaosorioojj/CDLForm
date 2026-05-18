@@ -1,14 +1,20 @@
-﻿from __future__ import annotations
+"""Servicios para leer configuracion JobTrack, homologar estaciones y consultar SQL productivo.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from typing import Any, Sequence
 
 import pyodbc
 
-from config.sql_server_config import build_connection_string
+from database.sql_connection import get_sql_connection
 from services.jobtrack.catalogo_contexto_service import CatalogoContextoService
 from services.jobtrack.jobtrack_config_service import JobtrackConfigService
 
 
+# Bloque CDLform: clase ApontamentoQueryService; agrupa estado y comportamiento de esta parte del flujo.
 class ApontamentoQueryService:
     COLUMNAS_SUPERVISOR_CANDIDATAS = (
         "Supervisor",
@@ -20,6 +26,7 @@ class ApontamentoQueryService:
         "Encargado",
     )
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(
         self,
         catalogo_contexto_service: CatalogoContextoService | None = None,
@@ -32,6 +39,7 @@ class ApontamentoQueryService:
             jobtrack_config_service or JobtrackConfigService()
         )
 
+    # Bloque CDLform: funcion/metodo _normalizar_cod_recursos; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_cod_recursos(cod_recursos: Sequence[str]) -> list[str]:
         normalizados = [
@@ -52,6 +60,7 @@ class ApontamentoQueryService:
 
         return unicos
 
+    # Bloque CDLform: funcion/metodo _normalizar_limit; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_limit(limit: int) -> int:
         limit_normalizado = int(limit)
@@ -61,6 +70,7 @@ class ApontamentoQueryService:
 
         return limit_normalizado
 
+    # Bloque CDLform: funcion/metodo _rows_to_dicts; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _rows_to_dicts(
         cursor: pyodbc.Cursor,
@@ -69,6 +79,7 @@ class ApontamentoQueryService:
         columnas = [columna[0] for columna in cursor.description]
         return [dict(zip(columnas, row)) for row in rows]
 
+    # Bloque CDLform: funcion/metodo _normalizar_id_apontamentos; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_id_apontamentos(
         id_apontamentos: Sequence[Any],
@@ -80,6 +91,7 @@ class ApontamentoQueryService:
                 normalizados.append(texto)
         return normalizados
 
+    # Bloque CDLform: funcion/metodo _normalizar_id_evento; encapsula una operacion del flujo del modulo.
     @staticmethod
     def _normalizar_id_evento(valor: Any) -> str:
         texto = str(valor or "").strip()
@@ -87,6 +99,7 @@ class ApontamentoQueryService:
             raise ValueError("El id_evento no puede venir vacio.")
         return texto
 
+    # Bloque CDLform: funcion/metodo _listar_valores_distintos; encapsula una operacion del flujo del modulo.
     def _listar_valores_distintos(
         self,
         nombre_columna: str,
@@ -114,19 +127,23 @@ class ApontamentoQueryService:
 
         sql += f"\nORDER BY {alias_columna}"
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
 
         return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
 
+    # Bloque CDLform: funcion/metodo listar_apontamentos_por_cod_recursos; encapsula una operacion del flujo del modulo.
     def listar_apontamentos_por_cod_recursos(
         self,
         cod_recursos: Sequence[str],
         limit: int = 20,
         solo_finalizados: bool = True,
     ) -> list[dict[str, Any]]:
+        # EMERGENCIA MANUAL / SOPORTE:
+        # Consulta directa a Apontamentos. El flujo automatico actual usa
+        # listar_eventos_op_pendientes().
         cod_recursos_normalizados = self._normalizar_cod_recursos(cod_recursos)
         limit_normalizado = self._normalizar_limit(limit)
         placeholders = self.catalogo_contexto_service.construir_placeholders_in(
@@ -164,7 +181,7 @@ class ApontamentoQueryService:
         ORDER BY [HoraFim] DESC, [IdApontamento] DESC
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
@@ -176,6 +193,7 @@ class ApontamentoQueryService:
             clave_destino="Supervisor",
         )
 
+    # Bloque CDLform: funcion/metodo listar_operadores_por_contexto; encapsula una operacion del flujo del modulo.
     def listar_operadores_por_contexto(
         self,
         cod_setor: str,
@@ -183,6 +201,9 @@ class ApontamentoQueryService:
         patron: str | None = None,
         limit: int = 500,
     ) -> list[str]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # Quedo de etapas con seleccion/listado manual de operarios. Hoy el
+        # operario viene desde Apontamentos/eventos SQL.
         cod_setor_normalizado = str(cod_setor or "").strip()
         cod_recurso_normalizado = str(cod_recurso or "").strip()
         limit_normalizado = self._normalizar_limit(limit)
@@ -213,18 +234,22 @@ class ApontamentoQueryService:
 
         sql += "\nORDER BY Operador"
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
 
         return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
 
+    # Bloque CDLform: funcion/metodo listar_operadores_registrados; encapsula una operacion del flujo del modulo.
     def listar_operadores_registrados(
         self,
         patron: str | None = None,
         limit: int | None = None,
     ) -> list[str]:
+        # LEGACY / NO FLUJO ACTUAL:
+        # No se usa en gestion/operario actual; no reintroducir seleccion manual
+        # de operario sin decision explicita.
         expresion_operador = "LTRIM(RTRIM(CAST([Operador] AS VARCHAR(160))))"
         top_clause = ""
         if limit is not None:
@@ -246,13 +271,14 @@ class ApontamentoQueryService:
 
         sql += "\nORDER BY Operador"
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
 
         return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
 
+    # Bloque CDLform: funcion/metodo listar_cod_recursos_por_cod_estacao; encapsula una operacion del flujo del modulo.
     def listar_cod_recursos_por_cod_estacao(
         self,
         cod_estacao: str,
@@ -275,13 +301,53 @@ class ApontamentoQueryService:
         ORDER BY CodRecurso
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, (cod_estacao_normalizado,))
             rows = cursor.fetchall()
 
         return [str(row[0]).strip() for row in rows if str(row[0]).strip()]
 
+    # Bloque CDLform: funcion/metodo listar_estaciones_por_cod_recursos; encapsula una operacion del flujo del modulo.
+    def listar_estaciones_por_cod_recursos(
+        self,
+        cod_recursos: Sequence[str],
+    ) -> dict[str, str]:
+        cod_recursos_normalizados = self._normalizar_cod_recursos(cod_recursos)
+        placeholders = self.catalogo_contexto_service.construir_placeholders_in(
+            len(cod_recursos_normalizados)
+        )
+
+        expresion_estacao = "LTRIM(RTRIM(CAST([CodEstacao] AS VARCHAR(100))))"
+        expresion_recurso = "LTRIM(RTRIM(CAST([CodRecurso] AS VARCHAR(100))))"
+
+        sql = f"""
+        SELECT DISTINCT
+            {expresion_recurso} AS CodRecurso,
+            {expresion_estacao} AS CodEstacao
+        FROM [dbo].[jbt_EstacaoXMaquinas]
+        WHERE [CodRecurso] IS NOT NULL
+          AND {expresion_recurso} IN ({placeholders})
+          AND [CodEstacao] IS NOT NULL
+          AND {expresion_estacao} <> ''
+        ORDER BY CodRecurso, CodEstacao
+        """
+
+        with get_sql_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, tuple(cod_recursos_normalizados))
+            rows = cursor.fetchall()
+
+        estaciones_por_recurso: dict[str, str] = {}
+        for row in rows:
+            cod_recurso = str(row[0] or "").strip()
+            cod_estacao = str(row[1] or "").strip()
+            if cod_recurso and cod_estacao and cod_recurso not in estaciones_por_recurso:
+                estaciones_por_recurso[cod_recurso] = cod_estacao
+
+        return estaciones_por_recurso
+
+    # Bloque CDLform: funcion/metodo _resolver_columna_supervisor; encapsula una operacion del flujo del modulo.
     def _resolver_columna_supervisor(self, cursor: pyodbc.Cursor) -> str | None:
         placeholders = self.catalogo_contexto_service.construir_placeholders_in(
             len(self.COLUMNAS_SUPERVISOR_CANDIDATAS)
@@ -302,6 +368,7 @@ class ApontamentoQueryService:
 
         return None
 
+    # Bloque CDLform: funcion/metodo listar_supervisores_por_id_apontamentos; encapsula una operacion del flujo del modulo.
     def listar_supervisores_por_id_apontamentos(
         self,
         id_apontamentos: Sequence[Any],
@@ -310,7 +377,7 @@ class ApontamentoQueryService:
         if not ids:
             return {}
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             columna_supervisor = self._resolver_columna_supervisor(cursor)
             if not columna_supervisor:
@@ -344,6 +411,7 @@ class ApontamentoQueryService:
 
         return supervisores
 
+    # Bloque CDLform: funcion/metodo _enriquecer_con_supervisores; encapsula una operacion del flujo del modulo.
     def _enriquecer_con_supervisores(
         self,
         registros: list[dict[str, Any]],
@@ -363,11 +431,16 @@ class ApontamentoQueryService:
 
         return registros
 
+    # Bloque CDLform: funcion/metodo listar_eventos_op_pendientes; encapsula una operacion del flujo del modulo.
     def listar_eventos_op_pendientes(
         self,
         cod_recursos: Sequence[str] | None = None,
         limit: int = 50,
+        enriquecer_supervisores: bool = True,
     ) -> list[dict[str, Any]]:
+        # FLUJO ACTUAL:
+        # Fuente principal del modo automatico. El watchdog tambien usa este
+        # metodo, con enriquecer_supervisores=False para reducir carga.
         limit_normalizado = self._normalizar_limit(limit)
         where_clauses = ["[procesado] = 0"]
         params: list[Any] = []
@@ -403,11 +476,16 @@ class ApontamentoQueryService:
         ORDER BY [fecha_deteccion] ASC, [id_evento] ASC
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, tuple(params))
             rows = cursor.fetchall()
             eventos = self._rows_to_dicts(cursor, rows)
+
+        if not enriquecer_supervisores:
+            # El watchdog solo necesita datos de enrutamiento; asi evita
+            # consultas extra a Apontamentos en cada ciclo.
+            return eventos
 
         return self._enriquecer_con_supervisores(
             eventos,
@@ -415,6 +493,7 @@ class ApontamentoQueryService:
             clave_destino="supervisor",
         )
 
+    # Bloque CDLform: funcion/metodo marcar_evento_op_pendiente_procesado; encapsula una operacion del flujo del modulo.
     def marcar_evento_op_pendiente_procesado(self, id_evento: Any) -> None:
         id_evento_normalizado = self._normalizar_id_evento(id_evento)
         sql = """
@@ -426,11 +505,12 @@ class ApontamentoQueryService:
         WHERE [id_evento] = ?
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, (id_evento_normalizado,))
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo marcar_evento_op_pendiente_error; encapsula una operacion del flujo del modulo.
     def marcar_evento_op_pendiente_error(
         self,
         id_evento: Any,
@@ -447,11 +527,12 @@ class ApontamentoQueryService:
         WHERE [id_evento] = ?
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, (mensaje, id_evento_normalizado))
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo marcar_evento_op_pendiente_omitido; encapsula una operacion del flujo del modulo.
     def marcar_evento_op_pendiente_omitido(
         self,
         id_evento: Any,
@@ -471,17 +552,20 @@ class ApontamentoQueryService:
         WHERE [id_evento] = ?
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql, (mensaje, id_evento_normalizado))
             conn.commit()
 
+    # Bloque CDLform: funcion/metodo listar_apontamentos_por_estacion; encapsula una operacion del flujo del modulo.
     def listar_apontamentos_por_estacion(
         self,
         estacion: str,
         limit: int = 20,
         solo_finalizados: bool = True,
     ) -> list[dict[str, Any]]:
+        # EMERGENCIA MANUAL / NO FLUJO ACTUAL:
+        # Wrapper de consulta directa a Apontamentos por estacion.
         cod_recursos = self.catalogo_contexto_service.obtener_cod_recursos_por_estacion(
             estacion
         )
@@ -492,11 +576,14 @@ class ApontamentoQueryService:
             solo_finalizados=solo_finalizados,
         )
 
+    # Bloque CDLform: funcion/metodo listar_apontamentos_estacion_actual; encapsula una operacion del flujo del modulo.
     def listar_apontamentos_estacion_actual(
         self,
         limit: int = 20,
         solo_finalizados: bool = True,
     ) -> list[dict[str, Any]]:
+        # EMERGENCIA MANUAL / NO FLUJO ACTUAL:
+        # No lo usa main.py --modo auto. La ruta vigente parte de la cola SQL.
         estacion = self.jobtrack_config_service.obtener_estacion_local()
 
         return self.listar_apontamentos_por_estacion(
@@ -505,10 +592,12 @@ class ApontamentoQueryService:
             solo_finalizados=solo_finalizados,
         )
 
+    # Bloque CDLform: funcion/metodo obtener_contexto_estacion_actual; encapsula una operacion del flujo del modulo.
     def obtener_contexto_estacion_actual(self) -> dict[str, object]:
         estacion = self.jobtrack_config_service.obtener_estacion_local()
         return self.catalogo_contexto_service.resolver_contexto_desde_estacion(estacion)
 
+    # Bloque CDLform: funcion/metodo listar_cod_recursos_disponibles; encapsula una operacion del flujo del modulo.
     def listar_cod_recursos_disponibles(
         self,
         patron: str | None = None,
@@ -521,6 +610,7 @@ class ApontamentoQueryService:
             limit=limit,
         )
 
+    # Bloque CDLform: funcion/metodo listar_cod_setores_disponibles; encapsula una operacion del flujo del modulo.
     def listar_cod_setores_disponibles(
         self,
         patron: str | None = None,
@@ -533,6 +623,7 @@ class ApontamentoQueryService:
             limit=limit,
         )
 
+    # Bloque CDLform: funcion/metodo listar_contextos_recurso_setor_disponibles; encapsula una operacion del flujo del modulo.
     def listar_contextos_recurso_setor_disponibles(
         self,
         limit: int = 5000,
@@ -554,7 +645,7 @@ class ApontamentoQueryService:
         ORDER BY CodSetor, CodRecurso
         """
 
-        with pyodbc.connect(build_connection_string()) as conn:
+        with get_sql_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(sql)
             rows = cursor.fetchall()
@@ -574,6 +665,7 @@ class ApontamentoQueryService:
 
         return contextos
 
+    # Bloque CDLform: funcion/metodo listar_turnos_disponibles; encapsula una operacion del flujo del modulo.
     def listar_turnos_disponibles(
         self,
         patron: str | None = None,

@@ -1,8 +1,14 @@
+"""Utilidades transversales de fechas, IDs, assets, JSON y estilos.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Iterable
 
 
+# Bloque CDLform: funcion/metodo generate_id; encapsula una operacion del flujo del modulo.
 def generate_id(prefix: str, records: Iterable[dict], field_name: str) -> str:
     """
     Genera un ID secuencial con formato PREFIX-0001.

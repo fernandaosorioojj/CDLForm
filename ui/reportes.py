@@ -1,4 +1,9 @@
-﻿from __future__ import annotations
+"""Vistas PyQt que componen las pantallas de gestion y operario.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
+from __future__ import annotations
 
 from datetime import datetime
 
@@ -27,6 +32,7 @@ from styles.common import apply_view_style
 from ui.detalle_formulario import DetalleFormularioView
 
 
+# Bloque CDLform: clase ReportesView; agrupa estado y comportamiento de esta parte del flujo.
 class ReportesView(QWidget):
     registros_por_pagina = 100
     qss_files = ("base.qss", "reportes.qss")
@@ -37,6 +43,7 @@ class ReportesView(QWidget):
     )
     detail_button_text = "Ver detalle"
 
+    # Bloque CDLform: funcion/metodo __init__; encapsula una operacion del flujo del modulo.
     def __init__(self) -> None:
         super().__init__()
 
@@ -55,6 +62,7 @@ class ReportesView(QWidget):
         apply_view_style(self, *self.qss_files)
         self.cargar_reporte()
 
+    # Bloque CDLform: funcion/metodo _init_ui; encapsula una operacion del flujo del modulo.
     def _init_ui(self) -> None:
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(24, 24, 24, 24)
@@ -223,6 +231,7 @@ class ReportesView(QWidget):
 
         self._conectar_filtros()
 
+    # Bloque CDLform: funcion/metodo _configurar_tabla; encapsula una operacion del flujo del modulo.
     def _configurar_tabla(self) -> None:
         self.tabla_reportes.setColumnCount(9)
         self.tabla_reportes.setHorizontalHeaderLabels(
@@ -248,6 +257,7 @@ class ReportesView(QWidget):
         self.tabla_reportes.horizontalHeader().setStretchLastSection(True)
         self.tabla_reportes.doubleClicked.connect(self.abrir_detalle)
 
+    # Bloque CDLform: funcion/metodo _conectar_filtros; encapsula una operacion del flujo del modulo.
     def _conectar_filtros(self) -> None:
         self.input_identificador.textChanged.connect(self.cargar_reporte_desde_inicio)
         self.input_operario.textChanged.connect(self.cargar_reporte_desde_inicio)
@@ -260,6 +270,7 @@ class ReportesView(QWidget):
         self.input_fecha_desde.dateChanged.connect(self.cargar_reporte_desde_inicio)
         self.input_fecha_hasta.dateChanged.connect(self.cargar_reporte_desde_inicio)
 
+    # Bloque CDLform: funcion/metodo _cargar_combo_con_todos; encapsula una operacion del flujo del modulo.
     def _cargar_combo_con_todos(
         self,
         combo: QComboBox,
@@ -273,10 +284,12 @@ class ReportesView(QWidget):
             if valor_limpio:
                 combo.addItem(valor_limpio, valor_limpio)
 
+    # Bloque CDLform: funcion/metodo cargar_reporte_desde_inicio; encapsula una operacion del flujo del modulo.
     def cargar_reporte_desde_inicio(self, *_args) -> None:
         self.pagina_actual = 0
         self.cargar_reporte()
 
+    # Bloque CDLform: funcion/metodo cargar_reporte; encapsula una operacion del flujo del modulo.
     def cargar_reporte(self, *_args) -> None:
         try:
             self.formularios = self.reporte_service.listar_formularios()
@@ -288,6 +301,7 @@ class ReportesView(QWidget):
         except Exception as exc:
             QMessageBox.critical(self, "Error", str(exc))
 
+    # Bloque CDLform: funcion/metodo limpiar_filtros; encapsula una operacion del flujo del modulo.
     def limpiar_filtros(self) -> None:
         self.input_identificador.clear()
         self.input_operario.clear()
@@ -303,17 +317,20 @@ class ReportesView(QWidget):
 
         self.cargar_reporte_desde_inicio()
 
+    # Bloque CDLform: funcion/metodo _obtener_formularios_pagina; encapsula una operacion del flujo del modulo.
     def _obtener_formularios_pagina(self) -> list[Formulario]:
         inicio = self.pagina_actual * self.registros_por_pagina
         fin = inicio + self.registros_por_pagina
         return self.formularios_filtrados[inicio:fin]
 
+    # Bloque CDLform: funcion/metodo _total_paginas; encapsula una operacion del flujo del modulo.
     def _total_paginas(self) -> int:
         total = len(self.formularios_filtrados)
         if total == 0:
             return 1
         return (total - 1) // self.registros_por_pagina + 1
 
+    # Bloque CDLform: funcion/metodo _actualizar_paginacion; encapsula una operacion del flujo del modulo.
     def _actualizar_paginacion(self) -> None:
         total = len(self.formularios_filtrados)
         if total == 0:
@@ -330,6 +347,7 @@ class ReportesView(QWidget):
         self.btn_anterior.setEnabled(self.pagina_actual > 0)
         self.btn_siguiente.setEnabled(self.pagina_actual < self._total_paginas() - 1)
 
+    # Bloque CDLform: funcion/metodo pagina_anterior; encapsula una operacion del flujo del modulo.
     def pagina_anterior(self) -> None:
         if self.pagina_actual <= 0:
             return
@@ -337,6 +355,7 @@ class ReportesView(QWidget):
         self._cargar_tabla(self._obtener_formularios_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo pagina_siguiente; encapsula una operacion del flujo del modulo.
     def pagina_siguiente(self) -> None:
         if self.pagina_actual >= self._total_paginas() - 1:
             return
@@ -344,6 +363,7 @@ class ReportesView(QWidget):
         self._cargar_tabla(self._obtener_formularios_pagina())
         self._actualizar_paginacion()
 
+    # Bloque CDLform: funcion/metodo _filtrar_formularios; encapsula una operacion del flujo del modulo.
     def _filtrar_formularios(
         self,
         formularios: list[Formulario],
@@ -407,14 +427,17 @@ class ReportesView(QWidget):
 
         return filtrados
 
+    # Bloque CDLform: funcion/metodo _cambiar_uso_fecha_desde; encapsula una operacion del flujo del modulo.
     def _cambiar_uso_fecha_desde(self, checked: bool) -> None:
         self.input_fecha_desde.setEnabled(checked)
         self.cargar_reporte_desde_inicio()
 
+    # Bloque CDLform: funcion/metodo _cambiar_uso_fecha_hasta; encapsula una operacion del flujo del modulo.
     def _cambiar_uso_fecha_hasta(self, checked: bool) -> None:
         self.input_fecha_hasta.setEnabled(checked)
         self.cargar_reporte_desde_inicio()
 
+    # Bloque CDLform: funcion/metodo _coerce_fecha; encapsula una operacion del flujo del modulo.
     def _coerce_fecha(self, valor) -> datetime | None:
         texto = str(valor or "").strip()
         if not texto:
@@ -446,6 +469,7 @@ class ReportesView(QWidget):
 
         return None
 
+    # Bloque CDLform: funcion/metodo _ordenar_formularios; encapsula una operacion del flujo del modulo.
     def _ordenar_formularios(self, formularios: list[Formulario]) -> None:
         formularios.sort(
             key=lambda formulario: (
@@ -455,6 +479,7 @@ class ReportesView(QWidget):
             reverse=True,
         )
 
+    # Bloque CDLform: funcion/metodo _cargar_tabla; encapsula una operacion del flujo del modulo.
     def _cargar_tabla(self, formularios: list[Formulario]) -> None:
         self.tabla_reportes.setRowCount(0)
 
@@ -478,12 +503,15 @@ class ReportesView(QWidget):
             self._set_item(row, 7, formulario.estado)
             self._set_item(row, 8, formulario.fecha_formulario)
 
+    # Bloque CDLform: funcion/metodo _obtener_cod_setor; encapsula una operacion del flujo del modulo.
     def _obtener_cod_setor(self, formulario: Formulario) -> str:
         return str(formulario.cod_setor or formulario.area or "").strip()
 
+    # Bloque CDLform: funcion/metodo _obtener_cod_recurso; encapsula una operacion del flujo del modulo.
     def _obtener_cod_recurso(self, formulario: Formulario) -> str:
         return str(formulario.cod_recurso or formulario.maquina or "").strip()
 
+    # Bloque CDLform: funcion/metodo _obtener_id_formulario_seleccionado; encapsula una operacion del flujo del modulo.
     def _obtener_id_formulario_seleccionado(self) -> str:
         fila = self.tabla_reportes.currentRow()
         if fila < 0:
@@ -495,6 +523,7 @@ class ReportesView(QWidget):
 
         return str(item.data(Qt.UserRole) or item.text()).strip()
 
+    # Bloque CDLform: funcion/metodo abrir_detalle; encapsula una operacion del flujo del modulo.
     def abrir_detalle(self, *_args) -> None:
         id_formulario = self._obtener_id_formulario_seleccionado()
         if not id_formulario:
@@ -521,6 +550,7 @@ class ReportesView(QWidget):
         )
         dialogo.exec_()
 
+    # Bloque CDLform: funcion/metodo _set_item; encapsula una operacion del flujo del modulo.
     def _set_item(
         self,
         row: int,

@@ -1,3 +1,8 @@
+"""Primitivas de dominio compartidas por modelos y servicios: enums, errores y validaciones.
+
+Este comentario de modulo ayuda a ubicar el archivo dentro del flujo actual sin alterar su logica.
+"""
+
 from __future__ import annotations
 
 from typing import Iterable, Sequence
@@ -5,6 +10,7 @@ from typing import Iterable, Sequence
 from core.exceptions import ValidationError
 
 
+# Bloque CDLform: funcion/metodo require_non_empty_string; encapsula una operacion del flujo del modulo.
 def require_non_empty_string(value: str, field_name: str, max_length: int | None = None) -> str:
     if not isinstance(value, str):
         raise ValidationError(f"el campo '{field_name}' debe ser texto")
@@ -21,6 +27,7 @@ def require_non_empty_string(value: str, field_name: str, max_length: int | None
     return normalized
 
 
+# Bloque CDLform: funcion/metodo optional_string; encapsula una operacion del flujo del modulo.
 def optional_string(value: str | None, field_name: str, max_length: int | None = None) -> str | None:
     if value is None:
         return None
@@ -40,12 +47,14 @@ def optional_string(value: str | None, field_name: str, max_length: int | None =
     return normalized
 
 
+# Bloque CDLform: funcion/metodo require_bool; encapsula una operacion del flujo del modulo.
 def require_bool(value: bool, field_name: str) -> bool:
     if not isinstance(value, bool):
         raise ValidationError(f"el campo '{field_name}' debe ser booleano")
     return value
 
 
+# Bloque CDLform: funcion/metodo require_list; encapsula una operacion del flujo del modulo.
 def require_list(value: Sequence, field_name: str) -> list:
     if value is None:
         return []
@@ -56,6 +65,7 @@ def require_list(value: Sequence, field_name: str) -> list:
     return list(value)
 
 
+# Bloque CDLform: funcion/metodo require_non_empty_iterable; encapsula una operacion del flujo del modulo.
 def require_non_empty_iterable(value: Iterable, field_name: str) -> list:
     result = list(value)
     if not result:
@@ -63,6 +73,7 @@ def require_non_empty_iterable(value: Iterable, field_name: str) -> list:
     return result
 
 
+# Bloque CDLform: funcion/metodo normalize_string_list; encapsula una operacion del flujo del modulo.
 def normalize_string_list(
     values: Sequence[str] | None,
     field_name: str,
@@ -95,6 +106,7 @@ def normalize_string_list(
     return normalized
 
 
+# Bloque CDLform: funcion/metodo require_positive_int; encapsula una operacion del flujo del modulo.
 def require_positive_int(value: int, field_name: str) -> int:
     if not isinstance(value, int):
         raise ValidationError(f"el campo '{field_name}' debe ser entero")
@@ -105,6 +117,7 @@ def require_positive_int(value: int, field_name: str) -> int:
     return value
 
 
+# Bloque CDLform: funcion/metodo require_status_in_allowed; encapsula una operacion del flujo del modulo.
 def require_status_in_allowed(value: str, field_name: str, allowed_values: Sequence[str]) -> str:
     normalized = require_non_empty_string(value, field_name).lower()
 
